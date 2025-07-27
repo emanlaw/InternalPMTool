@@ -33,6 +33,7 @@
                 <th>Status</th>
                 <th>Priority</th>
                 <th>Assignee</th>
+                <th>Due Date</th>
                 <th>Created</th>
                 <th>Actions</th>
             </tr>
@@ -52,6 +53,15 @@
                 </td>
                 <td><span class="priority-badge priority-{{ card.priority.lower() }}">{{ card.priority }}</span></td>
                 <td>{{ card.assignee or 'Unassigned' }}</td>
+                <td>
+                    {% if card.due_date %}
+                        <span class="{{ get_due_date_text_class(card.due_date) }}">
+                            {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
+                        </span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td>{{ card.created_at }}</td>
                 <td>
                     {% for project in projects %}
@@ -65,7 +75,7 @@
             
             {% if not cards %}
             <tr>
-                <td colspan="8" style="text-align: center; color: #5e6c84; padding: 40px;">
+                <td colspan="9" style="text-align: center; color: #5e6c84; padding: 40px;">
                     No issues found. Create your first issue!
                 </td>
             </tr>
@@ -90,6 +100,7 @@
             <input type="text" id="cardTitle" placeholder="Issue Title" required>
             <textarea id="cardDescription" placeholder="Description" rows="3"></textarea>
             <input type="text" id="cardAssignee" placeholder="Assignee">
+            <input type="date" id="cardDueDate" placeholder="Due Date">
             <select id="cardPriority">
                 <option value="Low">Low Priority</option>
                 <option value="Medium" selected>Medium Priority</option>
@@ -147,7 +158,8 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             title: document.getElementById('cardTitle').value,
             description: document.getElementById('cardDescription').value,
             assignee: document.getElementById('cardAssignee').value,
-            priority: document.getElementById('cardPriority').value
+            priority: document.getElementById('cardPriority').value,
+            due_date: document.getElementById('cardDueDate').value
         })
     });
     

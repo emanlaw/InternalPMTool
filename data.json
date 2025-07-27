@@ -42,5 +42,12 @@
       "priority": "High",
       "created_at": "2024-01-03"
     }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password_hash": "pbkdf2:sha256:600000$Bz5ohT0Zy2joxB4p$28a7853b441ea80735e4a4673891f12468e304395ca18fca76b69cb351906dad"
+    }
   ]
 }

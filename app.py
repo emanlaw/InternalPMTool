@@ -3,7 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
@@ -29,12 +29,79 @@ def load_user(user_id):
         return User(user_data['id'], user_data['username'], user_data['password_hash'])
     return None
 
+# Due date helper functions
+def get_due_date_class(due_date_str):
+    if not due_date_str:
+        return ''
+    
+    try:
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        today = date.today()
+        
+        if due_date < today:
+            return 'card-overdue'
+        elif due_date == today:
+            return 'card-due-today'
+        elif (due_date - today).days <= 3:
+            return 'card-due-soon'
+        return ''
+    except:
+        return ''
+
+def get_due_date_text_class(due_date_str):
+    if not due_date_str:
+        return ''
+    
+    try:
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        today = date.today()
+        
+        if due_date < today:
+            return 'due-date-overdue'
+        elif due_date == today:
+            return 'due-date-today'
+        return 'due-date-upcoming'
+    except:
+        return ''
+
+def get_due_date_status(due_date_str):
+    if not due_date_str:
+        return ''
+    
+    try:
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        today = date.today()
+        
+        if due_date < today:
+            return '(OVERDUE)'
+        elif due_date == today:
+            return '(TODAY)'
+        elif (due_date - today).days <= 3:
+            return '(SOON)'
+        return ''
+    except:
+        return ''
+
+# Register template filters
+app.jinja_env.globals.update(
+    get_due_date_class=get_due_date_class,
+    get_due_date_text_class=get_due_date_text_class,
+    get_due_date_status=get_due_date_status
+)
+
 DATA_FILE = 'data.json'
 
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+            # Ensure users section exists
+            if 'users' not in data:
+                data['users'] = [
+                    {'id': 1, 'username': 'admin', 'password_hash': generate_password_hash('admin123')}
+                ]
+                save_data(data)
+            return data
     return {
         'users': [
             {'id': 1, 'username': 'admin', 'password_hash': generate_password_hash('admin123')}
@@ -45,9 +112,9 @@ def load_data():
             'description': 'Your first project'
         }],
         'cards': [
-            {'id': 1, 'project_id': 1, 'title': 'Setup project', 'description': 'Initial setup', 'status': 'done', 'assignee': 'John', 'priority': 'High', 'created_at': '2024-01-01'},
-            {'id': 2, 'project_id': 1, 'title': 'Design UI', 'description': 'Create mockups', 'status': 'in_progress', 'assignee': 'Jane', 'priority': 'Medium', 'created_at': '2024-01-02'},
-            {'id': 3, 'project_id': 1, 'title': 'Implement backend', 'description': 'API development', 'status': 'todo', 'assignee': 'Bob', 'priority': 'High', 'created_at': '2024-01-03'}
+            {'id': 1, 'project_id': 1, 'title': 'Setup project', 'description': 'Initial setup', 'status': 'done', 'assignee': 'John', 'priority': 'High', 'created_at': '2024-01-01', 'due_date': '2024-01-15'},
+            {'id': 2, 'project_id': 1, 'title': 'Design UI', 'description': 'Create mockups', 'status': 'in_progress', 'assignee': 'Jane', 'priority': 'Medium', 'created_at': '2024-01-02', 'due_date': '2024-12-30'},
+            {'id': 3, 'project_id': 1, 'title': 'Implement backend', 'description': 'API development', 'status': 'todo', 'assignee': 'Bob', 'priority': 'High', 'created_at': '2024-01-03', 'due_date': '2024-12-20'}
         ]
     }
 
@@ -186,7 +253,8 @@ def add_card():
         'status': 'todo',
         'assignee': request.json.get('assignee', ''),
         'priority': request.json.get('priority', 'Medium'),
-        'created_at': datetime.now().strftime('%Y-%m-%d')
+        'created_at': datetime.now().strftime('%Y-%m-%d'),
+        'due_date': request.json.get('due_date', '')
     }
     data['cards'].append(new_card)
     save_data(data)

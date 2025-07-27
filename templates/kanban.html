@@ -15,9 +15,14 @@
         <h3>📋 To Do ({{ todo_cards|length }})</h3>
         <div class="cards-container">
             {% for card in todo_cards %}
-            <div class="card priority-{{ card.priority.lower() }}" draggable="true" data-card-id="{{ card.id }}">
+            <div class="card priority-{{ card.priority.lower() }} {% if card.due_date %}{{ get_due_date_class(card.due_date) }}{% endif %}" draggable="true" data-card-id="{{ card.id }}">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                {% if card.due_date %}
+                <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
+                    📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
+                </div>
+                {% endif %}
                 <div class="card-meta">
                     <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
                     <span>{{ card.priority }}</span>
@@ -32,9 +37,14 @@
         <h3>🔄 In Progress ({{ in_progress_cards|length }})</h3>
         <div class="cards-container">
             {% for card in in_progress_cards %}
-            <div class="card priority-{{ card.priority.lower() }}" draggable="true" data-card-id="{{ card.id }}">
+            <div class="card priority-{{ card.priority.lower() }} {% if card.due_date %}{{ get_due_date_class(card.due_date) }}{% endif %}" draggable="true" data-card-id="{{ card.id }}">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                {% if card.due_date %}
+                <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
+                    📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
+                </div>
+                {% endif %}
                 <div class="card-meta">
                     <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
                     <span>{{ card.priority }}</span>
@@ -49,9 +59,14 @@
         <h3>✅ Done ({{ done_cards|length }})</h3>
         <div class="cards-container">
             {% for card in done_cards %}
-            <div class="card priority-{{ card.priority.lower() }}" draggable="true" data-card-id="{{ card.id }}">
+            <div class="card priority-{{ card.priority.lower() }} {% if card.due_date %}{{ get_due_date_class(card.due_date) }}{% endif %}" draggable="true" data-card-id="{{ card.id }}">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                {% if card.due_date %}
+                <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
+                    📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
+                </div>
+                {% endif %}
                 <div class="card-meta">
                     <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
                     <span>{{ card.priority }}</span>
@@ -70,6 +85,7 @@
             <input type="text" id="cardTitle" placeholder="Card Title" required>
             <textarea id="cardDescription" placeholder="Description" rows="3"></textarea>
             <input type="text" id="cardAssignee" placeholder="Assignee">
+            <input type="date" id="cardDueDate" placeholder="Due Date">
             <select id="cardPriority">
                 <option value="Low">Low Priority</option>
                 <option value="Medium" selected>Medium Priority</option>
@@ -160,7 +176,8 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             title: document.getElementById('cardTitle').value,
             description: document.getElementById('cardDescription').value,
             assignee: document.getElementById('cardAssignee').value,
-            priority: document.getElementById('cardPriority').value
+            priority: document.getElementById('cardPriority').value,
+            due_date: document.getElementById('cardDueDate').value
         })
     });
     
