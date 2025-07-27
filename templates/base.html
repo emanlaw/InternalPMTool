@@ -75,6 +75,22 @@
         .card-overdue { border-left: 4px solid #ff5630 !important; background: #fff4f3; }
         .card-due-today { border-left: 4px solid #ffab00 !important; background: #fffbf0; }
         .card-due-soon { border-left: 4px solid #ffab00 !important; }
+        
+        /* Search and Filter Styles */
+        .search-container { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .search-input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.3s; }
+        .search-input:focus { outline: none; border-color: #0079bf; }
+        .filter-select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; }
+        .filter-select:focus { outline: none; border-color: #0079bf; }
+        .search-summary { margin-top: 15px; color: #5e6c84; font-size: 14px; font-style: italic; }
+        .filters-row { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+        .search-field { flex: 1; min-width: 250px; }
+        
+        /* Loading state */
+        .loading { opacity: 0.6; pointer-events: none; }
+        
+        /* Highlight search terms */
+        .search-highlight { background: #fff3cd; padding: 1px 3px; border-radius: 2px; }
     </style>
 </head>
 <body>

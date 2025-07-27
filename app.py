@@ -335,5 +335,48 @@ def get_card_details(card_id):
     comments = [c for c in data.get('comments', []) if c['card_id'] == card_id]
     return jsonify({'card': card, 'comments': comments})
 
+@app.route('/api/search')
+@login_required
+def search_cards():
+    data = load_data()
+    cards = data['cards']
+    
+    # Get search parameters
+    search_query = request.args.get('q', '').lower()
+    status_filter = request.args.get('status', '')
+    priority_filter = request.args.get('priority', '')
+    assignee_filter = request.args.get('assignee', '')
+    project_filter = request.args.get('project_id', '')
+    
+    # Filter cards
+    filtered_cards = cards
+    
+    # Project filter
+    if project_filter:
+        filtered_cards = [c for c in filtered_cards if c['project_id'] == int(project_filter)]
+    
+    # Status filter
+    if status_filter:
+        filtered_cards = [c for c in filtered_cards if c['status'] == status_filter]
+    
+    # Priority filter
+    if priority_filter:
+        filtered_cards = [c for c in filtered_cards if c['priority'] == priority_filter]
+    
+    # Assignee filter
+    if assignee_filter:
+        filtered_cards = [c for c in filtered_cards if c.get('assignee', '').lower() == assignee_filter.lower()]
+    
+    # Search query (title and description)
+    if search_query:
+        filtered_cards = [c for c in filtered_cards if 
+                         search_query in c['title'].lower() or 
+                         search_query in c.get('description', '').lower()]
+    
+    return jsonify({
+        'cards': filtered_cards,
+        'total': len(filtered_cards)
+    })
+
 if __name__ == '__main__':
     app.run(debug=True)
