@@ -1,12 +1,27 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_file
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import os
 from datetime import datetime, date
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+import io
+import threading
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
+
+# Flask-Mail configuration
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your-email@gmail.com'  # Change this
+app.config['MAIL_PASSWORD'] = 'your-app-password'     # Change this
+app.config['MAIL_DEFAULT_SENDER'] = 'your-email@gmail.com'
+
+mail = Mail(app)
 
 # Flask-Login setup
 login_manager = LoginManager()
@@ -85,6 +100,120 @@ def get_due_date_status(due_date_str):
 def get_comment_count(card_id):
     data = load_data()
     return len([c for c in data.get('comments', []) if c['card_id'] == card_id])
+
+def send_overdue_notifications():
+    """Send email notifications for overdue cards"""
+    try:
+        data = load_data()
+        today = date.today()
+        
+        # Find overdue cards
+        overdue_cards = []
+        for card in data['cards']:
+            if card.get('due_date'):
+                try:
+                    due_date = datetime.strptime(card['due_date'], '%Y-%m-%d').date()
+                    if due_date < today and card['status'] != 'done':
+                        overdue_cards.append(card)
+                except:
+                    continue
+        
+        if not overdue_cards:
+            return
+        
+        # Get users with email notifications enabled
+        users_to_notify = []
+        for user in data.get('users', []):
+            if user.get('email_notifications', True):  # Default to True
+                users_to_notify.append(user)
+        
+        # Send emails
+        for user in users_to_notify:
+            if user.get('email'):  # Only if user has email set
+                send_overdue_email(user, overdue_cards)
+                
+    except Exception as e:
+        print(f"Error sending notifications: {e}")
+
+def send_overdue_email(user, overdue_cards):
+    """Send overdue cards email to a specific user"""
+    try:
+        projects = {p['id']: p['name'] for p in load_data()['projects']}
+        
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #0079bf; color: white; padding: 20px; text-align: center;">
+                <h1>🚨 Overdue Cards Alert</h1>
+            </div>
+            
+            <div style="padding: 20px;">
+                <p>Hello {user['username']},</p>
+                <p>You have <strong>{len(overdue_cards)} overdue cards</strong> that need attention:</p>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        """
+        
+        for card in overdue_cards:
+            project_name = projects.get(card['project_id'], 'Unknown')
+            html_body += f"""
+                    <div style="border-left: 4px solid #ff5630; padding: 10px; margin: 10px 0; background: white;">
+                        <h3 style="margin: 0 0 5px 0; color: #172b4d;">#{card['id']} - {card['title']}</h3>
+                        <p style="margin: 5px 0; color: #5e6c84;">Project: {project_name}</p>
+                        <p style="margin: 5px 0; color: #5e6c84;">Due: {card['due_date']} | Priority: {card['priority']} | Assignee: {card.get('assignee', 'Unassigned')}</p>
+                        <p style="margin: 5px 0;">{card.get('description', '')}</p>
+                    </div>
+            """
+        
+        html_body += f"""
+                </div>
+                
+                <p>Please review and update these cards as soon as possible.</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="http://localhost:5000/issues" 
+                       style="background: #0079bf; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                        View All Issues
+                    </a>
+                </div>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                <p style="font-size: 12px; color: #5e6c84; text-align: center;">
+                    This is an automated notification from PM Tool.<br>
+                    Generated on {datetime.now().strftime('%Y-%m-%d at %H:%M')}
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg = Message(
+            subject=f"PM Tool: {len(overdue_cards)} Overdue Cards Need Attention",
+            recipients=[user['email']],
+            html=html_body
+        )
+        
+        mail.send(msg)
+        print(f"Overdue notification sent to {user['username']}")
+        
+    except Exception as e:
+        print(f"Error sending email to {user['username']}: {e}")
+
+def schedule_daily_notifications():
+    """Schedule daily email notifications (runs in background)"""
+    def run_notifications():
+        import time
+        while True:
+            # Check time - send at 9 AM daily
+            now = datetime.now()
+            if now.hour == 9 and now.minute == 0:
+                send_overdue_notifications()
+                time.sleep(60)  # Wait 1 minute to avoid duplicate sends
+            time.sleep(30)  # Check every 30 seconds
+    
+    # Run in background thread
+    thread = threading.Thread(target=run_notifications, daemon=True)
+    thread.start()
 
 # Register template filters
 app.jinja_env.globals.update(
@@ -188,6 +317,57 @@ def register():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    data = load_data()
+    user_data = next((u for u in data['users'] if u['id'] == current_user.id), None)
+    
+    if request.method == 'POST':
+        # Update user email and notification preferences
+        email = request.form.get('email', '')
+        email_notifications = 'email_notifications' in request.form
+        
+        for user in data['users']:
+            if user['id'] == current_user.id:
+                user['email'] = email
+                user['email_notifications'] = email_notifications
+                break
+        
+        save_data(data)
+        flash('Profile updated successfully!')
+        return redirect(url_for('profile'))
+    
+    return render_template('profile.html', user=user_data)
+
+@app.route('/api/test-email')
+@login_required
+def test_email():
+    """Test email functionality"""
+    try:
+        data = load_data()
+        user_data = next((u for u in data['users'] if u['id'] == current_user.id), None)
+        
+        if not user_data or not user_data.get('email'):
+            return jsonify({'error': 'No email address set in profile'}), 400
+        
+        # Send test email
+        msg = Message(
+            subject="PM Tool - Test Email",
+            recipients=[user_data['email']],
+            html="""
+            <h2>Test Email Successful! 🎉</h2>
+            <p>Your email notifications are working correctly.</p>
+            <p>You will receive daily notifications for overdue cards.</p>
+            """
+        )
+        
+        mail.send(msg)
+        return jsonify({'success': True, 'message': 'Test email sent successfully!'})
+        
+    except Exception as e:
+        return jsonify({'error': f'Email test failed: {str(e)}'}), 500
 
 @app.route('/')
 @login_required
@@ -378,5 +558,102 @@ def search_cards():
         'total': len(filtered_cards)
     })
 
+@app.route('/api/export-excel')
+@login_required
+def export_excel():
+    data = load_data()
+    cards = data['cards']
+    projects = {p['id']: p['name'] for p in data['projects']}
+    
+    # Apply same filters as search
+    search_query = request.args.get('q', '').lower()
+    status_filter = request.args.get('status', '')
+    priority_filter = request.args.get('priority', '')
+    assignee_filter = request.args.get('assignee', '')
+    project_filter = request.args.get('project_id', '')
+    
+    # Filter cards (same logic as search)
+    filtered_cards = cards
+    if project_filter:
+        filtered_cards = [c for c in filtered_cards if c['project_id'] == int(project_filter)]
+    if status_filter:
+        filtered_cards = [c for c in filtered_cards if c['status'] == status_filter]
+    if priority_filter:
+        filtered_cards = [c for c in filtered_cards if c['priority'] == priority_filter]
+    if assignee_filter:
+        filtered_cards = [c for c in filtered_cards if c.get('assignee', '').lower() == assignee_filter.lower()]
+    if search_query:
+        filtered_cards = [c for c in filtered_cards if 
+                         search_query in c['title'].lower() or 
+                         search_query in c.get('description', '').lower()]
+    
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Issues Export"
+    
+    # Headers
+    headers = ['ID', 'Title', 'Description', 'Status', 'Priority', 'Assignee', 'Project', 'Due Date', 'Comments', 'Created Date']
+    ws.append(headers)
+    
+    # Style headers
+    header_font = Font(bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='0079BF', end_color='0079BF', fill_type='solid')
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+    
+    # Add data
+    for card in filtered_cards:
+        comment_count = get_comment_count(card['id'])
+        project_name = projects.get(card['project_id'], 'Unknown')
+        
+        row_data = [
+            f"#{card['id']}",
+            card['title'],
+            card.get('description', ''),
+            card['status'].replace('_', ' ').title(),
+            card['priority'],
+            card.get('assignee', 'Unassigned'),
+            project_name,
+            card.get('due_date', ''),
+            comment_count,
+            card['created_at']
+        ]
+        ws.append(row_data)
+    
+    # Auto-adjust column widths
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    # Save to memory
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # Generate filename with current date
+    filename = f"issues_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
 if __name__ == '__main__':
+    # Start email notification scheduler
+    schedule_daily_notifications()
     app.run(debug=True)

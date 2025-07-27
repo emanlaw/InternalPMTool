@@ -91,6 +91,112 @@
         
         /* Highlight search terms */
         .search-highlight { background: #fff3cd; padding: 1px 3px; border-radius: 2px; }
+        
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        .dark-mode-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        .dark-mode .header {
+            background: #2d3748;
+        }
+        
+        .dark-mode .container {
+            background: #1a1a1a;
+        }
+        
+        .dark-mode .project-card,
+        .dark-mode .table-container,
+        .dark-mode .search-container,
+        .dark-mode .modal-content,
+        .dark-mode .stat-card {
+            background: #2d3748;
+            color: #e0e0e0;
+            border-color: #4a5568;
+        }
+        
+        .dark-mode .card {
+            background: #2d3748;
+            color: #e0e0e0;
+            border-color: #4a5568;
+        }
+        
+        .dark-mode .column {
+            background: #374151;
+        }
+        
+        .dark-mode th {
+            background: #374151;
+            color: #e0e0e0;
+        }
+        
+        .dark-mode td {
+            border-color: #4a5568;
+        }
+        
+        .dark-mode tr:hover {
+            background: #374151;
+        }
+        
+        .dark-mode input,
+        .dark-mode textarea,
+        .dark-mode select {
+            background: #374151;
+            color: #e0e0e0;
+            border-color: #4a5568;
+        }
+        
+        .dark-mode input:focus,
+        .dark-mode textarea:focus,
+        .dark-mode select:focus {
+            border-color: #0079bf;
+        }
+        
+        .dark-mode .btn-secondary {
+            background: #4a5568;
+            color: #e0e0e0;
+        }
+        
+        .dark-mode .btn-secondary:hover {
+            background: #2d3748;
+        }
+        
+        .dark-mode .nav-card {
+            background: #2d3748;
+            color: #e0e0e0;
+        }
+        
+        .dark-mode .nav-card:hover {
+            background: #374151;
+        }
+        
+        .dark-mode .flash-error {
+            background: #2d1b1b;
+            color: #f56565;
+            border-color: #f56565;
+        }
+        
+        .dark-mode .flash-success {
+            background: #1b2d1b;
+            color: #68d391;
+            border-color: #68d391;
+        }
     </style>
 </head>
 <body>
@@ -102,7 +208,11 @@
             <a href="/issues">Issues</a>
             <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
                 {% if current_user.is_authenticated %}
-                    <span style="color: rgba(255,255,255,0.8);">Welcome, {{ current_user.username }}!</span>
+                    <button onclick="toggleDarkMode()" class="dark-mode-toggle" title="Toggle Dark Mode">
+                        <span id="darkModeIcon">🌙</span>
+                    </button>
+                    <a href="{{ url_for('profile') }}">Profile</a>
+                    <span style="color: rgba(255,255,255,0.8);">{{ current_user.username }}</span>
                     <a href="{{ url_for('logout') }}">Logout</a>
                 {% else %}
                     <a href="{{ url_for('login') }}">Login</a>
@@ -114,5 +224,37 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+    
+    <script>
+        // Dark Mode Functionality
+        function toggleDarkMode() {
+            const body = document.body;
+            const icon = document.getElementById('darkModeIcon');
+            
+            body.classList.toggle('dark-mode');
+            
+            // Update icon
+            if (body.classList.contains('dark-mode')) {
+                icon.textContent = '☀️'; // Sun icon
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                icon.textContent = '🌙'; // Moon icon
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+        
+        // Load dark mode preference on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkMode = localStorage.getItem('darkMode');
+            const icon = document.getElementById('darkModeIcon');
+            
+            if (darkMode === 'enabled') {
+                document.body.classList.add('dark-mode');
+                if (icon) icon.textContent = '☀️';
+            } else {
+                if (icon) icon.textContent = '🌙';
+            }
+        });
+    </script>
 </body>
 </html>
