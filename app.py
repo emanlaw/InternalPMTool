@@ -82,11 +82,16 @@ def get_due_date_status(due_date_str):
     except:
         return ''
 
+def get_comment_count(card_id):
+    data = load_data()
+    return len([c for c in data.get('comments', []) if c['card_id'] == card_id])
+
 # Register template filters
 app.jinja_env.globals.update(
     get_due_date_class=get_due_date_class,
     get_due_date_text_class=get_due_date_text_class,
-    get_due_date_status=get_due_date_status
+    get_due_date_status=get_due_date_status,
+    get_comment_count=get_comment_count
 )
 
 DATA_FILE = 'data.json'
@@ -100,6 +105,10 @@ def load_data():
                 data['users'] = [
                     {'id': 1, 'username': 'admin', 'password_hash': generate_password_hash('admin123')}
                 ]
+                save_data(data)
+            # Ensure comments section exists
+            if 'comments' not in data:
+                data['comments'] = []
                 save_data(data)
             return data
     return {
@@ -115,6 +124,10 @@ def load_data():
             {'id': 1, 'project_id': 1, 'title': 'Setup project', 'description': 'Initial setup', 'status': 'done', 'assignee': 'John', 'priority': 'High', 'created_at': '2024-01-01', 'due_date': '2024-01-15'},
             {'id': 2, 'project_id': 1, 'title': 'Design UI', 'description': 'Create mockups', 'status': 'in_progress', 'assignee': 'Jane', 'priority': 'Medium', 'created_at': '2024-01-02', 'due_date': '2024-12-30'},
             {'id': 3, 'project_id': 1, 'title': 'Implement backend', 'description': 'API development', 'status': 'todo', 'assignee': 'Bob', 'priority': 'High', 'created_at': '2024-01-03', 'due_date': '2024-12-20'}
+        ],
+        'comments': [
+            {'id': 1, 'card_id': 1, 'author': 'admin', 'content': 'Great work on the setup!', 'created_at': '2024-01-02 10:30:00'},
+            {'id': 2, 'card_id': 2, 'author': 'admin', 'content': 'Please update the color scheme', 'created_at': '2024-01-03 14:15:00'}
         ]
     }
 
@@ -285,6 +298,42 @@ def update_card_status():
     
     save_data(data)
     return jsonify({'success': True})
+
+@app.route('/api/card/<int:card_id>/comments')
+@login_required
+def get_comments(card_id):
+    data = load_data()
+    comments = [c for c in data.get('comments', []) if c['card_id'] == card_id]
+    return jsonify(comments)
+
+@app.route('/api/card/<int:card_id>/comments', methods=['POST'])
+@login_required
+def add_comment(card_id):
+    data = load_data()
+    new_comment = {
+        'id': max([c['id'] for c in data.get('comments', [])], default=0) + 1,
+        'card_id': card_id,
+        'author': current_user.username,
+        'content': request.json['content'],
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    
+    if 'comments' not in data:
+        data['comments'] = []
+    data['comments'].append(new_comment)
+    save_data(data)
+    return jsonify(new_comment)
+
+@app.route('/api/card/<int:card_id>')
+@login_required
+def get_card_details(card_id):
+    data = load_data()
+    card = next((c for c in data['cards'] if c['id'] == card_id), None)
+    if not card:
+        return jsonify({'error': 'Card not found'}), 404
+    
+    comments = [c for c in data.get('comments', []) if c['card_id'] == card_id]
+    return jsonify({'card': card, 'comments': comments})
 
 if __name__ == '__main__':
     app.run(debug=True)
