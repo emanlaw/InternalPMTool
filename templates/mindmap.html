@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Project Mindmap</h1>
+
+<div class="card">
+    <h3>Interactive Mindmap</h3>
+    <div id="mindmap" style="width: 100%; height: 500px; border: 1px solid #ddd; position: relative; background: #f8f9fa;">
+        <div class="mindmap-node" style="position: absolute; top: 200px; left: 400px; background: #007bff; color: white; padding: 10px; border-radius: 50px; text-align: center; cursor: move;">
+            PM Tool
+        </div>
+        <div class="mindmap-node" style="position: absolute; top: 100px; left: 200px; background: #28a745; color: white; padding: 8px 15px; border-radius: 20px; cursor: move;">
+            Sprint Planning
+        </div>
+        <div class="mindmap-node" style="position: absolute; top: 300px; left: 200px; background: #ffc107; color: black; padding: 8px 15px; border-radius: 20px; cursor: move;">
+            Issue Tracking
+        </div>
+        <div class="mindmap-node" style="position: absolute; top: 200px; left: 600px; background: #dc3545; color: white; padding: 8px 15px; border-radius: 20px; cursor: move;">
+            Team Collaboration
+        </div>
+        <div class="mindmap-node" style="position: absolute; top: 50px; left: 500px; background: #6f42c1; color: white; padding: 8px 15px; border-radius: 20px; cursor: move;">
+            Reporting
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Add Node</h3>
+    <input type="text" id="nodeText" placeholder="Node text" style="width: 200px; padding: 8px; margin-right: 10px;">
+    <button class="btn" onclick="addNode()">Add Node</button>
+</div>
+
+<script>
+let nodeCount = 5;
+
+function addNode() {
+    const text = document.getElementById('nodeText').value;
+    if (!text) return;
+    
+    const mindmap = document.getElementById('mindmap');
+    const node = document.createElement('div');
+    node.className = 'mindmap-node';
+    node.style.cssText = `
+        position: absolute; 
+        top: ${Math.random() * 400}px; 
+        left: ${Math.random() * 600}px; 
+        background: #17a2b8; 
+        color: white; 
+        padding: 8px 15px; 
+        border-radius: 20px; 
+        cursor: move;
+    `;
+    node.textContent = text;
+    
+    // Make draggable
+    node.addEventListener('mousedown', startDrag);
+    
+    mindmap.appendChild(node);
+    document.getElementById('nodeText').value = '';
+}
+
+function startDrag(e) {
+    const node = e.target;
+    const rect = node.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    
+    function drag(e) {
+        const mindmapRect = document.getElementById('mindmap').getBoundingClientRect();
+        node.style.left = (e.clientX - mindmapRect.left - offsetX) + 'px';
+        node.style.top = (e.clientY - mindmapRect.top - offsetY) + 'px';
+    }
+    
+    function stopDrag() {
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDrag);
+    }
+    
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDrag);
+}
+
+// Make existing nodes draggable
+document.querySelectorAll('.mindmap-node').forEach(node => {
+    node.addEventListener('mousedown', startDrag);
+});
+</script>
+{% endblock %}

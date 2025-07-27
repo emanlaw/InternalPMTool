@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h2>Issues List</h2>
+        {% if current_project %}
+        <p style="color: #5e6c84; margin: 0;">Project: {{ current_project.name }}</p>
+        {% else %}
+        <p style="color: #5e6c84; margin: 0;">All Projects</p>
+        {% endif %}
+    </div>
+    <div>
+        <select id="projectFilter" onchange="filterByProject()" style="padding: 8px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">All Projects</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
+                {{ project.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <button class="btn" onclick="showAddCardModal()">+ Add Issue</button>
+    </div>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Assignee</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for card in cards %}
+            <tr>
+                <td><strong>#{{ card.id }}</strong></td>
+                <td>{{ card.title }}</td>
+                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ card.description or '-' }}</td>
+                <td>
+                    <select class="status-badge status-{{ card.status }}" onchange="updateStatus({{ card.id }}, this.value)" style="border: none; background: transparent; font-size: 12px;">
+                        <option value="todo" {% if card.status == 'todo' %}selected{% endif %}>To Do</option>
+                        <option value="in_progress" {% if card.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="done" {% if card.status == 'done' %}selected{% endif %}>Done</option>
+                    </select>
+                </td>
+                <td><span class="priority-badge priority-{{ card.priority.lower() }}">{{ card.priority }}</span></td>
+                <td>{{ card.assignee or 'Unassigned' }}</td>
+                <td>{{ card.created_at }}</td>
+                <td>
+                    {% for project in projects %}
+                        {% if project.id == card.project_id %}
+                        <button class="btn" style="font-size: 12px; padding: 4px 8px;" onclick="location.href='/board/{{ project.id }}'">View Board</button>
+                        {% endif %}
+                    {% endfor %}
+                </td>
+            </tr>
+            {% endfor %}
+            
+            {% if not cards %}
+            <tr>
+                <td colspan="8" style="text-align: center; color: #5e6c84; padding: 40px;">
+                    No issues found. Create your first issue!
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Issue Modal -->
+<div id="addCardModal" class="modal">
+    <div class="modal-content">
+        <h3>Create New Issue</h3>
+        <form id="cardForm">
+            <select id="cardProject" required>
+                <option value="">Select Project</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
+                    {{ project.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <input type="text" id="cardTitle" placeholder="Issue Title" required>
+            <textarea id="cardDescription" placeholder="Description" rows="3"></textarea>
+            <input type="text" id="cardAssignee" placeholder="Assignee">
+            <select id="cardPriority">
+                <option value="Low">Low Priority</option>
+                <option value="Medium" selected>Medium Priority</option>
+                <option value="High">High Priority</option>
+            </select>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn">Create Issue</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddCardModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterByProject() {
+    const projectId = document.getElementById('projectFilter').value;
+    if (projectId) {
+        location.href = '/issues?project_id=' + projectId;
+    } else {
+        location.href = '/issues';
+    }
+}
+
+async function updateStatus(cardId, newStatus) {
+    await fetch('/api/update_card_status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            card_id: cardId,
+            status: newStatus
+        })
+    });
+    
+    // Update the visual status badge
+    location.reload();
+}
+
+function showAddCardModal() {
+    document.getElementById('addCardModal').style.display = 'block';
+}
+
+function hideAddCardModal() {
+    document.getElementById('addCardModal').style.display = 'none';
+    document.getElementById('cardForm').reset();
+}
+
+document.getElementById('cardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const response = await fetch('/api/add_card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            project_id: parseInt(document.getElementById('cardProject').value),
+            title: document.getElementById('cardTitle').value,
+            description: document.getElementById('cardDescription').value,
+            assignee: document.getElementById('cardAssignee').value,
+            priority: document.getElementById('cardPriority').value
+        })
+    });
+    
+    if (response.ok) {
+        location.reload();
+    }
+});
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('addCardModal');
+    if (event.target === modal) {
+        hideAddCardModal();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h2>{{ project.name }}</h2>
+        <p style="color: #5e6c84; margin: 0;">{{ project.description }}</p>
+    </div>
+    <button class="btn" onclick="showAddCardModal()">+ Add Card</button>
+</div>
+
+<div class="board">
+    <!-- To Do Column -->
+    <div class="column" data-status="todo">
+        <h3>📋 To Do ({{ todo_cards|length }})</h3>
+        <div class="cards-container">
+            {% for card in todo_cards %}
+            <div class="card priority-{{ card.priority.lower() }}" draggable="true" data-card-id="{{ card.id }}">
+                <div class="card-title">{{ card.title }}</div>
+                <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                <div class="card-meta">
+                    <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
+                    <span>{{ card.priority }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- In Progress Column -->
+    <div class="column" data-status="in_progress">
+        <h3>🔄 In Progress ({{ in_progress_cards|length }})</h3>
+        <div class="cards-container">
+            {% for card in in_progress_cards %}
+            <div class="card priority-{{ card.priority.lower() }}" draggable="true" data-card-id="{{ card.id }}">
+                <div class="card-title">{{ card.title }}</div>
+                <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                <div class="card-meta">
+                    <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
+                    <span>{{ card.priority }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Done Column -->
+    <div class="column" data-status="done">
+        <h3>✅ Done ({{ done_cards|length }})</h3>
+        <div class="cards-container">
+            {% for card in done_cards %}
+            <div class="card priority-{{ card.priority.lower() }}" draggable="true" data-card-id="{{ card.id }}">
+                <div class="card-title">{{ card.title }}</div>
+                <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                <div class="card-meta">
+                    <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
+                    <span>{{ card.priority }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Card Modal -->
+<div id="addCardModal" class="modal">
+    <div class="modal-content">
+        <h3>Create New Card</h3>
+        <form id="cardForm">
+            <input type="text" id="cardTitle" placeholder="Card Title" required>
+            <textarea id="cardDescription" placeholder="Description" rows="3"></textarea>
+            <input type="text" id="cardAssignee" placeholder="Assignee">
+            <select id="cardPriority">
+                <option value="Low">Low Priority</option>
+                <option value="Medium" selected>Medium Priority</option>
+                <option value="High">High Priority</option>
+            </select>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn">Create Card</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddCardModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let draggedCard = null;
+
+// Drag and Drop functionality
+document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+        draggedCard = e.target;
+        e.target.classList.add('dragging');
+    });
+    
+    card.addEventListener('dragend', (e) => {
+        e.target.classList.remove('dragging');
+        draggedCard = null;
+    });
+});
+
+document.querySelectorAll('.column').forEach(column => {
+    column.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+    
+    column.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        if (draggedCard) {
+            const newStatus = column.dataset.status;
+            const cardId = parseInt(draggedCard.dataset.cardId);
+            
+            // Move card visually
+            column.querySelector('.cards-container').appendChild(draggedCard);
+            
+            // Update server
+            await fetch('/api/move_card', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    card_id: cardId,
+                    status: newStatus
+                })
+            });
+            
+            // Update column counts
+            updateColumnCounts();
+        }
+    });
+});
+
+function updateColumnCounts() {
+    document.querySelectorAll('.column').forEach(column => {
+        const count = column.querySelectorAll('.card').length;
+        const header = column.querySelector('h3');
+        const status = column.dataset.status;
+        const emoji = status === 'todo' ? '📋' : status === 'in_progress' ? '🔄' : '✅';
+        const title = status === 'todo' ? 'To Do' : status === 'in_progress' ? 'In Progress' : 'Done';
+        header.textContent = `${emoji} ${title} (${count})`;
+    });
+}
+
+function showAddCardModal() {
+    document.getElementById('addCardModal').style.display = 'block';
+}
+
+function hideAddCardModal() {
+    document.getElementById('addCardModal').style.display = 'none';
+    document.getElementById('cardForm').reset();
+}
+
+document.getElementById('cardForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const response = await fetch('/api/add_card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            project_id: {{ project.id }},
+            title: document.getElementById('cardTitle').value,
+            description: document.getElementById('cardDescription').value,
+            assignee: document.getElementById('cardAssignee').value,
+            priority: document.getElementById('cardPriority').value
+        })
+    });
+    
+    if (response.ok) {
+        location.reload();
+    }
+});
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('addCardModal');
+    if (event.target === modal) {
+        hideAddCardModal();
+    }
+}
+</script>
+{% endblock %}

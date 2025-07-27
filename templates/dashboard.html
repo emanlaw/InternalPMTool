@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>Dashboard Overview</h2>
+    <button class="btn" onclick="showAddProjectModal()">+ New Project</button>
+</div>
+
+<!-- Overall Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number" style="color: #36b37e;">{{ stats.todo }}</div>
+        <div class="stat-label">📋 To Do</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" style="color: #ffab00;">{{ stats.in_progress }}</div>
+        <div class="stat-label">🔄 In Progress</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" style="color: #0079bf;">{{ stats.done }}</div>
+        <div class="stat-label">✅ Done</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" style="color: #172b4d;">{{ stats.total }}</div>
+        <div class="stat-label">📊 Total Issues</div>
+    </div>
+</div>
+
+<h3>Projects</h3>
+<div class="projects-grid">
+    {% for project in projects %}
+    <div class="project-card">
+        <h3>{{ project.name }}</h3>
+        <p>{{ project.description }}</p>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="location.href='/board/{{ project.id }}'">Kanban Board</button>
+            <button class="btn btn-secondary" onclick="location.href='/issues?project_id={{ project.id }}'">Issues List</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Add Project Modal -->
+<div id="addProjectModal" class="modal">
+    <div class="modal-content">
+        <h3>Create New Project</h3>
+        <form id="projectForm">
+            <input type="text" id="projectName" placeholder="Project Name" required>
+            <textarea id="projectDescription" placeholder="Project Description" rows="3"></textarea>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn">Create Project</button>
+                <button type="button" class="btn btn-secondary" onclick="hideAddProjectModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showAddProjectModal() {
+    document.getElementById('addProjectModal').style.display = 'block';
+}
+
+function hideAddProjectModal() {
+    document.getElementById('addProjectModal').style.display = 'none';
+    document.getElementById('projectForm').reset();
+}
+
+document.getElementById('projectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const response = await fetch('/api/add_project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: document.getElementById('projectName').value,
+            description: document.getElementById('projectDescription').value
+        })
+    });
+    
+    if (response.ok) {
+        location.reload();
+    }
+});
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('addProjectModal');
+    if (event.target === modal) {
+        hideAddProjectModal();
+    }
+}
+</script>
+{% endblock %}
