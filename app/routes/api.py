@@ -54,33 +54,62 @@ def move_card():
 
 @api_bp.route('/add_card', methods=['POST'])
 def add_card():
-    data = load_data()
-    new_card = {
-        'id': max([c['id'] for c in data['cards']], default=0) + 1,
-        'project_id': request.json['project_id'],
-        'title': request.json['title'],
-        'description': request.json.get('description', ''),
-        'status': 'todo',
-        'assignee': request.json.get('assignee', ''),
-        'priority': request.json.get('priority', 'Medium'),
-        'created_at': datetime.now().strftime('%Y-%m-%d'),
-        'due_date': request.json.get('due_date', '')
-    }
-    data['cards'].append(new_card)
-    save_data(data)
-    return jsonify(new_card)
+    # Try Firebase first
+    try:
+        from app.services.firebase_service import firebase_service
+        new_card = {
+            'project_id': str(request.json['project_id']),
+            'title': request.json['title'],
+            'description': request.json.get('description', ''),
+            'status': 'todo',
+            'assignee': request.json.get('assignee', ''),
+            'priority': request.json.get('priority', 'Medium'),
+            'due_date': request.json.get('due_date', '')
+        }
+        created_card = firebase_service.create_card(new_card)
+        return jsonify(created_card)
+    except Exception as e:
+        print(f"Firebase error, using JSON: {e}")
+        # Fallback to JSON
+        data = load_data()
+        new_card = {
+            'id': max([c['id'] for c in data['cards']], default=0) + 1,
+            'project_id': request.json['project_id'],
+            'title': request.json['title'],
+            'description': request.json.get('description', ''),
+            'status': 'todo',
+            'assignee': request.json.get('assignee', ''),
+            'priority': request.json.get('priority', 'Medium'),
+            'created_at': datetime.now().strftime('%Y-%m-%d'),
+            'due_date': request.json.get('due_date', '')
+        }
+        data['cards'].append(new_card)
+        save_data(data)
+        return jsonify(new_card)
 
 @api_bp.route('/add_project', methods=['POST'])
 def add_project():
-    data = load_data()
-    new_project = {
-        'id': max([p['id'] for p in data['projects']], default=0) + 1,
-        'name': request.json['name'],
-        'description': request.json.get('description', '')
-    }
-    data['projects'].append(new_project)
-    save_data(data)
-    return jsonify(new_project)
+    # Try Firebase first
+    try:
+        from app.services.firebase_service import firebase_service
+        new_project = {
+            'name': request.json['name'],
+            'description': request.json.get('description', '')
+        }
+        created_project = firebase_service.create_project(new_project)
+        return jsonify(created_project)
+    except Exception as e:
+        print(f"Firebase error, using JSON: {e}")
+        # Fallback to JSON
+        data = load_data()
+        new_project = {
+            'id': max([p['id'] for p in data['projects']], default=0) + 1,
+            'name': request.json['name'],
+            'description': request.json.get('description', '')
+        }
+        data['projects'].append(new_project)
+        save_data(data)
+        return jsonify(new_project)
 
 @api_bp.route('/update_card_status', methods=['POST'])
 def update_card_status():
@@ -106,20 +135,33 @@ def get_comments(card_id):
 @api_bp.route('/card/<int:card_id>/comments', methods=['POST'])
 @login_required
 def add_comment(card_id):
-    data = load_data()
-    new_comment = {
-        'id': max([c['id'] for c in data.get('comments', [])], default=0) + 1,
-        'card_id': card_id,
-        'author': current_user.username,
-        'content': request.json['content'],
-        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
-    
-    if 'comments' not in data:
-        data['comments'] = []
-    data['comments'].append(new_comment)
-    save_data(data)
-    return jsonify(new_comment)
+    # Try Firebase first
+    try:
+        from app.services.firebase_service import firebase_service
+        new_comment = {
+            'card_id': str(card_id),
+            'author': current_user.username,
+            'content': request.json['content']
+        }
+        created_comment = firebase_service.create_comment(new_comment)
+        return jsonify(created_comment)
+    except Exception as e:
+        print(f"Firebase error, using JSON: {e}")
+        # Fallback to JSON
+        data = load_data()
+        new_comment = {
+            'id': max([c['id'] for c in data.get('comments', [])], default=0) + 1,
+            'card_id': card_id,
+            'author': current_user.username,
+            'content': request.json['content'],
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if 'comments' not in data:
+            data['comments'] = []
+        data['comments'].append(new_comment)
+        save_data(data)
+        return jsonify(new_comment)
 
 @api_bp.route('/card/<int:card_id>')
 @login_required

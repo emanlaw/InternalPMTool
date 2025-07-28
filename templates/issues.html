@@ -404,21 +404,41 @@ function hideAddCardModal() {
 document.getElementById('cardForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const response = await fetch('/api/add_card', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            project_id: parseInt(document.getElementById('cardProject').value),
-            title: document.getElementById('cardTitle').value,
-            description: document.getElementById('cardDescription').value,
-            assignee: document.getElementById('cardAssignee').value,
-            priority: document.getElementById('cardPriority').value,
-            due_date: document.getElementById('cardDueDate').value
-        })
-    });
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Creating...';
+    submitBtn.disabled = true;
     
-    if (response.ok) {
-        location.reload();
+    try {
+        const response = await fetch('/api/add_card', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_id: parseInt(document.getElementById('cardProject').value),
+                title: document.getElementById('cardTitle').value,
+                description: document.getElementById('cardDescription').value,
+                assignee: document.getElementById('cardAssignee').value,
+                priority: document.getElementById('cardPriority').value,
+                due_date: document.getElementById('cardDueDate').value
+            })
+        });
+        
+        if (response.ok) {
+            const newCard = await response.json();
+            console.log('Card created:', newCard);
+            hideAddCardModal();
+            // Force a complete page refresh to show Firebase data
+            window.location.href = window.location.href;
+        } else {
+            alert('Error creating card');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error('Error creating card:', error);
+        alert('Error creating card');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 });
 

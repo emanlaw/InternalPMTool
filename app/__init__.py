@@ -30,7 +30,8 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         data = load_data()
-        user_data = next((u for u in data.get('users', []) if u['id'] == int(user_id)), None)
+        # Handle both string and int IDs
+        user_data = next((u for u in data.get('users', []) if str(u['id']) == str(user_id)), None)
         if user_data:
             return User(user_data['id'], user_data['username'], user_data['password_hash'])
         return None
@@ -39,10 +40,12 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.main import main_bp
     from app.routes.api import api_bp
+    from app.routes.firebase_routes import firebase_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(firebase_bp)
     
     # Register template filters
     register_template_filters(app)

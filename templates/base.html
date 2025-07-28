@@ -110,7 +110,7 @@
         /* Dark Mode Styles */
         body.dark-mode {
             background: #1a1a1a;
-            color: #e0e0e0;
+            color: #f5f5f5;
         }
         
         .dark-mode .header {
@@ -127,14 +127,14 @@
         .dark-mode .modal-content,
         .dark-mode .stat-card {
             background: #2d3748;
-            color: #e0e0e0;
-            border-color: #4a5568;
+            color: #f5f5f5;
+            border-color: #555555;
         }
         
         .dark-mode .card {
             background: #2d3748;
-            color: #e0e0e0;
-            border-color: #4a5568;
+            color: #f5f5f5;
+            border-color: #555555;
         }
         
         .dark-mode .column {
@@ -143,7 +143,7 @@
         
         .dark-mode th {
             background: #374151;
-            color: #e0e0e0;
+            color: #f5f5f5;
         }
         
         .dark-mode td {
@@ -158,8 +158,8 @@
         .dark-mode textarea,
         .dark-mode select {
             background: #374151;
-            color: #e0e0e0;
-            border-color: #4a5568;
+            color: #f0f0f0;
+            border-color: #555555;
         }
         
         .dark-mode input:focus,
@@ -170,7 +170,7 @@
         
         .dark-mode .btn-secondary {
             background: #4a5568;
-            color: #e0e0e0;
+            color: #ffffff;
         }
         
         .dark-mode .btn-secondary:hover {
@@ -179,7 +179,20 @@
         
         .dark-mode .nav-card {
             background: #2d3748;
-            color: #e0e0e0;
+            color: #f5f5f5;
+        }
+        
+        .dark-mode h1,
+        .dark-mode h2,
+        .dark-mode h3,
+        .dark-mode h4,
+        .dark-mode h5,
+        .dark-mode h6 {
+            color: #ffffff !important;
+        }
+        
+        .dark-mode .card-title {
+            color: #ffffff !important;
         }
         
         .dark-mode .nav-card:hover {
@@ -206,6 +219,7 @@
             <a href="{{ url_for('main.home') }}">Home</a>
             <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
             <a href="{{ url_for('main.issues_list') }}">Issues</a>
+            <a href="{{ url_for('firebase.firebase_dashboard') }}">Firebase</a>
             <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
                 {% if current_user.is_authenticated %}
                     <button onclick="toggleDarkMode()" class="dark-mode-toggle" title="Toggle Dark Mode">

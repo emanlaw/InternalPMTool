@@ -37,11 +37,21 @@ def register():
             return render_template('register.html')
         
         # Create new user
-        new_user = {
-            'id': max([u['id'] for u in data.get('users', [])], default=0) + 1,
-            'username': username,
-            'password_hash': generate_password_hash(password)
-        }
+        try:
+            # Try to get max numeric ID for compatibility
+            max_id = max([int(u['id']) for u in data.get('users', []) if str(u['id']).isdigit()], default=0)
+            new_user = {
+                'id': max_id + 1,
+                'username': username,
+                'password_hash': generate_password_hash(password)
+            }
+        except:
+            # Fallback for Firebase string IDs
+            new_user = {
+                'id': len(data.get('users', [])) + 1,
+                'username': username,
+                'password_hash': generate_password_hash(password)
+            }
         
         if 'users' not in data:
             data['users'] = []

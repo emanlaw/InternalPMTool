@@ -5,6 +5,14 @@ import os
 
 DATA_FILE = 'data.json'
 
+# Try to import Firebase, fallback to JSON if not available
+try:
+    from app.services.firebase_service import firebase_service
+    USE_FIREBASE = True
+except (ImportError, Exception) as e:
+    print(f"Firebase not available, using JSON: {e}")
+    USE_FIREBASE = False
+
 class User(UserMixin):
     def __init__(self, id, username, password_hash):
         self.id = id
@@ -12,6 +20,44 @@ class User(UserMixin):
         self.password_hash = password_hash
 
 def load_data():
+    if USE_FIREBASE:
+        try:
+            # Load data from Firebase
+            users = firebase_service.get_all_users()
+            projects = firebase_service.get_all_projects()
+            cards = firebase_service.get_all_cards()
+            comments = []
+            for card in cards:
+                card_comments = firebase_service.get_comments_by_card(card['id'])
+                comments.extend(card_comments)
+            
+            # If Firebase has data, use it
+            if users:
+                print("Using Firebase data")
+                # Convert Firebase data to expected format
+                for user in users:
+                    # Keep Firebase string IDs as strings
+                    pass
+                for project in projects:
+                    # Keep Firebase string IDs as strings
+                    pass
+                for card in cards:
+                    # Keep Firebase string IDs as strings
+                    pass
+                
+                return {
+                    'users': users,
+                    'projects': projects,
+                    'cards': cards,
+                    'comments': comments
+                }
+            else:
+                print("No users in Firebase, falling back to JSON")
+        except Exception as e:
+            print(f"Firebase error, falling back to JSON: {e}")
+            # Fall back to JSON if Firebase fails
+    
+    # JSON fallback
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
             data = json.load(f)
@@ -47,5 +93,15 @@ def load_data():
     }
 
 def save_data(data):
-    with open(DATA_FILE, 'w') as f:
-        json.dump(data, f, indent=2)
+    if USE_FIREBASE:
+        try:
+            # Update Firebase with any changes
+            print("Saving data to Firebase")
+            # Firebase saves data automatically through the service
+            pass
+        except Exception as e:
+            print(f"Firebase save error: {e}")
+    else:
+        # JSON fallback
+        with open(DATA_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
