@@ -203,20 +203,20 @@
     <div class="header">
         <h1>🔧 PM Tool</h1>
         <nav>
-            <a href="/">Home</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="/issues">Issues</a>
+            <a href="{{ url_for('main.home') }}">Home</a>
+            <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('main.issues_list') }}">Issues</a>
             <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
                 {% if current_user.is_authenticated %}
                     <button onclick="toggleDarkMode()" class="dark-mode-toggle" title="Toggle Dark Mode">
                         <span id="darkModeIcon">🌙</span>
                     </button>
-                    <a href="{{ url_for('profile') }}">Profile</a>
+                    <a href="{{ url_for('auth.profile') }}">Profile</a>
                     <span style="color: rgba(255,255,255,0.8);">{{ current_user.username }}</span>
-                    <a href="{{ url_for('logout') }}">Logout</a>
+                    <a href="{{ url_for('auth.logout') }}">Logout</a>
                 {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('register') }}">Register</a>
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a href="{{ url_for('auth.register') }}">Register</a>
                 {% endif %}
             </div>
         </nav>
