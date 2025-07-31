@@ -22,7 +22,17 @@ def migrate_to_firebase():
 def firebase_status():
     """Check Firebase connection status"""
     try:
-        # Test Firebase connection by getting users count
+        from config.firebase_config import firebase_config
+        
+        # Check if Firebase is configured
+        if firebase_config.db is None:
+            return jsonify({
+                'success': False,
+                'status': 'Firebase not configured',
+                'error': 'Firebase credentials not set up. Please run setup_firebase_credentials.py'
+            }), 500
+        
+        # Test Firebase connection by getting data counts
         users = firebase_service.get_all_users()
         projects = firebase_service.get_all_projects()
         cards = firebase_service.get_all_cards()

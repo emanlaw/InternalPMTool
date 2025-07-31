@@ -23,6 +23,9 @@ class FirebaseService:
     
     def get_all_users(self):
         """Get all users"""
+        if self.db is None:
+            raise Exception("Firebase not configured")
+        
         users = []
         users_ref = self.db.collection('users')
         for doc in users_ref.stream():
@@ -47,6 +50,9 @@ class FirebaseService:
     
     def get_all_projects(self):
         """Get all projects"""
+        if self.db is None:
+            raise Exception("Firebase not configured")
+        
         projects = []
         projects_ref = self.db.collection('projects')
         for doc in projects_ref.stream():
@@ -78,6 +84,9 @@ class FirebaseService:
     
     def get_all_cards(self):
         """Get all cards"""
+        if self.db is None:
+            raise Exception("Firebase not configured")
+        
         cards = []
         cards_ref = self.db.collection('cards')
         for doc in cards_ref.stream():

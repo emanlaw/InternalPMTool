@@ -8,4 +8,4 @@ if __name__ == '__main__':
         from app.services.notification_service import schedule_daily_notifications
         schedule_daily_notifications()
     
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5002)

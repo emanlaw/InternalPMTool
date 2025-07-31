@@ -427,8 +427,8 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             const newCard = await response.json();
             console.log('Card created:', newCard);
             hideAddCardModal();
-            // Force a complete page refresh to show Firebase data
-            window.location.href = window.location.href;
+            // Refresh the page to show the new issue
+            window.location.reload();
         } else {
             alert('Error creating card');
             submitBtn.textContent = originalText;

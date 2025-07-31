@@ -7,6 +7,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 import io
 from app.models.user import load_data, save_data
 from app.utils.date_helpers import get_comment_count
+from app.services.analytics_service import AnalyticsService
 
 api_bp = Blueprint('api', __name__)
 
@@ -54,62 +55,50 @@ def move_card():
 
 @api_bp.route('/add_card', methods=['POST'])
 def add_card():
-    # Try Firebase first
     try:
         from app.services.firebase_service import firebase_service
-        new_card = {
-            'project_id': str(request.json['project_id']),
-            'title': request.json['title'],
-            'description': request.json.get('description', ''),
-            'status': 'todo',
-            'assignee': request.json.get('assignee', ''),
-            'priority': request.json.get('priority', 'Medium'),
-            'due_date': request.json.get('due_date', '')
-        }
-        created_card = firebase_service.create_card(new_card)
-        return jsonify(created_card)
+        from config.firebase_config import firebase_config
+        
+        if firebase_config.db is not None:
+            # Use Firebase
+            new_card = {
+                'project_id': str(request.json['project_id']),
+                'title': request.json['title'],
+                'description': request.json.get('description', ''),
+                'status': 'todo',
+                'assignee': request.json.get('assignee', ''),
+                'priority': request.json.get('priority', 'Medium'),
+                'due_date': request.json.get('due_date', '')
+            }
+            created_card = firebase_service.create_card(new_card)
+            return jsonify(created_card)
+        else:
+            return jsonify({'error': 'Firebase not configured. Please set up Firebase credentials.'}), 500
+            
     except Exception as e:
-        print(f"Firebase error, using JSON: {e}")
-        # Fallback to JSON
-        data = load_data()
-        new_card = {
-            'id': max([c['id'] for c in data['cards']], default=0) + 1,
-            'project_id': request.json['project_id'],
-            'title': request.json['title'],
-            'description': request.json.get('description', ''),
-            'status': 'todo',
-            'assignee': request.json.get('assignee', ''),
-            'priority': request.json.get('priority', 'Medium'),
-            'created_at': datetime.now().strftime('%Y-%m-%d'),
-            'due_date': request.json.get('due_date', '')
-        }
-        data['cards'].append(new_card)
-        save_data(data)
-        return jsonify(new_card)
+        print(f"Firebase error: {e}")
+        return jsonify({'error': f'Failed to create card: {str(e)}'}), 500
 
 @api_bp.route('/add_project', methods=['POST'])
 def add_project():
-    # Try Firebase first
     try:
         from app.services.firebase_service import firebase_service
-        new_project = {
-            'name': request.json['name'],
-            'description': request.json.get('description', '')
-        }
-        created_project = firebase_service.create_project(new_project)
-        return jsonify(created_project)
+        from config.firebase_config import firebase_config
+        
+        if firebase_config.db is not None:
+            # Use Firebase
+            new_project = {
+                'name': request.json['name'],
+                'description': request.json.get('description', '')
+            }
+            created_project = firebase_service.create_project(new_project)
+            return jsonify(created_project)
+        else:
+            return jsonify({'error': 'Firebase not configured. Please set up Firebase credentials.'}), 500
+            
     except Exception as e:
-        print(f"Firebase error, using JSON: {e}")
-        # Fallback to JSON
-        data = load_data()
-        new_project = {
-            'id': max([p['id'] for p in data['projects']], default=0) + 1,
-            'name': request.json['name'],
-            'description': request.json.get('description', '')
-        }
-        data['projects'].append(new_project)
-        save_data(data)
-        return jsonify(new_project)
+        print(f"Firebase error: {e}")
+        return jsonify({'error': f'Failed to create project: {str(e)}'}), 500
 
 @api_bp.route('/update_card_status', methods=['POST'])
 def update_card_status():
@@ -135,33 +124,25 @@ def get_comments(card_id):
 @api_bp.route('/card/<int:card_id>/comments', methods=['POST'])
 @login_required
 def add_comment(card_id):
-    # Try Firebase first
     try:
         from app.services.firebase_service import firebase_service
-        new_comment = {
-            'card_id': str(card_id),
-            'author': current_user.username,
-            'content': request.json['content']
-        }
-        created_comment = firebase_service.create_comment(new_comment)
-        return jsonify(created_comment)
-    except Exception as e:
-        print(f"Firebase error, using JSON: {e}")
-        # Fallback to JSON
-        data = load_data()
-        new_comment = {
-            'id': max([c['id'] for c in data.get('comments', [])], default=0) + 1,
-            'card_id': card_id,
-            'author': current_user.username,
-            'content': request.json['content'],
-            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
+        from config.firebase_config import firebase_config
         
-        if 'comments' not in data:
-            data['comments'] = []
-        data['comments'].append(new_comment)
-        save_data(data)
-        return jsonify(new_comment)
+        if firebase_config.db is not None:
+            # Use Firebase
+            new_comment = {
+                'card_id': str(card_id),
+                'author': current_user.username,
+                'content': request.json['content']
+            }
+            created_comment = firebase_service.create_comment(new_comment)
+            return jsonify(created_comment)
+        else:
+            return jsonify({'error': 'Firebase not configured. Please set up Firebase credentials.'}), 500
+            
+    except Exception as e:
+        print(f"Firebase error: {e}")
+        return jsonify({'error': f'Failed to create comment: {str(e)}'}), 500
 
 @api_bp.route('/card/<int:card_id>')
 @login_required
@@ -311,3 +292,36 @@ def export_excel():
         download_name=filename,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+# Analytics endpoints
+@api_bp.route('/analytics/data')
+@login_required
+def get_analytics_data():
+    """Get analytics data for dashboard"""
+    analytics = AnalyticsService()
+    
+    return jsonify({
+        'projects': analytics.get_project_health_data(),
+        'resources': analytics.get_resource_utilization_data(),
+        'performance': analytics.get_performance_metrics(),
+        'predictive': analytics.get_predictive_analytics()
+    })
+
+@api_bp.route('/analytics/report/<report_type>')
+@login_required
+def generate_analytics_report(report_type):
+    """Generate specific analytics report"""
+    analytics = AnalyticsService()
+    
+    if report_type == 'project-health':
+        report = analytics.generate_project_health_report()
+    elif report_type == 'resource-utilization':
+        report = analytics.generate_resource_utilization_report()
+    elif report_type == 'performance-metrics':
+        report = analytics.generate_performance_metrics_report()
+    elif report_type == 'risk-assessment':
+        report = analytics.generate_risk_assessment_report()
+    else:
+        return jsonify({'error': 'Invalid report type'}), 400
+    
+    return jsonify(report)
