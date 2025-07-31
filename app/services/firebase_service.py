@@ -77,10 +77,22 @@ class FirebaseService:
     
     def update_card(self, card_id, updates):
         """Update a card"""
-        card_ref = self.db.collection('cards').document(card_id)
-        updates['updated_at'] = datetime.now()
-        card_ref.update(updates)
-        return True
+        if self.db is None:
+            raise Exception("Firebase not configured")
+        
+        try:
+            card_ref = self.db.collection('cards').document(card_id)
+            
+            # Check if document exists
+            if not card_ref.get().exists:
+                return False
+            
+            updates['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            card_ref.update(updates)
+            return True
+        except Exception as e:
+            print(f"Error updating card {card_id}: {e}")
+            return False
     
     def get_all_cards(self):
         """Get all cards"""
@@ -183,6 +195,24 @@ class FirebaseService:
             return True
         except Exception as e:
             print(f"Migration error: {e}")
+            return False
+
+    def delete_card(self, card_id):
+        """Delete a card"""
+        if self.db is None:
+            raise Exception("Firebase not configured")
+        
+        try:
+            card_ref = self.db.collection('cards').document(card_id)
+            
+            # Check if document exists
+            if not card_ref.get().exists:
+                return False
+            
+            card_ref.delete()
+            return True
+        except Exception as e:
+            print(f"Error deleting card {card_id}: {e}")
             return False
 
 # Global Firebase service instance

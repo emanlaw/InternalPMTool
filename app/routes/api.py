@@ -102,17 +102,50 @@ def add_project():
 
 @api_bp.route('/update_card_status', methods=['POST'])
 def update_card_status():
-    data = load_data()
-    card_id = request.json['card_id']
-    new_status = request.json['status']
-    
-    for card in data['cards']:
-        if card['id'] == card_id:
-            card['status'] = new_status
-            break
-    
-    save_data(data)
-    return jsonify({'success': True})
+    try:
+        from app.services.firebase_service import firebase_service
+        from config.firebase_config import firebase_config
+        
+        card_id = request.json['card_id']
+        new_status = request.json['status']
+        
+        if firebase_config.db is not None:
+            # Get all cards to find the correct Firebase ID
+            all_cards = firebase_service.get_all_cards()
+            
+            # Find the card by matching the ID (handle both integer and string formats)
+            target_card = None
+            for card in all_cards:
+                # Check if card ID matches directly (for integer IDs)
+                if card['id'] == card_id or str(card['id']) == str(card_id):
+                    target_card = card
+                    break
+                # Also check CARD-XXX format
+                elif isinstance(card['id'], str) and card['id'].startswith('CARD-'):
+                    try:
+                        card_number = int(card['id'].split('-')[1])
+                        if card_number == card_id:
+                            target_card = card
+                            break
+                    except (ValueError, IndexError):
+                        continue
+            
+            if target_card:
+                # Update the card status in Firebase
+                success = firebase_service.update_card(str(target_card['id']), {'status': new_status})
+                
+                if success:
+                    return jsonify({'success': True})
+                else:
+                    return jsonify({'error': 'Failed to update card status'}), 500
+            else:
+                return jsonify({'error': f'Card with ID {card_id} not found'}), 404
+        else:
+            return jsonify({'error': 'Firebase not configured'}), 500
+            
+    except Exception as e:
+        print(f"Error updating card status: {e}")
+        return jsonify({'error': f'Failed to update status: {str(e)}'}), 500
 
 @api_bp.route('/card/<int:card_id>/comments')
 @login_required
@@ -325,3 +358,193 @@ def generate_analytics_report(report_type):
         return jsonify({'error': 'Invalid report type'}), 400
     
     return jsonify(report)
+
+@api_bp.route('/debug/cards')
+@login_required
+def debug_cards():
+    """Debug endpoint to check card ID mapping"""
+    try:
+        from app.services.firebase_service import firebase_service
+        from config.firebase_config import firebase_config
+        
+        if firebase_config.db is not None:
+            cards = firebase_service.get_all_cards()
+            
+            debug_info = []
+            for card in cards:
+                # Extract number from Firebase ID
+                card_number = None
+                if card['id'].startswith('CARD-'):
+                    card_number = int(card['id'].split('-')[1])
+                
+                debug_info.append({
+                    'firebase_id': card['id'],
+                    'display_id': card_number,
+                    'title': card['title'],
+                    'status': card['status']
+                })
+            
+            return jsonify({
+                'success': True,
+                'cards': debug_info
+            })
+        else:
+            return jsonify({'error': 'Firebase not configured'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api_bp.route('/move_to_backlog', methods=['POST'])
+@login_required
+def move_to_backlog():
+    """Move issue to backlog (todo status)"""
+    try:
+        from app.services.firebase_service import firebase_service
+        from config.firebase_config import firebase_config
+        
+        card_id = request.json['card_id']
+        
+        if firebase_config.db is not None:
+            # Get all cards to find the correct Firebase ID
+            all_cards = firebase_service.get_all_cards()
+            
+            # Find the card by matching the ID
+            target_card = None
+            for card in all_cards:
+                if card['id'] == card_id or str(card['id']) == str(card_id):
+                    target_card = card
+                    break
+                elif isinstance(card['id'], str) and card['id'].startswith('CARD-'):
+                    try:
+                        card_number = int(card['id'].split('-')[1])
+                        if card_number == card_id:
+                            target_card = card
+                            break
+                    except (ValueError, IndexError):
+                        continue
+            
+            if target_card:
+                success = firebase_service.update_card(str(target_card['id']), {'status': 'todo'})
+                
+                if success:
+                    return jsonify({'success': True})
+                else:
+                    return jsonify({'error': 'Failed to update card status'}), 500
+            else:
+                return jsonify({'error': f'Card with ID {card_id} not found'}), 404
+        else:
+            return jsonify({'error': 'Firebase not configured'}), 500
+            
+    except Exception as e:
+        print(f"Error moving to backlog: {e}")
+        return jsonify({'error': f'Failed to move to backlog: {str(e)}'}), 500
+
+@api_bp.route('/send_to_assignee', methods=['POST'])
+@login_required
+def send_to_assignee():
+    """Send email notification to assignee"""
+    try:
+        from app.services.firebase_service import firebase_service
+        from config.firebase_config import firebase_config
+        
+        card_id = request.json['card_id']
+        assignee = request.json['assignee']
+        
+        if not assignee or assignee == 'Unassigned':
+            return jsonify({'error': 'No assignee specified'}), 400
+        
+        # Get card details
+        if firebase_config.db is not None:
+            all_cards = firebase_service.get_all_cards()
+            target_card = None
+            
+            for card in all_cards:
+                if card['id'] == card_id or str(card['id']) == str(card_id):
+                    target_card = card
+                    break
+                elif isinstance(card['id'], str) and card['id'].startswith('CARD-'):
+                    try:
+                        card_number = int(card['id'].split('-')[1])
+                        if card_number == card_id:
+                            target_card = card
+                            break
+                    except (ValueError, IndexError):
+                        continue
+            
+            if not target_card:
+                return jsonify({'error': 'Card not found'}), 404
+            
+            # Send email notification
+            try:
+                msg = Message(
+                    subject=f"PM Tool - Issue Assigned: {target_card['title']}",
+                    recipients=[f"{assignee}@company.com"],  # Assuming email format
+                    html=f"""
+                    <h2>Issue Assigned to You</h2>
+                    <p><strong>Title:</strong> {target_card['title']}</p>
+                    <p><strong>Description:</strong> {target_card.get('description', 'No description')}</p>
+                    <p><strong>Priority:</strong> {target_card['priority']}</p>
+                    <p><strong>Status:</strong> {target_card['status'].replace('_', ' ').title()}</p>
+                    <p><strong>Due Date:</strong> {target_card.get('due_date', 'Not set')}</p>
+                    <br>
+                    <p>Please check the PM Tool for more details.</p>
+                    """
+                )
+                
+                current_app.extensions['mail'].send(msg)
+                return jsonify({'success': True, 'message': f'Email sent to {assignee}'})
+                
+            except Exception as e:
+                print(f"Email error: {e}")
+                return jsonify({'error': f'Failed to send email: {str(e)}'}), 500
+        else:
+            return jsonify({'error': 'Firebase not configured'}), 500
+            
+    except Exception as e:
+        print(f"Error sending to assignee: {e}")
+        return jsonify({'error': f'Failed to send to assignee: {str(e)}'}), 500
+
+@api_bp.route('/delete_card', methods=['POST'])
+@login_required
+def delete_card():
+    """Delete a card permanently"""
+    try:
+        from app.services.firebase_service import firebase_service
+        from config.firebase_config import firebase_config
+        
+        card_id = request.json['card_id']
+        
+        if firebase_config.db is not None:
+            # Get all cards to find the correct Firebase ID
+            all_cards = firebase_service.get_all_cards()
+            
+            target_card = None
+            for card in all_cards:
+                if card['id'] == card_id or str(card['id']) == str(card_id):
+                    target_card = card
+                    break
+                elif isinstance(card['id'], str) and card['id'].startswith('CARD-'):
+                    try:
+                        card_number = int(card['id'].split('-')[1])
+                        if card_number == card_id:
+                            target_card = card
+                            break
+                    except (ValueError, IndexError):
+                        continue
+            
+            if target_card:
+                # Delete the card from Firebase
+                success = firebase_service.delete_card(str(target_card['id']))
+                
+                if success:
+                    return jsonify({'success': True})
+                else:
+                    return jsonify({'error': 'Failed to delete card from database'}), 500
+            else:
+                return jsonify({'error': f'Card with ID {card_id} not found'}), 404
+        else:
+            return jsonify({'error': 'Firebase not configured'}), 500
+            
+    except Exception as e:
+        print(f"Error deleting card: {e}")
+        return jsonify({'error': f'Failed to delete card: {str(e)}'}), 500
