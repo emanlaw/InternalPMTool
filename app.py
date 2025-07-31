@@ -101,6 +101,29 @@ def get_comment_count(card_id):
     data = load_data()
     return len([c for c in data.get('comments', []) if c['card_id'] == card_id])
 
+def format_timestamp(timestamp):
+    """Format timestamp to YYYY-MM-DD HH:MM:SS (remove milliseconds)"""
+    if not timestamp:
+        return '-'
+    
+    # If it's already in the desired format, return as is
+    if isinstance(timestamp, str) and len(timestamp) == 10:  # YYYY-MM-DD format
+        return timestamp
+    
+    # Try to parse and format
+    try:
+        if isinstance(timestamp, str):
+            # Try parsing different formats
+            for fmt in ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
+                try:
+                    dt = datetime.strptime(timestamp, fmt)
+                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    continue
+        return timestamp  # Return original if parsing fails
+    except:
+        return timestamp  # Return original if any error occurs
+
 def send_overdue_notifications():
     """Send email notifications for overdue cards"""
     try:
@@ -220,7 +243,8 @@ app.jinja_env.globals.update(
     get_due_date_class=get_due_date_class,
     get_due_date_text_class=get_due_date_text_class,
     get_due_date_status=get_due_date_status,
-    get_comment_count=get_comment_count
+    get_comment_count=get_comment_count,
+    format_timestamp=format_timestamp
 )
 
 DATA_FILE = 'data.json'
@@ -557,6 +581,95 @@ def search_cards():
         'cards': filtered_cards,
         'total': len(filtered_cards)
     })
+
+@app.route('/api/move_to_backlog', methods=['POST'])
+@login_required
+def move_to_backlog():
+    try:
+        data = load_data()
+        card_id = request.json['card_id']
+        
+        # Find and update the card status to 'todo' (backlog)
+        for card in data['cards']:
+            if card['id'] == card_id:
+                card['status'] = 'todo'
+                break
+        else:
+            return jsonify({'success': False, 'error': 'Card not found'}), 404
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/send_to_assignee', methods=['POST'])
+@login_required
+def send_to_assignee():
+    try:
+        data = load_data()
+        card_id = request.json['card_id']
+        assignee = request.json['assignee']
+        
+        # Find the card
+        card = next((c for c in data['cards'] if c['id'] == card_id), None)
+        if not card:
+            return jsonify({'success': False, 'error': 'Card not found'}), 404
+        
+        # Find project name
+        project = next((p for p in data['projects'] if p['id'] == card['project_id']), None)
+        project_name = project['name'] if project else 'Unknown Project'
+        
+        # Send email notification (simplified version)
+        try:
+            msg = Message(
+                subject=f"PM Tool: Issue #{card['id']} - {card['title']}",
+                recipients=[f"{assignee}@company.com"],  # You may want to store actual emails
+                html=f"""
+                <h2>Issue Assignment Notification</h2>
+                <p>You have been assigned to work on the following issue:</p>
+                <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0;">
+                    <h3>#{card['id']} - {card['title']}</h3>
+                    <p><strong>Project:</strong> {project_name}</p>
+                    <p><strong>Priority:</strong> {card['priority']}</p>
+                    <p><strong>Status:</strong> {card['status'].replace('_', ' ').title()}</p>
+                    <p><strong>Description:</strong> {card.get('description', 'No description')}</p>
+                    {f"<p><strong>Due Date:</strong> {card['due_date']}</p>" if card.get('due_date') else ""}
+                </div>
+                <p>Please review and update the issue status as needed.</p>
+                <a href="http://localhost:5000/issues" style="background: #0079bf; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">View Issues</a>
+                """
+            )
+            mail.send(msg)
+            return jsonify({'success': True})
+        except Exception as email_error:
+            return jsonify({'success': False, 'error': f'Failed to send email: {str(email_error)}'}), 500
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/delete_card', methods=['POST'])
+@login_required
+def delete_card():
+    try:
+        data = load_data()
+        card_id = request.json['card_id']
+        
+        # Find and remove the card
+        original_count = len(data['cards'])
+        data['cards'] = [c for c in data['cards'] if c['id'] != card_id]
+        
+        if len(data['cards']) == original_count:
+            return jsonify({'success': False, 'error': 'Card not found'}), 404
+        
+        # Also remove associated comments
+        data['comments'] = [c for c in data.get('comments', []) if c['card_id'] != card_id]
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/export-excel')
 @login_required

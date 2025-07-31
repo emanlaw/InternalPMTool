@@ -599,7 +599,15 @@ function hideCardDetailsModal() {
 
 // Actions dropdown functions
 function toggleDropdown(cardId) {
-    const dropdown = document.getElementById(`dropdown-${cardId}`);
+    // Ensure cardId is properly escaped for CSS selector
+    const escapedCardId = CSS.escape(String(cardId));
+    const dropdown = document.getElementById(`dropdown-${escapedCardId}`);
+    
+    if (!dropdown) {
+        console.error(`Dropdown not found for card ID: ${cardId}`);
+        return;
+    }
+    
     const isVisible = dropdown.style.display === 'block';
     
     // Close all other dropdowns
@@ -623,7 +631,7 @@ async function moveToBacklog(cardId) {
         
         if (response.ok && result.success) {
             // Update the status visually
-            const statusSelect = document.querySelector(`select[onchange*="${cardId}"]`);
+            const statusSelect = document.querySelector(`select[onchange*="${CSS.escape(String(cardId))}"]`);
             if (statusSelect) {
                 statusSelect.value = 'todo';
                 statusSelect.className = 'status-badge status-todo';
@@ -639,13 +647,15 @@ async function moveToBacklog(cardId) {
     }
     
     // Close dropdown
-    document.getElementById(`dropdown-${cardId}`).style.display = 'none';
+    const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+    if (dropdown) dropdown.style.display = 'none';
 }
 
 async function sendToAssignee(cardId, assignee) {
     if (!assignee || assignee === 'Unassigned') {
         showNotification('No assignee set for this issue', 'error');
-        document.getElementById(`dropdown-${cardId}`).style.display = 'none';
+        const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+        if (dropdown) dropdown.style.display = 'none';
         return;
     }
     
@@ -669,7 +679,8 @@ async function sendToAssignee(cardId, assignee) {
     }
     
     // Close dropdown
-    document.getElementById(`dropdown-${cardId}`).style.display = 'none';
+    const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+    if (dropdown) dropdown.style.display = 'none';
 }
 
 function deleteIssue(cardId) {
@@ -678,7 +689,8 @@ function deleteIssue(cardId) {
     }
     
     // Close dropdown
-    document.getElementById(`dropdown-${cardId}`).style.display = 'none';
+    const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+    if (dropdown) dropdown.style.display = 'none';
 }
 
 async function performDelete(cardId) {
