@@ -216,6 +216,33 @@ Acceptance Criteria:
 
 ---
 
+## Issue #23: [FEATURE] Add Actions Dropdown for Issue Management ✅ COMPLETED
+**Implementation Date:** 2025-07-31
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/23
+
+**Description:**
+Title: [FEATURE] Add Actions Dropdown for Issue Management
+
+Description:
+Add an Actions dropdown menu to each issue card for better management capabilities.
+
+Requirements:
+- [x] Actions dropdown button on each issue card
+- [x] Move to Backlog action
+- [x] Delete Issue action
+- [x] Send to Assignee action
+- [x] Proper confirmation dialogs
+- [x] CSS.escape polyfill for browser compatibility
+
+Acceptance Criteria:
+- [x] Dropdown appears when clicking Actions button
+- [x] All actions work correctly with proper error handling
+- [x] Confirmation dialogs prevent accidental deletions
+- [x] Works across all browsers including older ones
+
+---
+
 ## Issue #1: [FEATURE] Issue #1 Add User Authentication ✅ COMPLETED
 **Implementation Date:** 2025-07-28
 **Status:** ✅ COMPLETED
