@@ -426,22 +426,6 @@ def issues_list():
     
     return render_template('issues.html', cards=cards, projects=data['projects'], current_project=project)
 
-@app.route('/backlog')
-@login_required
-def backlog():
-    data = load_data()
-    project_id = request.args.get('project_id', type=int)
-    
-    # Filter for backlog items (todo status)
-    if project_id:
-        cards = [c for c in data['cards'] if c['project_id'] == project_id and c['status'] == 'todo']
-        project = next((p for p in data['projects'] if p['id'] == project_id), None)
-    else:
-        cards = [c for c in data['cards'] if c['status'] == 'todo']
-        project = None
-    
-    return render_template('backlog.html', cards=cards, projects=data['projects'], current_project=project)
-
 @app.route('/board/<int:project_id>')
 @login_required
 def kanban_board(project_id):

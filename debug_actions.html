@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Actions Dropdown</title>
+    <style>
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-menu { 
+            display: none; 
+            position: absolute; 
+            right: 0; 
+            top: 100%; 
+            background: white; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            z-index: 1000; 
+            min-width: 150px;
+        }
+        .dropdown-menu a {
+            display: block; 
+            padding: 8px 12px; 
+            text-decoration: none; 
+            color: #333; 
+            border-bottom: 1px solid #eee;
+        }
+        .btn { padding: 8px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Debug Actions Dropdown</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>Test Issue 1</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn" onclick="toggleDropdown(1)">⋮ Actions</button>
+                        <div id="dropdown-1" class="dropdown-menu">
+                            <a href="javascript:void(0)" onclick="testAction('moveToBacklog', 1)">📋 Move to Backlog</a>
+                            <a href="javascript:void(0)" onclick="testAction('sendToAssignee', 1)">📧 Send to Assignee</a>
+                            <a href="javascript:void(0)" onclick="testAction('delete', 1)">🗑️ Delete</a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Test Issue 2</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn" onclick="toggleDropdown(2)">⋮ Actions</button>
+                        <div id="dropdown-2" class="dropdown-menu">
+                            <a href="javascript:void(0)" onclick="testAction('moveToBacklog', 2)">📋 Move to Backlog</a>
+                            <a href="javascript:void(0)" onclick="testAction('sendToAssignee', 2)">📧 Send to Assignee</a>
+                            <a href="javascript:void(0)" onclick="testAction('delete', 2)">🗑️ Delete</a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div id="log" style="margin-top: 20px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+        <h3>Debug Log:</h3>
+        <div id="logContent"></div>
+    </div>
+
+    <script>
+        function toggleDropdown(cardId) {
+            console.log('toggleDropdown called with cardId:', cardId);
+            logAction(`toggleDropdown called with cardId: ${cardId}`);
+            
+            try {
+                const escapedCardId = CSS.escape(String(cardId));
+                const dropdown = document.getElementById(`dropdown-${escapedCardId}`);
+                
+                if (!dropdown) {
+                    console.error(`Dropdown not found for card ID: ${cardId}`);
+                    logAction(`ERROR: Dropdown not found for card ID: ${cardId}`);
+                    return;
+                }
+                
+                const isVisible = dropdown.style.display === 'block';
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+                
+                // Toggle current dropdown
+                dropdown.style.display = isVisible ? 'none' : 'block';
+                
+                logAction(`Dropdown ${isVisible ? 'closed' : 'opened'} for card ID: ${cardId}`);
+            } catch (error) {
+                console.error('Error in toggleDropdown:', error);
+                logAction(`ERROR in toggleDropdown: ${error.message}`);
+            }
+        }
+        
+        function testAction(action, cardId) {
+            logAction(`Action "${action}" triggered for card ID: ${cardId}`);
+            
+            // Close dropdown
+            try {
+                const escapedCardId = CSS.escape(String(cardId));
+                const dropdown = document.getElementById(`dropdown-${escapedCardId}`);
+                if (dropdown) dropdown.style.display = 'none';
+            } catch (error) {
+                logAction(`ERROR closing dropdown: ${error.message}`);
+            }
+        }
+        
+        function logAction(message) {
+            const logContent = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+        
+        // Test CSS.escape availability
+        if (typeof CSS === 'undefined' || typeof CSS.escape === 'undefined') {
+            logAction('ERROR: CSS.escape is not available in this browser');
+            
+            // Polyfill for CSS.escape
+            if (!window.CSS) {
+                window.CSS = {};
+            }
+            if (!CSS.escape) {
+                CSS.escape = function(value) {
+                    return value.replace(/[^\\w-]/g, function(match) {
+                        return '\\\\' + match;
+                    });
+                };
+            }
+            logAction('CSS.escape polyfill added');
+        } else {
+            logAction('CSS.escape is available');
+        }
+        
+        // Close dropdowns when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+                logAction('Closed all dropdowns (clicked outside)');
+            }
+        }
+        
+        logAction('Debug page loaded successfully');
+    </script>
+</body>
+</html>

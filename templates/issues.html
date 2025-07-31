@@ -210,8 +210,23 @@
 </div>
 
 <script>
+// CSS.escape polyfill for older browsers
+if (!window.CSS) {
+    window.CSS = {};
+}
+if (!CSS.escape) {
+    CSS.escape = function(value) {
+        return value.replace(/[^\w-]/g, function(match) {
+            return '\\' + match;
+        });
+    };
+}
+
 let searchTimeout;
 let projects = {{ projects | tojson }};
+
+console.log('Issues page JavaScript loaded');
+console.log('Projects:', projects);
 
 function performSearch() {
     // Clear previous timeout
@@ -599,24 +614,43 @@ function hideCardDetailsModal() {
 
 // Actions dropdown functions
 function toggleDropdown(cardId) {
-    // Ensure cardId is properly escaped for CSS selector
-    const escapedCardId = CSS.escape(String(cardId));
-    const dropdown = document.getElementById(`dropdown-${escapedCardId}`);
+    console.log('toggleDropdown called with cardId:', cardId, typeof cardId);
     
-    if (!dropdown) {
-        console.error(`Dropdown not found for card ID: ${cardId}`);
-        return;
+    try {
+        // Ensure cardId is properly escaped for CSS selector
+        const escapedCardId = CSS.escape(String(cardId));
+        console.log('Escaped cardId:', escapedCardId);
+        
+        const dropdown = document.getElementById(`dropdown-${escapedCardId}`);
+        console.log('Dropdown element:', dropdown);
+        
+        if (!dropdown) {
+            console.error(`Dropdown not found for card ID: ${cardId}`);
+            // Try without escaping as fallback
+            const fallbackDropdown = document.getElementById(`dropdown-${cardId}`);
+            console.log('Fallback dropdown:', fallbackDropdown);
+            if (fallbackDropdown) {
+                dropdown = fallbackDropdown;
+            } else {
+                return;
+            }
+        }
+        
+        const isVisible = dropdown.style.display === 'block';
+        console.log('Dropdown is visible:', isVisible);
+        
+        // Close all other dropdowns
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.style.display = 'none';
+        });
+        
+        // Toggle current dropdown
+        dropdown.style.display = isVisible ? 'none' : 'block';
+        console.log('Dropdown toggled to:', dropdown.style.display);
+        
+    } catch (error) {
+        console.error('Error in toggleDropdown:', error);
     }
-    
-    const isVisible = dropdown.style.display === 'block';
-    
-    // Close all other dropdowns
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.style.display = 'none';
-    });
-    
-    // Toggle current dropdown
-    dropdown.style.display = isVisible ? 'none' : 'block';
 }
 
 async function moveToBacklog(cardId) {

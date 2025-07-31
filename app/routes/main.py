@@ -96,6 +96,22 @@ def kanban_board(project_id):
                          in_progress_cards=in_progress_cards,
                          done_cards=done_cards)
 
+@main_bp.route('/backlog')
+@login_required
+def backlog():
+    data = load_firebase_data()
+    project_id = request.args.get('project_id', type=int)
+    
+    # Filter for backlog items (todo status)
+    if project_id:
+        cards = [c for c in data['cards'] if c['project_id'] == project_id and c['status'] == 'todo']
+        project = next((p for p in data['projects'] if p['id'] == project_id), None)
+    else:
+        cards = [c for c in data['cards'] if c['status'] == 'todo']
+        project = None
+    
+    return render_template('backlog.html', cards=cards, projects=data['projects'], current_project=project)
+
 @main_bp.route('/analytics')
 @login_required
 def gantt_analytics():
