@@ -122,7 +122,7 @@
                         <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">
                             ⋮ Actions
                         </button>
-                        <div id="dropdown-{{ card.id }}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px;">
+                        <div id="dropdown-{{ card.id }}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 9999; min-width: 150px;">
                             <a href="javascript:void(0)" onclick="moveToBacklog({{ card.id }})" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📋 Move to Backlog</a>
                             <a href="javascript:void(0)" onclick="sendToAssignee({{ card.id }}, '{{ card.assignee }}')" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📧 Send to Assignee</a>
                             <a href="javascript:void(0)" onclick="deleteIssue({{ card.id }})" style="display: block; padding: 8px 12px; text-decoration: none; color: #dc3545;">🗑️ Delete</a>
@@ -310,7 +310,7 @@ function updateTable(cards) {
                         <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">
                             ⋮ Actions
                         </button>
-                        <div id="dropdown-${card.id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px;">
+                        <div id="dropdown-${card.id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 9999; min-width: 150px;">
                             <a href="javascript:void(0)" onclick="moveToBacklog(${card.id})" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📋 Move to Backlog</a>
                             <a href="javascript:void(0)" onclick="sendToAssignee(${card.id}, '${card.assignee || ''}')" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📧 Send to Assignee</a>
                             <a href="javascript:void(0)" onclick="deleteIssue(${card.id})" style="display: block; padding: 8px 12px; text-decoration: none; color: #dc3545;">🗑️ Delete</a>
