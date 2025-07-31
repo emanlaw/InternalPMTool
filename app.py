@@ -426,6 +426,22 @@ def issues_list():
     
     return render_template('issues.html', cards=cards, projects=data['projects'], current_project=project)
 
+@app.route('/backlog')
+@login_required
+def backlog():
+    data = load_data()
+    project_id = request.args.get('project_id', type=int)
+    
+    # Filter for backlog items (todo status)
+    if project_id:
+        cards = [c for c in data['cards'] if c['project_id'] == project_id and c['status'] == 'todo']
+        project = next((p for p in data['projects'] if p['id'] == project_id), None)
+    else:
+        cards = [c for c in data['cards'] if c['status'] == 'todo']
+        project = None
+    
+    return render_template('backlog.html', cards=cards, projects=data['projects'], current_project=project)
+
 @app.route('/board/<int:project_id>')
 @login_required
 def kanban_board(project_id):
@@ -470,8 +486,9 @@ def add_card():
         'status': 'todo',
         'assignee': request.json.get('assignee', ''),
         'priority': request.json.get('priority', 'Medium'),
-        'created_at': datetime.now().strftime('%Y-%m-%d'),
-        'due_date': request.json.get('due_date', '')
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'due_date': request.json.get('due_date', ''),
+        'story_points': request.json.get('story_points')
     }
     data['cards'].append(new_card)
     save_data(data)
@@ -551,6 +568,8 @@ def search_cards():
     priority_filter = request.args.get('priority', '')
     assignee_filter = request.args.get('assignee', '')
     project_filter = request.args.get('project_id', '')
+    due_date_filter = request.args.get('due_date_filter', '')
+    sort_by = request.args.get('sort', 'created_desc')
     
     # Filter cards
     filtered_cards = cards
@@ -569,13 +588,57 @@ def search_cards():
     
     # Assignee filter
     if assignee_filter:
-        filtered_cards = [c for c in filtered_cards if c.get('assignee', '').lower() == assignee_filter.lower()]
+        if assignee_filter == '':
+            filtered_cards = [c for c in filtered_cards if not c.get('assignee')]
+        else:
+            filtered_cards = [c for c in filtered_cards if c.get('assignee', '').lower() == assignee_filter.lower()]
+    
+    # Due date filter
+    if due_date_filter:
+        from datetime import datetime, date, timedelta
+        today = date.today()
+        
+        if due_date_filter == 'overdue':
+            filtered_cards = [c for c in filtered_cards if c.get('due_date') and 
+                            datetime.strptime(c['due_date'], '%Y-%m-%d').date() < today]
+        elif due_date_filter == 'today':
+            filtered_cards = [c for c in filtered_cards if c.get('due_date') and 
+                            datetime.strptime(c['due_date'], '%Y-%m-%d').date() == today]
+        elif due_date_filter == 'this_week':
+            week_end = today + timedelta(days=7)
+            filtered_cards = [c for c in filtered_cards if c.get('due_date') and 
+                            today <= datetime.strptime(c['due_date'], '%Y-%m-%d').date() <= week_end]
+        elif due_date_filter == 'next_week':
+            next_week_start = today + timedelta(days=7)
+            next_week_end = today + timedelta(days=14)
+            filtered_cards = [c for c in filtered_cards if c.get('due_date') and 
+                            next_week_start <= datetime.strptime(c['due_date'], '%Y-%m-%d').date() <= next_week_end]
+        elif due_date_filter == 'no_date':
+            filtered_cards = [c for c in filtered_cards if not c.get('due_date')]
     
     # Search query (title and description)
     if search_query:
         filtered_cards = [c for c in filtered_cards if 
                          search_query in c['title'].lower() or 
                          search_query in c.get('description', '').lower()]
+    
+    # Sort cards
+    if sort_by == 'created_desc':
+        filtered_cards.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    elif sort_by == 'created_asc':
+        filtered_cards.sort(key=lambda x: x.get('created_at', ''))
+    elif sort_by == 'priority':
+        priority_order = {'High': 3, 'Medium': 2, 'Low': 1}
+        filtered_cards.sort(key=lambda x: priority_order.get(x.get('priority', 'Low'), 1), reverse=True)
+    elif sort_by == 'due_date':
+        # Sort by due date, putting items without due dates at the end
+        def due_date_sort_key(card):
+            if not card.get('due_date'):
+                return '9999-12-31'  # Far future date for items without due dates
+            return card['due_date']
+        filtered_cards.sort(key=due_date_sort_key)
+    elif sort_by == 'title':
+        filtered_cards.sort(key=lambda x: x.get('title', '').lower())
     
     return jsonify({
         'cards': filtered_cards,
@@ -664,6 +727,49 @@ def delete_card():
         
         # Also remove associated comments
         data['comments'] = [c for c in data.get('comments', []) if c['card_id'] != card_id]
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/update_story_points', methods=['POST'])
+@login_required
+def update_story_points():
+    try:
+        data = load_data()
+        card_id = request.json['card_id']
+        story_points = request.json.get('story_points')
+        
+        # Find and update the card
+        for card in data['cards']:
+            if card['id'] == card_id:
+                card['story_points'] = story_points
+                break
+        else:
+            return jsonify({'success': False, 'error': 'Card not found'}), 404
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/move_to_sprint', methods=['POST'])
+@login_required
+def move_to_sprint():
+    try:
+        data = load_data()
+        card_id = request.json['card_id']
+        
+        # Find and update the card status to 'in_progress' (active sprint)
+        for card in data['cards']:
+            if card['id'] == card_id:
+                card['status'] = 'in_progress'
+                break
+        else:
+            return jsonify({'success': False, 'error': 'Card not found'}), 404
         
         save_data(data)
         return jsonify({'success': True})

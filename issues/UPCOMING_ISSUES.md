@@ -94,6 +94,32 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
+### Issue #10: Team Collaboration Tools - OPEN
+```
+Title: [FEATURE] Team Collaboration Tools
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/10
+
+Description:
+I want better team collaboration features like @mentions, notifications, and activity feeds.
+
+What I want:
+- @mention users in comments
+- Activity feed showing recent changes
+- Real-time notifications
+- Team member assignments
+
+Acceptance Criteria:
+- [ ] @mention functionality in comments
+- [ ] Activity feed on dashboard
+- [ ] Browser notifications for mentions
+- [ ] Team member dropdown for assignments
+- [ ] Real-time updates using WebSocket
+
+@coding-agent please implement this feature
+```
+
 ### Issue #11: Mobile Responsive Design - OPEN
 ```
 Title: [FEATURE] Mobile Responsive Design
@@ -413,16 +439,108 @@ Files to Create/Modify:
 @coding-agent please implement this comprehensive backlog management feature
 ```
 
+### Issue #25: User Registration System with Admin Control - OPEN
+```
+Title: [FEATURE] Issue #25: User Registration System with Admin Control
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/25
+
+Description:
+Implement a comprehensive user registration system that allows new users to register and provides admin control over user management.
+
+What I want:
+- User registration flow with display name, email, and password
+- Admin notification system for new registrations
+- Admin dashboard to view and manage registered users
+- User permission levels controlled by admin
+- Secure registration process with validation
+
+Core Registration Features:
+- [ ] Registration page with form fields (display name, email, password)
+- [ ] Email validation and uniqueness check
+- [ ] Password strength requirements and confirmation
+- [ ] User account creation with pending status
+- [ ] Email verification system (optional)
+- [ ] Registration success confirmation
+
+Admin Notification System:
+- [ ] Real-time alert to admin when new user registers
+- [ ] Email notification to admin with user details
+- [ ] Admin dashboard notification badge for pending users
+- [ ] Registration activity log for admin review
+
+Admin User Management:
+- [ ] View all registered users in admin interface
+- [ ] User status management (Pending, Active, Suspended, Inactive)
+- [ ] User permission levels (Admin, Manager, User, Viewer)
+- [ ] Bulk user operations (Approve, Reject, Suspend)
+- [ ] User profile editing by admin
+- [ ] User activity tracking and last login info
+
+User Permission Levels:
+- [ ] Admin: Full system access and user management
+- [ ] Manager: Project management and team oversight
+- [ ] User: Standard access to assigned projects
+- [ ] Viewer: Read-only access to permitted content
+
+Registration Flow:
+1. User clicks Register link
+2. User fills registration form (display name, email, password)
+3. System validates input and creates pending account
+4. Admin receives notification of new registration
+5. Admin reviews and approves/rejects user
+6. User receives approval/rejection notification
+7. Approved users can login with assigned permission level
+
+Security Features:
+- [ ] Password hashing and secure storage
+- [ ] CSRF protection on registration forms
+- [ ] Rate limiting for registration attempts
+- [ ] Input sanitization and validation
+- [ ] Session management for logged-in users
+- [ ] Password reset functionality
+
+Files to Create/Modify:
+- templates/register.html - Registration form page
+- templates/admin/users.html - Admin user management dashboard
+- app/routes/auth.py - Registration and user management routes
+- app/models/user.py - User model with permissions
+- app/services/user_service.py - User management logic
+- app/services/notification_service.py - Admin notification system
+- static/js/registration.js - Registration form validation
+- static/css/registration.css - Registration styling
+- templates/base.html - Add registration link
+
+@coding-agent please implement this comprehensive user registration system
+```
+
 ## 📊 SUMMARY
-- **Total Issues**: 24
+- **Total Issues**: 25
 - **Completed**: 11 issues ✅
-- **Open/In Progress**: 13 issues 🔄
-- **Completion Rate**: 46%
+- **Open/In Progress**: 14 issues 🔄
+- **Completion Rate**: 44%
+
+**Open Issues on GitHub:**
+- Issue #8: Card Labels/Tags System
+- Issue #9: Time Tracking Features
+- Issue #10: Team Collaboration Tools
+- Issue #11: Mobile Responsive Design
+- Issue #13: Database Integration (PostgreSQL)
+- Issue #14: Interactive Mind Map for Project Planning
+- Issue #15: Interactive Gantt Chart for Sprint and Project Management
+- Issue #16: Advanced Mind Map Features
+- Issue #19: Enhanced Dark Mode Toggle with Better Contrast
+- Issue #20: Add Colored Labels to Cards
+- Issue #21: Time Tracking for Cards
+- Issue #22: Enhanced Team Collaboration
+- Issue #24: Create Backlog Page with Advanced Filtering
+- Issue #25: User Registration System with Admin Control
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #24: Create Backlog Page with Advanced Filtering 🆕
-2. Issue #8: Card Labels/Tags System
-3. Issue #9: Time Tracking Features  
-4. Issue #11: Mobile Responsive Design
-5. Issue #13: Database Integration (PostgreSQL)
-6. Issue #19: Enhanced Dark Mode Toggle
+1. Issue #25: User Registration System with Admin Control 🆕
+2. Issue #24: Create Backlog Page with Advanced Filtering
+3. Issue #8: Card Labels/Tags System
+4. Issue #9: Time Tracking Features  
+5. Issue #11: Mobile Responsive Design
+6. Issue #13: Database Integration (PostgreSQL)
