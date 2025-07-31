@@ -46,7 +46,7 @@
                 <td>Test Issue 1</td>
                 <td>
                     <div class="dropdown">
-                        <button class="btn" onclick="toggleDropdown(1)">⋮ Actions</button>
+                        <button class="btn" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">⋮ Actions</button>
                         <div id="dropdown-1" class="dropdown-menu">
                             <a href="javascript:void(0)" onclick="testAction('moveToBacklog', 1)">📋 Move to Backlog</a>
                             <a href="javascript:void(0)" onclick="testAction('sendToAssignee', 1)">📧 Send to Assignee</a>
@@ -60,7 +60,7 @@
                 <td>Test Issue 2</td>
                 <td>
                     <div class="dropdown">
-                        <button class="btn" onclick="toggleDropdown(2)">⋮ Actions</button>
+                        <button class="btn" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">⋮ Actions</button>
                         <div id="dropdown-2" class="dropdown-menu">
                             <a href="javascript:void(0)" onclick="testAction('moveToBacklog', 2)">📋 Move to Backlog</a>
                             <a href="javascript:void(0)" onclick="testAction('sendToAssignee', 2)">📧 Send to Assignee</a>

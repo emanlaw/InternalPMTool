@@ -119,7 +119,7 @@
                 <td>{{ format_timestamp(card.created_at) }}</td>
                 <td>
                     <div class="dropdown" style="position: relative;">
-                        <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="toggleDropdown({{ card.id }})">
+                        <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">
                             ⋮ Actions
                         </button>
                         <div id="dropdown-{{ card.id }}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px;">
@@ -307,7 +307,7 @@ function updateTable(cards) {
                 <td>${formatTimestamp(card.created_at)}</td>
                 <td>
                     <div class="dropdown" style="position: relative;">
-                        <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="toggleDropdown(${card.id})">
+                        <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">
                             ⋮ Actions
                         </button>
                         <div id="dropdown-${card.id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px;">
@@ -613,45 +613,7 @@ function hideCardDetailsModal() {
 }
 
 // Actions dropdown functions
-function toggleDropdown(cardId) {
-    console.log('toggleDropdown called with cardId:', cardId, typeof cardId);
-    
-    try {
-        // Ensure cardId is properly escaped for CSS selector
-        const escapedCardId = CSS.escape(String(cardId));
-        console.log('Escaped cardId:', escapedCardId);
-        
-        const dropdown = document.getElementById(`dropdown-${escapedCardId}`);
-        console.log('Dropdown element:', dropdown);
-        
-        if (!dropdown) {
-            console.error(`Dropdown not found for card ID: ${cardId}`);
-            // Try without escaping as fallback
-            const fallbackDropdown = document.getElementById(`dropdown-${cardId}`);
-            console.log('Fallback dropdown:', fallbackDropdown);
-            if (fallbackDropdown) {
-                dropdown = fallbackDropdown;
-            } else {
-                return;
-            }
-        }
-        
-        const isVisible = dropdown.style.display === 'block';
-        console.log('Dropdown is visible:', isVisible);
-        
-        // Close all other dropdowns
-        document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.style.display = 'none';
-        });
-        
-        // Toggle current dropdown
-        dropdown.style.display = isVisible ? 'none' : 'block';
-        console.log('Dropdown toggled to:', dropdown.style.display);
-        
-    } catch (error) {
-        console.error('Error in toggleDropdown:', error);
-    }
-}
+
 
 async function moveToBacklog(cardId) {
     try {
@@ -665,7 +627,7 @@ async function moveToBacklog(cardId) {
         
         if (response.ok && result.success) {
             // Update the status visually
-            const statusSelect = document.querySelector(`select[onchange*="${CSS.escape(String(cardId))}"]`);
+            const statusSelect = document.querySelector(`select[onchange*="${cardId}"]`);
             if (statusSelect) {
                 statusSelect.value = 'todo';
                 statusSelect.className = 'status-badge status-todo';
@@ -681,14 +643,14 @@ async function moveToBacklog(cardId) {
     }
     
     // Close dropdown
-    const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+    const dropdown = document.getElementById(`dropdown-${cardId}`);
     if (dropdown) dropdown.style.display = 'none';
 }
 
 async function sendToAssignee(cardId, assignee) {
     if (!assignee || assignee === 'Unassigned') {
         showNotification('No assignee set for this issue', 'error');
-        const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+        const dropdown = document.getElementById(`dropdown-${cardId}`);
         if (dropdown) dropdown.style.display = 'none';
         return;
     }
@@ -713,7 +675,7 @@ async function sendToAssignee(cardId, assignee) {
     }
     
     // Close dropdown
-    const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+    const dropdown = document.getElementById(`dropdown-${cardId}`);
     if (dropdown) dropdown.style.display = 'none';
 }
 
@@ -723,7 +685,7 @@ function deleteIssue(cardId) {
     }
     
     // Close dropdown
-    const dropdown = document.getElementById(`dropdown-${CSS.escape(String(cardId))}`);
+    const dropdown = document.getElementById(`dropdown-${cardId}`);
     if (dropdown) dropdown.style.display = 'none';
 }
 
