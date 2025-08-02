@@ -606,11 +606,111 @@ Files to Create/Modify:
 @coding-agent please implement this comprehensive user registration system
 ```
 
+### Issue #27: Project Archive System with Dashboard Integration - OPEN
+```
+Title: [FEATURE] Project Archive System with Dashboard Integration
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/27
+
+Description:
+Implement a comprehensive project archiving system that allows users to archive completed or inactive projects, store them separately, and manage them through a dedicated archive page.
+
+What I want:
+- Archive button on dashboard with confirmation dialog
+- Dedicated archive page to view archived projects
+- Ability to restore archived projects
+- Archived projects excluded from main dashboard
+- Archive status tracking and metadata
+
+Core Archive Features:
+- [ ] Archive button on each project card in dashboard
+- [ ] Confirmation dialog before archiving ("Are you sure you want to archive this project?")
+- [ ] Archive status field added to project data structure
+- [ ] Archived projects filtered out from main dashboard view
+- [ ] Archive timestamp and user tracking
+
+Archive Page Features:
+- [ ] Dedicated /archive route and page template
+- [ ] Display all archived projects in organized grid/list view
+- [ ] Search functionality for archived projects
+- [ ] Filter by archive date, project type, or original status
+- [ ] Restore functionality to move projects back to active
+- [ ] Permanent delete option for archived projects
+- [ ] Archive statistics (total archived, archive dates)
+
+Dashboard Integration:
+- [ ] Archive button with archive icon on project cards
+- [ ] Confirmation modal with project name display
+- [ ] Success notification after archiving
+- [ ] Real-time removal from dashboard after archive
+- [ ] Archive count indicator in navigation
+
+Confirmation Dialog Features:
+- [ ] Modal popup with project name confirmation
+- [ ] Warning message about archiving consequences
+- [ ] Cancel and Confirm buttons
+- [ ] Prevent accidental archiving
+- [ ] Show project details in confirmation
+
+Archive Management:
+- [ ] Bulk archive operations (select multiple projects)
+- [ ] Archive reason/notes field (optional)
+- [ ] Archive history log for audit trail
+- [ ] Export archived projects data
+- [ ] Archive cleanup (auto-delete after X months)
+
+Restore Functionality:
+- [ ] Restore button on archived project cards
+- [ ] Restore confirmation dialog
+- [ ] Move project back to active status
+- [ ] Restore notification and success message
+- [ ] Maintain project data integrity during restore
+
+Data Structure Changes:
+- [ ] Add 'archived' boolean field to projects
+- [ ] Add 'archived_date' timestamp field
+- [ ] Add 'archived_by' user field
+- [ ] Add 'archive_reason' optional text field
+- [ ] Update project queries to filter archived projects
+
+UI/UX Features:
+- [ ] Archive icon (folder with down arrow)
+- [ ] Visual distinction for archived projects
+- [ ] Archive breadcrumb navigation
+- [ ] Empty state message when no archived projects
+- [ ] Responsive design for archive page
+
+Security and Permissions:
+- [ ] Only project owners/admins can archive projects
+- [ ] Archive action logging for audit
+- [ ] Prevent archiving projects with active issues
+- [ ] Confirmation for projects with recent activity
+
+Files to Create/Modify:
+- templates/archive.html - Archive page template
+- app/routes/main.py - Add /archive route and archive functionality
+- static/js/archive.js - Archive page JavaScript
+- static/css/archive.css - Archive page styling
+- templates/base.html - Add Archive navigation link
+- templates/dashboard.html - Add archive buttons to project cards
+- app/services/project_service.py - Archive/restore logic
+- static/js/dashboard.js - Archive confirmation modal
+
+API Endpoints:
+- [ ] POST /api/archive_project - Archive a project
+- [ ] POST /api/restore_project - Restore archived project
+- [ ] GET /api/archived_projects - Get all archived projects
+- [ ] DELETE /api/delete_archived_project - Permanently delete
+
+@coding-agent please implement this comprehensive project archive system
+```
+
 ## 📊 SUMMARY
-- **Total Issues**: 26
+- **Total Issues**: 27
 - **Completed**: 11 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #17, #18, #23)
-- **Open/In Progress**: 15 issues 🔄
-- **Completion Rate**: 42%
+- **Open/In Progress**: 16 issues 🔄
+- **Completion Rate**: 41%
 
 **Recently Completed:**
 - ✅ Issue #23: Actions Dropdown for Issue Management (2025-07-31)
@@ -633,11 +733,12 @@ Files to Create/Modify:
 - Issue #22: Enhanced Team Collaboration
 - Issue #24: Create Backlog Page with Advanced Filtering
 - Issue #25: User Registration System with Admin Control
+- Issue #27: Project Archive System with Dashboard Integration
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #26: Interactive Gantt Chart for Project Navigation and Scheduling 🆕
-2. Issue #25: User Registration System with Admin Control
-3. Issue #24: Create Backlog Page with Advanced Filtering
-4. Issue #8: Card Labels/Tags System
-5. Issue #9: Time Tracking Features  
-6. Issue #11: Mobile Responsive Design
+1. Issue #27: Project Archive System with Dashboard Integration 🆕
+2. Issue #26: Interactive Gantt Chart for Project Navigation and Scheduling
+3. Issue #25: User Registration System with Admin Control
+4. Issue #24: Create Backlog Page with Advanced Filtering
+5. Issue #8: Card Labels/Tags System
+6. Issue #9: Time Tracking Features
