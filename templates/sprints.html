@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Sprint Management{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/sprints.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="sprints-header">
+    <h1>🏃‍♂️ Sprint Management</h1>
+    <div class="sprint-actions">
+        <button class="btn btn-primary" onclick="showCreateSprintModal()">+ Create Sprint</button>
+        <select id="projectFilter" class="form-select" onchange="filterSprintsByProject()">
+            <option value="">All Projects</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div class="sprint-stats">
+    <div class="stat-card">
+        <div class="stat-number" id="totalSprints">{{ sprints|length }}</div>
+        <div class="stat-label">Total Sprints</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="activeSprints">{{ active_sprints|length }}</div>
+        <div class="stat-label">Active Sprints</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number" id="completedSprints">{{ completed_sprints|length }}</div>
+        <div class="stat-label">Completed</div>
+    </div>
+</div>
+
+<div class="sprints-container">
+    {% if sprints %}
+        <div class="sprints-grid" id="sprintsGrid">
+            {% for sprint in sprints %}
+            <div class="sprint-card" data-project-id="{{ sprint.project_id }}" data-status="{{ sprint.status }}">
+                <div class="sprint-header">
+                    <h3>{{ sprint.name }}</h3>
+                    <span class="sprint-status status-{{ sprint.status }}">{{ sprint.status.title() }}</span>
+                </div>
+                
+                <div class="sprint-info">
+                    <div class="sprint-dates">
+                        <span class="date-range">
+                            📅 {{ sprint.start_date }} - {{ sprint.end_date }}
+                        </span>
+                        <span class="duration">{{ sprint.get_duration_days() }} days</span>
+                    </div>
+                    
+                    {% if sprint.goal %}
+                    <div class="sprint-goal">
+                        <strong>Goal:</strong> {{ sprint.goal }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="sprint-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Story Points:</span>
+                            <span class="metric-value">{{ sprint.story_points }}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Issues:</span>
+                            <span class="metric-value">{{ sprint.issues|length }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sprint-actions">
+                    <button class="btn btn-sm" onclick="viewSprint({{ sprint.id }})">View</button>
+                    <button class="btn btn-sm btn-secondary" onclick="editSprint({{ sprint.id }})">Edit</button>
+                    {% if sprint.status == 'planning' %}
+                    <button class="btn btn-sm btn-success" onclick="startSprint({{ sprint.id }})">Start</button>
+                    {% elif sprint.status == 'active' %}
+                    <button class="btn btn-sm btn-warning" onclick="completeSprint({{ sprint.id }})">Complete</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🏃‍♂️</div>
+            <h3>No Sprints Yet</h3>
+            <p>Create your first sprint to start organizing your work into time-boxed iterations.</p>
+            <button class="btn btn-primary" onclick="showCreateSprintModal()">Create First Sprint</button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Create Sprint Modal -->
+<div id="createSprintModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create New Sprint</h2>
+            <span class="close" onclick="closeModal('createSprintModal')">&times;</span>
+        </div>
+        <form id="createSprintForm" onsubmit="createSprint(event)">
+            <div class="form-group">
+                <label for="sprintName">Sprint Name *</label>
+                <input type="text" id="sprintName" name="name" required placeholder="e.g., Sprint 1, Feature Development Sprint">
+            </div>
+            
+            <div class="form-group">
+                <label for="sprintProject">Project *</label>
+                <select id="sprintProject" name="project_id" required>
+                    <option value="">Select Project</option>
+                    {% for project in projects %}
+                    <option value="{{ project.id }}">{{ project.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="startDate">Start Date *</label>
+                    <input type="date" id="startDate" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End Date *</label>
+                    <input type="date" id="endDate" name="end_date" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="sprintGoal">Sprint Goal</label>
+                <textarea id="sprintGoal" name="goal" rows="3" placeholder="What do you want to achieve in this sprint?"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="storyPoints">Story Points</label>
+                <input type="number" id="storyPoints" name="story_points" min="0" placeholder="Estimated story points">
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('createSprintModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Sprint</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/sprints.js"></script>
+{% endblock %}

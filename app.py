@@ -9,6 +9,9 @@ from datetime import datetime, date
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+# Sprint management imports
+from app_modules.services.sprint_service import SprintService
+
 # Initialize Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate('firebase-service-account.json')
@@ -731,6 +734,164 @@ def mindmap():
     data = load_data()
     active_projects = [p for p in data['projects'] if not p.get('archived', False)]
     return render_template('mindmap.html', projects=active_projects)
+
+# Sprint Management Routes
+@app.route('/sprints')
+@login_required
+def sprints():
+    data = load_data()
+    sprint_service = SprintService()
+    
+    all_sprints = sprint_service.get_all_sprints()
+    active_sprints = sprint_service.get_active_sprints()
+    completed_sprints = [s for s in all_sprints if s.status == 'completed']
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    
+    return render_template('sprints.html', 
+                         sprints=all_sprints,
+                         active_sprints=active_sprints,
+                         completed_sprints=completed_sprints,
+                         projects=active_projects)
+
+@app.route('/sprints/<int:sprint_id>')
+@login_required
+def sprint_detail(sprint_id):
+    data = load_data()
+    sprint_service = SprintService()
+    
+    sprint = sprint_service.get_sprint_by_id(sprint_id)
+    if not sprint:
+        return "Sprint not found", 404
+    
+    # Get project cards
+    project_cards = [c for c in data['cards'] if c['project_id'] == sprint.project_id]
+    
+    # Separate backlog and sprint issues
+    sprint_issues = [c for c in project_cards if c['id'] in sprint.issues]
+    backlog_issues = [c for c in project_cards if c['id'] not in sprint.issues and c['status'] == 'todo']
+    
+    # Calculate metrics
+    completed_issues = [c for c in sprint_issues if c['status'] == 'done']
+    days_remaining = max(0, (sprint.end_date - date.today()).days)
+    
+    return render_template('sprint_detail.html',
+                         sprint=sprint,
+                         sprint_issues=sprint_issues,
+                         backlog_issues=backlog_issues,
+                         completed_issues=completed_issues,
+                         days_remaining=days_remaining)
+
+# Sprint API Routes
+@app.route('/api/sprints', methods=['POST'])
+@login_required
+def create_sprint():
+    try:
+        sprint_service = SprintService()
+        
+        name = request.json['name']
+        project_id = request.json['project_id']
+        start_date = datetime.fromisoformat(request.json['start_date']).date()
+        end_date = datetime.fromisoformat(request.json['end_date']).date()
+        goal = request.json.get('goal', '')
+        story_points = request.json.get('story_points', 0)
+        
+        sprint = sprint_service.create_sprint(
+            name=name,
+            project_id=project_id,
+            start_date=start_date,
+            end_date=end_date,
+            goal=goal,
+            story_points=story_points
+        )
+        
+        return jsonify({'success': True, 'sprint': sprint.to_dict()})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/start', methods=['POST'])
+@login_required
+def start_sprint(sprint_id):
+    try:
+        sprint_service = SprintService()
+        success = sprint_service.start_sprint(sprint_id)
+        
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/complete', methods=['POST'])
+@login_required
+def complete_sprint(sprint_id):
+    try:
+        sprint_service = SprintService()
+        success = sprint_service.complete_sprint(sprint_id)
+        
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/issues', methods=['POST'])
+@login_required
+def add_issue_to_sprint(sprint_id):
+    try:
+        sprint_service = SprintService()
+        issue_id = request.json['issue_id']
+        
+        success = sprint_service.assign_issue_to_sprint(sprint_id, issue_id)
+        
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to add issue to sprint'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/issues/<int:issue_id>', methods=['DELETE'])
+@login_required
+def remove_issue_from_sprint(sprint_id, issue_id):
+    try:
+        sprint_service = SprintService()
+        success = sprint_service.remove_issue_from_sprint(sprint_id, issue_id)
+        
+        if success:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to remove issue from sprint'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/retrospective', methods=['POST'])
+@login_required
+def save_retrospective(sprint_id):
+    try:
+        # For now, just return success - in a full implementation,
+        # this would save retrospective data to the database
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/export')
+@login_required
+def export_sprint_report(sprint_id):
+    try:
+        # For now, just return a placeholder - in a full implementation,
+        # this would generate and return a PDF or Excel report
+        return jsonify({'success': True, 'message': 'Export functionality coming soon!'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/archive_project', methods=['POST'])
 @login_required
