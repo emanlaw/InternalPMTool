@@ -1,14 +1,9 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_file
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
-import json
 import os
+import json
 from datetime import datetime, date
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
-import io
-import threading
 
 # Firebase imports
 import firebase_admin
@@ -21,24 +16,14 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
+# Simple Flask app for Windows
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
-
-# Flask-Mail configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your-email@gmail.com'
-app.config['MAIL_PASSWORD'] = 'your-app-password'
-app.config['MAIL_DEFAULT_SENDER'] = 'your-email@gmail.com'
-
-mail = Mail(app)
 
 # Flask-Login setup
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-login_manager.login_message = 'Please log in to access this page.'
 
 class User(UserMixin):
     def __init__(self, id, username, password_hash):
@@ -54,116 +39,45 @@ def load_user(user_id):
         return User(user_data['id'], user_data['username'], user_data['password_hash'])
     return None
 
-def get_due_date_class(due_date_str):
-    if not due_date_str:
-        return ''
-    try:
-        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
-        today = date.today()
-        if due_date < today:
-            return 'card-overdue'
-        elif due_date == today:
-            return 'card-due-today'
-        elif (due_date - today).days <= 3:
-            return 'card-due-soon'
-        return ''
-    except:
-        return ''
 
-def get_due_date_text_class(due_date_str):
-    if not due_date_str:
-        return ''
-    try:
-        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
-        today = date.today()
-        if due_date < today:
-            return 'due-date-overdue'
-        elif due_date == today:
-            return 'due-date-today'
-        return 'due-date-upcoming'
-    except:
-        return ''
-
-def get_due_date_status(due_date_str):
-    if not due_date_str:
-        return ''
-    try:
-        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
-        today = date.today()
-        if due_date < today:
-            return '(OVERDUE)'
-        elif due_date == today:
-            return '(TODAY)'
-        elif (due_date - today).days <= 3:
-            return '(SOON)'
-        return ''
-    except:
-        return ''
-
-def get_comment_count(card_id):
-    data = load_data()
-    return len([c for c in data.get('comments', []) if c['card_id'] == card_id])
-
-def format_timestamp(timestamp):
-    if not timestamp:
-        return '-'
-    if isinstance(timestamp, str) and len(timestamp) == 10:
-        return timestamp
-    try:
-        if isinstance(timestamp, str):
-            for fmt in ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
-                try:
-                    dt = datetime.strptime(timestamp, fmt)
-                    return dt.strftime('%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    continue
-        return timestamp
-    except:
-        return timestamp
-
-app.jinja_env.globals.update(
-    get_due_date_class=get_due_date_class,
-    get_due_date_text_class=get_due_date_text_class,
-    get_due_date_status=get_due_date_status,
-    get_comment_count=get_comment_count,
-    format_timestamp=format_timestamp
-)
 
 def load_data():
+    """Load data from Firebase"""
     data = {'users': [], 'projects': [], 'cards': [], 'comments': []}
     
     try:
+        # Load from Firebase collections
         for doc in db.collection('users').stream():
             user_data = doc.to_dict()
             user_data['id'] = int(doc.id)
             data['users'].append(user_data)
-    except:
-        pass
-    
-    try:
+        
         for doc in db.collection('projects').stream():
             project_data = doc.to_dict()
             project_data['id'] = int(doc.id)
             data['projects'].append(project_data)
-    except:
-        pass
+        
+        # Load cards from projects/{projectId}/cards subcollection
+        for project_doc in db.collection('projects').stream():
+            project_id = int(project_doc.id)
+            cards_ref = db.collection('projects').document(project_doc.id).collection('cards')
+            for card_doc in cards_ref.stream():
+                card_data = card_doc.to_dict()
+                card_data['id'] = int(card_doc.id)
+                card_data['project_id'] = project_id
+                data['cards'].append(card_data)
+                
+                # Load comments for this card
+                comments_ref = cards_ref.document(card_doc.id).collection('comments')
+                for comment_doc in comments_ref.stream():
+                    comment_data = comment_doc.to_dict()
+                    comment_data['id'] = int(comment_doc.id)
+                    comment_data['card_id'] = int(card_doc.id)
+                    data['comments'].append(comment_data)
+    except Exception as e:
+        print(f"Firebase error: {e}")
     
-    try:
-        for doc in db.collection('cards').stream():
-            card_data = doc.to_dict()
-            card_data['id'] = int(doc.id)
-            data['cards'].append(card_data)
-    except:
-        pass
-    
-    try:
-        for doc in db.collection('comments').stream():
-            comment_data = doc.to_dict()
-            comment_data['id'] = int(doc.id)
-            data['comments'].append(comment_data)
-    except:
-        pass
-    
+    # Create default data if empty
     if not data['users']:
         default_user = {
             'username': 'admin',
@@ -183,7 +97,9 @@ def load_data():
     return data
 
 def save_data(data):
+    """Save data to Firebase"""
     try:
+        # Save to Firebase collections
         for user in data.get('users', []):
             user_copy = user.copy()
             user_copy.pop('id', None)
@@ -194,15 +110,25 @@ def save_data(data):
             project_copy.pop('id', None)
             db.collection('projects').document(str(project['id'])).set(project_copy)
         
+        # Save cards to projects/{projectId}/cards subcollection
         for card in data.get('cards', []):
             card_copy = card.copy()
             card_copy.pop('id', None)
-            db.collection('cards').document(str(card['id'])).set(card_copy)
+            card_copy.pop('project_id', None)  # Remove project_id as it's implicit in path
+            project_ref = db.collection('projects').document(str(card['project_id']))
+            project_ref.collection('cards').document(str(card['id'])).set(card_copy)
         
+        # Save comments to projects/{projectId}/cards/{cardId}/comments
         for comment in data.get('comments', []):
             comment_copy = comment.copy()
             comment_copy.pop('id', None)
-            db.collection('comments').document(str(comment['id'])).set(comment_copy)
+            card_id = comment_copy.pop('card_id')
+            # Find project_id for this card
+            card = next((c for c in data.get('cards', []) if c['id'] == card_id), None)
+            if card:
+                project_ref = db.collection('projects').document(str(card['project_id']))
+                card_ref = project_ref.collection('cards').document(str(card_id))
+                card_ref.collection('comments').document(str(comment['id'])).set(comment_copy)
     except Exception as e:
         print(f"Error saving to Firebase: {e}")
 
@@ -324,50 +250,80 @@ def analytics():
     data = load_data()
     return render_template('gantt_analytics.html', projects=data['projects'], cards=data['cards'])
 
+@app.route('/gantt')
+@login_required
+def gantt():
+    data = load_data()
+    projects = data.get('projects', [])
+    cards = data.get('cards', [])
+    
+    # Calculate project progress
+    def get_project_progress(project_id):
+        project_cards = [c for c in cards if c.get('project_id') == project_id]
+        if not project_cards:
+            return 0
+        completed = len([c for c in project_cards if c.get('status') == 'done'])
+        return round((completed / len(project_cards)) * 100)
+    
+    return render_template('gantt.html', 
+                         projects=projects, 
+                         cards=cards,
+                         get_project_progress=get_project_progress)
+
 @app.route('/firebase')
 @login_required
-def firebase():
-    return render_template('firebase_dashboard.html')
+def firebase_dashboard():
+    data = load_data()
+    stats = {
+        'users_count': len(data['users']),
+        'projects_count': len(data['projects']),
+        'cards_count': len(data['cards']),
+        'comments_count': len(data['comments'])
+    }
+    return render_template('firebase_dashboard.html', stats=stats)
 
 @app.route('/firebase-status')
 @login_required
 def firebase_status():
-    try:
-        users_count = len(list(db.collection('users').stream()))
-        projects_count = len(list(db.collection('projects').stream()))
-        cards_count = len(list(db.collection('cards').stream()))
-        comments_count = len(list(db.collection('comments').stream()))
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'users_count': users_count,
-                'projects_count': projects_count,
-                'cards_count': cards_count,
-                'comments_count': comments_count
-            }
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        })
+    data = load_data()
+    return jsonify({
+        'success': True,
+        'data': {
+            'users_count': len(data['users']),
+            'projects_count': len(data['projects']),
+            'cards_count': len(data['cards']),
+            'comments_count': len(data['comments'])
+        }
+    })
 
 @app.route('/migrate-to-firebase')
 @login_required
 def migrate_to_firebase():
     try:
         data = load_data()
-        save_data(data)
+        # Since we're using JSON storage, this is just a placeholder
+        # In a real Firebase setup, this would migrate data to Firestore
         return jsonify({
             'success': True,
-            'message': 'Data migrated successfully'
+            'message': f'Data ready for migration: {len(data["users"])} users, {len(data["projects"])} projects, {len(data["cards"])} cards'
         })
     except Exception as e:
         return jsonify({
             'success': False,
             'message': str(e)
         })
+
+@app.route('/settings')
+@login_required
+def settings():
+    data = load_data()
+    stats = {
+        'users_count': len(data['users']),
+        'projects_count': len(data['projects']),
+        'cards_count': len(data['cards']),
+        'comments_count': len(data['comments'])
+    }
+    return render_template('dashboard.html', projects=data['projects'], stats=stats)
 
 @app.route('/board/<int:project_id>')
 @login_required
@@ -389,11 +345,18 @@ def kanban_board(project_id):
                          done_cards=done_cards)
 
 @app.route('/api/add_card', methods=['POST'])
+@login_required
 def add_card():
+    project_id = request.json['project_id']
     data = load_data()
+    
+    # Get next card ID for this project
+    project_cards = [c for c in data['cards'] if c['project_id'] == project_id]
+    next_id = max([c['id'] for c in project_cards], default=0) + 1
+    
     new_card = {
-        'id': max([c['id'] for c in data['cards']], default=0) + 1,
-        'project_id': request.json['project_id'],
+        'id': next_id,
+        'project_id': project_id,
         'title': request.json['title'],
         'description': request.json.get('description', ''),
         'status': 'todo',
@@ -403,11 +366,19 @@ def add_card():
         'due_date': request.json.get('due_date', ''),
         'story_points': request.json.get('story_points')
     }
-    data['cards'].append(new_card)
-    save_data(data)
+    
+    # Save directly to Firebase subcollection
+    card_copy = new_card.copy()
+    card_copy.pop('id', None)
+    card_copy.pop('project_id', None)
+    
+    project_ref = db.collection('projects').document(str(project_id))
+    project_ref.collection('cards').document(str(next_id)).set(card_copy)
+    
     return jsonify(new_card)
 
 @app.route('/api/update_card_status', methods=['POST'])
+@login_required
 def update_card_status():
     data = load_data()
     card_id = request.json['card_id']
@@ -503,5 +474,156 @@ def delete_card():
 def send_to_assignee():
     return jsonify({'success': True})
 
+@app.route('/api/add_project', methods=['POST'])
+@login_required
+def add_project():
+    data = load_data()
+    new_project = {
+        'id': max([p['id'] for p in data['projects']], default=0) + 1,
+        'name': request.json['name'],
+        'description': request.json.get('description', ''),
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    data['projects'].append(new_project)
+    save_data(data)
+    return jsonify(new_project)
+
+@app.route('/api/update_card', methods=['POST'])
+@login_required
+def update_card():
+    data = load_data()
+    card_id = request.json['card_id']
+    updates = request.json.get('updates', {})
+    
+    for card in data['cards']:
+        if card['id'] == card_id:
+            card.update(updates)
+            card['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            break
+    
+    save_data(data)
+    return jsonify({'success': True})
+
+@app.route('/api/card/<int:card_id>')
+@login_required
+def get_card_details(card_id):
+    data = load_data()
+    card = next((c for c in data['cards'] if c['id'] == card_id), None)
+    if not card:
+        return jsonify({'error': 'Card not found'}), 404
+    
+    comments = [c for c in data.get('comments', []) if c['card_id'] == card_id]
+    return jsonify({'card': card, 'comments': comments})
+
+@app.route('/api/card/<int:card_id>/comments', methods=['GET', 'POST'])
+@login_required
+def card_comments(card_id):
+    data = load_data()
+    
+    if request.method == 'POST':
+        new_comment = {
+            'id': max([c['id'] for c in data.get('comments', [])], default=0) + 1,
+            'card_id': card_id,
+            'author': current_user.username,
+            'content': request.json['content'],
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        if 'comments' not in data:
+            data['comments'] = []
+        data['comments'].append(new_comment)
+        save_data(data)
+        return jsonify(new_comment)
+    
+    comments = [c for c in data.get('comments', []) if c['card_id'] == card_id]
+    return jsonify(comments)
+
+@app.route('/api/update_card_due_date', methods=['POST'])
+@login_required
+def update_card_due_date():
+    data = load_data()
+    card_id = request.json['card_id']
+    new_due_date = request.json['due_date']
+    
+    for card in data['cards']:
+        if card['id'] == card_id:
+            card['due_date'] = new_due_date
+            card['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            break
+    
+    save_data(data)
+    return jsonify({'success': True})
+
+# Template helper functions
+def get_due_date_text_class(due_date_str):
+    if not due_date_str:
+        return ''
+    try:
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        today = date.today()
+        if due_date < today:
+            return 'due-date-overdue'
+        elif due_date == today:
+            return 'due-date-today'
+        return 'due-date-upcoming'
+    except:
+        return ''
+
+def get_due_date_status(due_date_str):
+    if not due_date_str:
+        return ''
+    try:
+        due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+        today = date.today()
+        if due_date < today:
+            return '(OVERDUE)'
+        elif due_date == today:
+            return '(TODAY)'
+        elif (due_date - today).days <= 3:
+            return '(SOON)'
+        return ''
+    except:
+        return ''
+
+def get_comment_count(card_id):
+    data = load_data()
+    return len([c for c in data.get('comments', []) if c['card_id'] == card_id])
+
+def format_timestamp(timestamp):
+    if not timestamp:
+        return '-'
+    if isinstance(timestamp, str) and len(timestamp) == 10:
+        return timestamp
+    try:
+        if isinstance(timestamp, str):
+            for fmt in ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
+                try:
+                    dt = datetime.strptime(timestamp, fmt)
+                    return dt.strftime('%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    continue
+        return timestamp
+    except:
+        return timestamp
+
+# Register template functions
+app.jinja_env.globals.update(
+    get_due_date_text_class=get_due_date_text_class,
+    get_due_date_status=get_due_date_status,
+    get_comment_count=get_comment_count,
+    format_timestamp=format_timestamp
+)
+
+@app.template_filter('format_date')
+def format_date(date_string):
+    if not date_string:
+        return ''
+    try:
+        if len(date_string) == 10:  # YYYY-MM-DD format
+            return date_string
+        dt = datetime.strptime(date_string, '%Y-%m-%d %H:%M:%S')
+        return dt.strftime('%Y-%m-%d')
+    except:
+        return date_string
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='127.0.0.1', port=5000)

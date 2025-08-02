@@ -441,6 +441,95 @@ Files to Create/Modify:
 @coding-agent please implement this comprehensive backlog management feature
 ```
 
+### Issue #26: Interactive Gantt Chart for Project Navigation and Scheduling - OPEN
+```
+Title: [FEATURE] Interactive Gantt Chart for Project Navigation and Scheduling
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/26
+
+Description:
+Create a comprehensive Gantt chart feature for project navigation and scheduling with horizontal timeline view, organized by projects and issues.
+
+What I want:
+- Interactive Gantt chart with horizontal timeline view
+- Date and month navigation headers
+- Two-level hierarchy: Projects (first level) and Issues (second level)
+- Drag-and-drop scheduling capabilities
+- Visual progress tracking and dependencies
+- Export and sharing functionality
+
+Core Features:
+- [ ] Horizontal timeline view with date/month headers
+- [ ] Two-level hierarchy display (Projects → Issues)
+- [ ] Interactive task bars with drag-and-drop scheduling
+- [ ] Visual progress indicators on task bars
+- [ ] Task dependencies with connecting arrows
+- [ ] Milestone markers for important deadlines
+- [ ] Zoom levels (day, week, month, quarter view)
+- [ ] Today indicator line
+
+Project-Level Features:
+- [ ] Project swimlanes with collapsible sections
+- [ ] Project progress rollup from child issues
+- [ ] Project timeline spanning all child issues
+- [ ] Project milestone tracking
+- [ ] Resource allocation per project
+
+Issue-Level Features:
+- [ ] Issue task bars with start/end dates
+- [ ] Issue status color coding (TODO=gray, In Progress=blue, Done=green)
+- [ ] Issue priority indicators (High=red border, Medium=yellow, Low=green)
+- [ ] Assignee avatars on task bars
+- [ ] Due date warnings for overdue items
+
+Interactive Features:
+- [ ] Drag task bars to reschedule dates
+- [ ] Resize task bars to adjust duration
+- [ ] Click task bars to open issue details
+- [ ] Right-click context menu for quick actions
+- [ ] Keyboard shortcuts for navigation
+
+Navigation and Filtering:
+- [ ] Date range selector (This Week, This Month, This Quarter)
+- [ ] Project filter dropdown
+- [ ] Status filter (All, Active, Completed)
+- [ ] Assignee filter
+- [ ] Search functionality for issues
+- [ ] Bookmark and save custom views
+
+Visualization Options:
+- [ ] Critical path highlighting
+- [ ] Baseline vs actual timeline comparison
+- [ ] Resource utilization heatmap
+- [ ] Progress percentage on task bars
+- [ ] Dependency conflict warnings
+
+Export and Sharing:
+- [ ] Export to PDF with custom date ranges
+- [ ] Export to PNG/SVG for presentations
+- [ ] Print-friendly view
+- [ ] Share view with team members
+- [ ] Export data to CSV/Excel
+
+Technical Implementation:
+- [ ] Use D3.js or similar library for interactive timeline
+- [ ] Responsive design for different screen sizes
+- [ ] Real-time updates when data changes
+- [ ] Efficient rendering for large datasets (100+ issues)
+- [ ] Browser compatibility (Chrome, Firefox, Safari, Edge)
+
+Files to Create/Modify:
+- templates/gantt.html - Main Gantt chart page
+- static/js/gantt.js - Gantt chart functionality
+- static/css/gantt.css - Gantt chart styling
+- app/routes/main.py - Add /gantt route
+- app/services/gantt_service.py - Gantt data processing
+- templates/base.html - Add Gantt navigation link
+
+@coding-agent please implement this comprehensive Gantt chart feature
+```
+
 ### Issue #25: User Registration System with Admin Control - OPEN
 ```
 Title: [FEATURE] Issue #25: User Registration System with Admin Control
@@ -518,10 +607,10 @@ Files to Create/Modify:
 ```
 
 ## 📊 SUMMARY
-- **Total Issues**: 25
+- **Total Issues**: 26
 - **Completed**: 11 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #17, #18, #23)
-- **Open/In Progress**: 14 issues 🔄
-- **Completion Rate**: 44%
+- **Open/In Progress**: 15 issues 🔄
+- **Completion Rate**: 42%
 
 **Recently Completed:**
 - ✅ Issue #23: Actions Dropdown for Issue Management (2025-07-31)
@@ -546,9 +635,9 @@ Files to Create/Modify:
 - Issue #25: User Registration System with Admin Control
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #25: User Registration System with Admin Control 🆕
-2. Issue #24: Create Backlog Page with Advanced Filtering
-3. Issue #8: Card Labels/Tags System
-4. Issue #9: Time Tracking Features  
-5. Issue #11: Mobile Responsive Design
-6. Issue #13: Database Integration (PostgreSQL)
+1. Issue #26: Interactive Gantt Chart for Project Navigation and Scheduling 🆕
+2. Issue #25: User Registration System with Admin Control
+3. Issue #24: Create Backlog Page with Advanced Filtering
+4. Issue #8: Card Labels/Tags System
+5. Issue #9: Time Tracking Features  
+6. Issue #11: Mobile Responsive Design

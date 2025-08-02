@@ -8,8 +8,15 @@ class FirebaseConfig:
         # Firebase Admin SDK (for server-side operations)
         try:
             if not firebase_admin._apps:
-                cred = credentials.Certificate('firebase-service-account.json')
-                firebase_admin.initialize_app(cred)
+                # Windows-compatible path handling
+                service_account_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'firebase-service-account.json')
+                if os.path.exists(service_account_path):
+                    cred = credentials.Certificate(service_account_path)
+                    firebase_admin.initialize_app(cred)
+                else:
+                    # Fallback to current directory
+                    cred = credentials.Certificate('firebase-service-account.json')
+                    firebase_admin.initialize_app(cred)
             self.db = firestore.client()
         except Exception as e:
             print(f"Firebase not available, using JSON: {e}")

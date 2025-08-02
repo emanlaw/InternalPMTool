@@ -9,16 +9,23 @@ login_manager = LoginManager()
 mail = Mail()
 
 def create_app():
-    # Get the absolute path to the project root
+    # Get the absolute path to the project root (Windows-compatible)
     basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     
     app = Flask(__name__, 
-                template_folder=os.path.join(basedir, 'templates'),
-                static_folder=os.path.join(basedir, 'static'))
+                template_folder=os.path.normpath(os.path.join(basedir, 'templates')),
+                static_folder=os.path.normpath(os.path.join(basedir, 'static')))
     
-    # Load configuration
-    from config.config import Config
-    app.config.from_object(Config)
+    # Load configuration (Windows-compatible import)
+    try:
+        from config.config import Config
+        app.config.from_object(Config)
+    except ImportError:
+        # Fallback configuration
+        app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
+        app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+        app.config['MAIL_PORT'] = 587
+        app.config['MAIL_USE_TLS'] = True
     
     # Initialize extensions
     login_manager.init_app(app)
