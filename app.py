@@ -26,10 +26,20 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 class User(UserMixin):
-    def __init__(self, id, username, password_hash):
+    def __init__(self, id, username, password_hash, email=None, display_name=None, role='user', status='active'):
         self.id = id
         self.username = username
         self.password_hash = password_hash
+        self.email = email
+        self.display_name = display_name or username
+        self.role = role
+        self.status = status
+    
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    def can_manage_users(self):
+        return self.role == 'admin'
 
 @login_manager.user_loader
 def load_user(user_id):

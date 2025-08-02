@@ -16,13 +16,13 @@
             <option value="{{ project.id }}">{{ project.name }}</option>
             {% endfor %}
         </select>
-        <button class="btn" onclick="createNode()">+ Add Node</button>
-        <button class="btn btn-secondary" onclick="clearCanvas()">Clear</button>
-        <button class="btn btn-secondary" onclick="exportMindMap()">Export PNG</button>
-        <button class="btn btn-secondary" onclick="exportToJSON()">Export JSON</button>
-        <button class="btn btn-secondary" onclick="importFromJSON()">Import JSON</button>
-        <button class="btn btn-secondary" onclick="saveMindMap()">Save</button>
-        <button class="btn btn-secondary" onclick="showMindMapSummary()">Summary</button>
+        <button class="btn btn-primary" onclick="createNode()">+ Add Node</button>
+        <button class="btn btn-secondary" onclick="saveMindMap()">💾 Save</button>
+        <button class="btn btn-secondary" onclick="exportMindMap()">📸 Export PNG</button>
+        <button class="btn btn-secondary" onclick="exportToJSON()">📄 Export JSON</button>
+        <button class="btn btn-secondary" onclick="importFromJSON()">📁 Import JSON</button>
+        <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ Clear</button>
+        <button class="btn btn-secondary" onclick="showMindMapSummary()">📊 Summary</button>
     </div>
 </div>
 
@@ -163,6 +163,13 @@ class MindMap {
         this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
         this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
+        this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
+        this.canvas.addEventListener('mouseleave', () => this.hideTooltip());
+        
+        // Touch events for mobile
+        this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
+        this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
+        this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
     }
     
     getMousePos(e) {
@@ -192,11 +199,22 @@ class MindMap {
     }
     
     onMouseMove(e) {
+        const pos = this.getMousePos(e);
+        
         if (this.dragging && this.selectedNode) {
-            const pos = this.getMousePos(e);
             this.selectedNode.x = pos.x - this.dragOffset.x;
             this.selectedNode.y = pos.y - this.dragOffset.y;
             this.draw();
+        } else {
+            // Show tooltip for hovered node
+            const hoveredNode = this.getNodeAt(pos.x, pos.y);
+            if (hoveredNode) {
+                this.showTooltip(e, hoveredNode);
+                this.canvas.style.cursor = 'pointer';
+            } else {
+                this.hideTooltip();
+                this.canvas.style.cursor = this.connectionMode ? 'crosshair' : 'grab';
+            }
         }
     }
     
@@ -227,22 +245,86 @@ class MindMap {
     
     createNodeAt(x, y) {
         const nodeType = document.getElementById('nodeType').value;
-        const text = prompt('Enter node text:');
+        this.showNodeCreationDialog(x, y, nodeType);
+    }
+    
+    showNodeCreationDialog(x, y, nodeType) {
+        const dialog = document.createElement('div');
+        dialog.className = 'node-creation-dialog';
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <h3>Create New Node</h3>
+                <div class="form-group">
+                    <label>Node Text:</label>
+                    <textarea id="nodeText" placeholder="Enter node description..." rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Node Type:</label>
+                    <select id="dialogNodeType">
+                        <option value="todo" ${nodeType === 'todo' ? 'selected' : ''}>TODO</option>
+                        <option value="in_progress" ${nodeType === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="done" ${nodeType === 'done' ? 'selected' : ''}>Done</option>
+                        <option value="idea" ${nodeType === 'idea' ? 'selected' : ''}>Idea</option>
+                    </select>
+                </div>
+                <div class="dialog-actions">
+                    <button class="btn btn-primary" onclick="this.parentElement.parentElement.parentElement.createNode()">Create</button>
+                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()">Cancel</button>
+                </div>
+            </div>
+        `;
         
-        if (text) {
-            const node = {
-                id: this.nodeIdCounter++,
-                x: x,
-                y: y,
-                text: text,
-                type: nodeType,
-                width: 120,
-                height: 60
-            };
+        dialog.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        const content = dialog.querySelector('.dialog-content');
+        content.style.cssText = `
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        `;
+        
+        dialog.createNode = () => {
+            const text = dialog.querySelector('#nodeText').value.trim();
+            const type = dialog.querySelector('#dialogNodeType').value;
             
-            this.nodes.push(node);
-            this.draw();
-        }
+            if (text) {
+                const node = {
+                    id: this.nodeIdCounter++,
+                    x: x,
+                    y: y,
+                    text: text,
+                    type: type,
+                    width: Math.max(120, text.length * 8),
+                    height: Math.max(60, Math.ceil(text.length / 15) * 20 + 20)
+                };
+                
+                this.nodes.push(node);
+                this.selectedNode = node;
+                this.draw();
+                dialog.remove();
+            } else {
+                alert('Please enter node text');
+            }
+        };
+        
+        document.body.appendChild(dialog);
+        dialog.querySelector('#nodeText').focus();
     }
     
     editNode(node) {
@@ -478,13 +560,30 @@ class MindMap {
         };
     }
     
+    onWheel(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(0.1, Math.min(3, this.zoom * zoomFactor));
+        
+        // Zoom towards mouse position
+        this.panX = mouseX - (mouseX - this.panX) * (newZoom / this.zoom);
+        this.panY = mouseY - (mouseY - this.panY) * (newZoom / this.zoom);
+        
+        this.zoom = newZoom;
+        this.draw();
+    }
+    
     zoomIn() {
-        this.zoom *= 1.2;
+        this.zoom = Math.min(3, this.zoom * 1.2);
         this.draw();
     }
     
     zoomOut() {
-        this.zoom /= 1.2;
+        this.zoom = Math.max(0.1, this.zoom / 1.2);
         this.draw();
     }
     
@@ -493,6 +592,59 @@ class MindMap {
         this.panX = 0;
         this.panY = 0;
         this.draw();
+    }
+    
+    showTooltip(e, node) {
+        let tooltip = document.querySelector('.mindmap-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.className = 'mindmap-tooltip tooltip';
+            document.body.appendChild(tooltip);
+        }
+        
+        tooltip.innerHTML = `
+            <strong>${node.text}</strong><br>
+            <small>Type: ${node.type.replace('_', ' ').toUpperCase()}</small><br>
+            <small>Double-click to edit</small>
+        `;
+        
+        tooltip.style.left = e.clientX + 10 + 'px';
+        tooltip.style.top = e.clientY - 10 + 'px';
+        tooltip.classList.add('show');
+    }
+    
+    hideTooltip() {
+        const tooltip = document.querySelector('.mindmap-tooltip');
+        if (tooltip) {
+            tooltip.classList.remove('show');
+        }
+    }
+    
+    // Touch event handlers for mobile support
+    onTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        this.onMouseDown(mouseEvent);
+    }
+    
+    onTouchMove(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        this.onMouseMove(mouseEvent);
+    }
+    
+    onTouchEnd(e) {
+        e.preventDefault();
+        const mouseEvent = new MouseEvent('mouseup', {});
+        this.onMouseUp(mouseEvent);
     }
     
     clear() {
@@ -564,6 +716,14 @@ document.addEventListener('DOMContentLoaded', function() {
     mindmap = new AdvancedMindMap('mindmapCanvas');
     window.mindmap = mindmap; // Make globally accessible
     
+    // Add floating action button
+    const fab = document.createElement('button');
+    fab.className = 'fab';
+    fab.innerHTML = '+';
+    fab.title = 'Add Node (Double-click on canvas)';
+    fab.onclick = () => mindmap.createNodeAt(200, 200);
+    document.body.appendChild(fab);
+    
     // Load mind map when project is selected
     document.getElementById('projectSelect').addEventListener('change', function() {
         const projectId = this.value;
@@ -573,15 +733,63 @@ document.addEventListener('DOMContentLoaded', function() {
             mindmap.clear();
         }
     });
+    
+    // Add keyboard shortcut hints
+    const helpButton = document.createElement('button');
+    helpButton.className = 'btn btn-secondary';
+    helpButton.innerHTML = '? Help';
+    helpButton.onclick = showHelpDialog;
+    document.querySelector('.mindmap-controls').appendChild(helpButton);
 });
 
-// Global functions
+function showHelpDialog() {
+    const dialog = document.createElement('div');
+    dialog.className = 'help-overlay';
+    dialog.innerHTML = `
+        <div class="help-content">
+            <button class="close-help" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            <h2>Mind Map Help</h2>
+            <div class="help-shortcuts">
+                <div class="shortcut-key">Double-click</div>
+                <div>Create/Edit node</div>
+                <div class="shortcut-key">Right-click</div>
+                <div>Context menu</div>
+                <div class="shortcut-key">Drag</div>
+                <div>Move nodes</div>
+                <div class="shortcut-key">Mouse wheel</div>
+                <div>Zoom in/out</div>
+                <div class="shortcut-key">Ctrl+S</div>
+                <div>Save mind map</div>
+                <div class="shortcut-key">Ctrl+Z</div>
+                <div>Undo</div>
+                <div class="shortcut-key">Ctrl+Y</div>
+                <div>Redo</div>
+                <div class="shortcut-key">Delete</div>
+                <div>Delete selected node</div>
+            </div>
+            <h3>Node Types</h3>
+            <p><strong>TODO:</strong> Tasks to be completed</p>
+            <p><strong>In Progress:</strong> Currently working on</p>
+            <p><strong>Done:</strong> Completed tasks</p>
+            <p><strong>Idea:</strong> Brainstorming and concepts</p>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    setTimeout(() => dialog.classList.add('show'), 10);
+}
+
+// Enhanced global functions
 function createNode() {
-    mindmap.createNodeAt(200, 200);
+    const canvas = document.getElementById('mindmapCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const centerX = (rect.width / 2 - mindmap.panX) / mindmap.zoom;
+    const centerY = (rect.height / 2 - mindmap.panY) / mindmap.zoom;
+    mindmap.createNodeAt(centerX, centerY);
 }
 
 function clearCanvas() {
-    if (confirm('Clear all nodes and connections?')) {
+    if (confirm('⚠️ This will delete all nodes and connections. Are you sure?')) {
         mindmap.clear();
     }
 }
@@ -605,6 +813,137 @@ function zoomOut() {
 function resetZoom() {
     mindmap.resetZoom();
 }
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .node-creation-dialog .dialog-content {
+        animation: slideUp 0.3s ease;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.2);
+    }
+    
+    .dialog-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    
+    .help-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .help-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .help-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        position: relative;
+    }
+    
+    .help-overlay.show .help-content {
+        transform: scale(1);
+    }
+    
+    .help-shortcuts {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 10px;
+        margin: 20px 0;
+    }
+    
+    .shortcut-key {
+        background: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: bold;
+        border: 1px solid #dee2e6;
+    }
+    
+    .close-help {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6c757d;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    
+    .close-help:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+`;
+document.head.appendChild(style);
 </script>
 <script src="/static/js/mindmap.js"></script>
 {% endblock %}

@@ -270,14 +270,73 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
+### Issue #27: Sprint Management System - OPEN
+```
+Title: [FEATURE] Sprint Management System
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/27
+
+Description:
+I want a comprehensive Sprint Management System to organize work into time-boxed iterations with proper planning, tracking, and reporting capabilities.
+
+What I want:
+- Create and manage sprints with start/end dates
+- Assign issues/cards to specific sprints
+- Sprint planning interface with drag-and-drop
+- Sprint progress tracking and burndown charts
+- Sprint retrospective and reporting
+- Velocity tracking across sprints
+
+Core Features:
+- [ ] Sprint creation with project targeting
+- [ ] Sprint planning board (backlog to sprint assignment)
+- [ ] Sprint dashboard with progress metrics
+- [ ] Burndown chart visualization
+- [ ] Sprint capacity planning (story points/hours)
+- [ ] Sprint retrospective templates
+- [ ] Velocity tracking and forecasting
+- [ ] Sprint calendar integration
+
+Advanced Features:
+- [ ] Sprint templates for recurring patterns
+- [ ] Automated sprint rollover for incomplete items
+- [ ] Sprint comparison and analytics
+- [ ] Team workload distribution in sprints
+- [ ] Sprint notifications and reminders
+- [ ] Export sprint reports (PDF/Excel)
+- [ ] Sprint milestone integration
+- [ ] Custom sprint fields and metadata
+
+Acceptance Criteria:
+- [ ] Sprint list page showing all sprints with status
+- [ ] Create sprint modal with project selection
+- [ ] Sprint planning interface with issue assignment
+- [ ] Sprint detail page with progress tracking
+- [ ] Burndown chart with daily progress
+- [ ] Sprint retrospective form and history
+- [ ] Velocity calculation and trending
+- [ ] Sprint reports and analytics dashboard
+
+Technical Requirements:
+- [ ] Sprint model with relationships to projects/issues
+- [ ] Sprint planning drag-and-drop interface
+- [ ] Chart.js integration for burndown visualization
+- [ ] Sprint progress calculation algorithms
+- [ ] Sprint notification system
+- [ ] Sprint data export functionality
+
+@coding-agent please implement this comprehensive sprint management feature
+```
+
 
 
 ## 📊 SUMMARY
-- **Total Issues**: 26
+- **Total Issues**: 27
 - **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #14, #15, #16, #17, #18, #23, #24, #25, #26)
 - **Archived**: 1 issue 📦 (Issue #13)
-- **Open/In Progress**: 7 issues 🔄
-- **Completion Rate**: 69% (18/26 completed)
+- **Open/In Progress**: 8 issues 🔄
+- **Completion Rate**: 67% (18/27 completed)
 
 **Note**: Issues #24 and #26 are correctly completed and have been removed from the upcoming list
 
