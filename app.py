@@ -9,9 +9,6 @@ from datetime import datetime, date
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# Sprint management imports
-from app_modules.services.sprint_service import SprintService
-
 # Initialize Firebase
 if not firebase_admin._apps:
     cred = credentials.Certificate('firebase-service-account.json')
@@ -739,6 +736,7 @@ def mindmap():
 @app.route('/sprints')
 @login_required
 def sprints():
+    from app_modules.services.sprint_service import SprintService
     data = load_data()
     sprint_service = SprintService()
     
@@ -756,6 +754,7 @@ def sprints():
 @app.route('/sprints/<int:sprint_id>')
 @login_required
 def sprint_detail(sprint_id):
+    from app_modules.services.sprint_service import SprintService
     data = load_data()
     sprint_service = SprintService()
     
@@ -786,6 +785,7 @@ def sprint_detail(sprint_id):
 @login_required
 def create_sprint():
     try:
+        from app_modules.services.sprint_service import SprintService
         sprint_service = SprintService()
         
         name = request.json['name']
@@ -813,6 +813,7 @@ def create_sprint():
 @login_required
 def start_sprint(sprint_id):
     try:
+        from app_modules.services.sprint_service import SprintService
         sprint_service = SprintService()
         success = sprint_service.start_sprint(sprint_id)
         
@@ -828,6 +829,7 @@ def start_sprint(sprint_id):
 @login_required
 def complete_sprint(sprint_id):
     try:
+        from app_modules.services.sprint_service import SprintService
         sprint_service = SprintService()
         success = sprint_service.complete_sprint(sprint_id)
         
@@ -843,6 +845,7 @@ def complete_sprint(sprint_id):
 @login_required
 def add_issue_to_sprint(sprint_id):
     try:
+        from app_modules.services.sprint_service import SprintService
         sprint_service = SprintService()
         issue_id = request.json['issue_id']
         
@@ -860,6 +863,7 @@ def add_issue_to_sprint(sprint_id):
 @login_required
 def remove_issue_from_sprint(sprint_id, issue_id):
     try:
+        from app_modules.services.sprint_service import SprintService
         sprint_service = SprintService()
         success = sprint_service.remove_issue_from_sprint(sprint_id, issue_id)
         
