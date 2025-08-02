@@ -182,34 +182,6 @@ Detailed Features:
 @coding-agent please implement this feature
 ```
 
-### Issue #15: Interactive Gantt Chart for Sprint and Project Management - OPEN
-```
-Title: [FEATURE] Interactive Gantt Chart for Sprint and Project Management
-
-Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/15
-
-Description:
-I want an interactive Gantt chart to visualize project timelines, dependencies, and sprint planning.
-
-What I want:
-- Interactive Gantt chart with drag-and-drop timeline editing
-- Task dependencies and critical path visualization
-- Sprint planning and milestone tracking
-- Resource allocation and workload management
-
-Acceptance Criteria:
-- [ ] Interactive Gantt chart with timeline view
-- [ ] Drag tasks to adjust dates and duration
-- [ ] Task dependencies with connecting lines
-- [ ] Critical path highlighting
-- [ ] Sprint boundaries and milestones
-- [ ] Resource allocation view
-- [ ] Export to PDF and image formats
-
-@coding-agent please implement this feature
-```
-
 ### Issue #16: Advanced Mind Map Features - OPEN
 ```
 Title: [FEATURE] Advanced Mind Map Features
@@ -353,10 +325,10 @@ Acceptance Criteria:
 
 ## 📊 SUMMARY
 - **Total Issues**: 26
-- **Completed**: 15 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #17, #18, #23, #24, #25, #26)
+- **Completed**: 16 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #15, #17, #18, #23, #24, #25, #26)
 - **Archived**: 1 issue 📦 (Issue #13)
-- **Open/In Progress**: 10 issues 🔄
-- **Completion Rate**: 58% (15/26 completed)
+- **Open/In Progress**: 9 issues 🔄
+- **Completion Rate**: 62% (16/26 completed)
 
 **Note**: Issues #24 and #26 are correctly completed and have been removed from the upcoming list
 
@@ -373,7 +345,6 @@ Acceptance Criteria:
 - Issue #10: Team Collaboration Tools
 - Issue #11: Mobile Responsive Design
 - Issue #14: Interactive Mind Map for Project Planning
-- Issue #15: Interactive Gantt Chart for Sprint and Project Management
 - Issue #16: Advanced Mind Map Features
 - Issue #19: Enhanced Dark Mode Toggle with Better Contrast
 - Issue #20: Add Colored Labels to Cards
