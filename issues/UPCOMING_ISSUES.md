@@ -9,9 +9,15 @@
 - ✅ Issue #6: [FEATURE] Email Notifications for Overdue Cards - CLOSED
 - ✅ Issue #7: [FEATURE] Dark Mode Theme - CLOSED
 - ✅ Issue #12: [VERSION 1.1] Issues List - CLOSED
+- ✅ Issue #13: [FEATURE] Database Integration (PostgreSQL) - CLOSED
+- ✅ Issue #14: [FEATURE] Interactive Mind Map for Project Planning - CLOSED
+- ✅ Issue #15: [FEATURE] Interactive Gantt Chart for Sprint and Project Management - CLOSED
+- ✅ Issue #16: [FEATURE] Advanced Mind Map Features - CLOSED
 - ✅ Issue #17: [FEATURE] Enhanced Gantt Chart Analytics - CLOSED
 - ✅ Issue #18: [BUG] Fix Issues List Status Updates and Filtering - CLOSED
 - ✅ Issue #23: [FEATURE] Add Actions Dropdown for Issue Management - CLOSED
+- ✅ Issue #24: [FEATURE] Create Backlog Page with Advanced Filtering - CLOSED
+- ✅ Issue #25: [FEATURE] User Registration System with Admin Control - CLOSED
 - ✅ Issue #26: [FEATURE] Project Archive System with Dashboard Integration - CLOSED
 
 **Note:** Issue #24 (Backlog Page) was implemented but remains OPEN on GitHub for additional enhancements.
@@ -314,19 +320,16 @@ Technical Requirements:
 
 ## 📊 SUMMARY
 - **Total Issues**: 27
-- **Completed**: 19 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #14, #15, #16, #17, #18, #23, #24, #25, #26, #27)
-- **Archived**: 1 issue 📦 (Issue #13)
-- **Open/In Progress**: 7 issues 🔄
-- **Completion Rate**: 70% (19/27 completed)
-
-**Note**: Issues #24 and #26 are correctly completed and have been removed from the upcoming list
+- **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #13, #14, #15, #16, #17, #18, #23, #24, #25, #26)
+- **Open/In Progress**: 9 issues 🔄
+- **Completion Rate**: 67% (18/27 completed)
 
 **Recently Completed:**
-- ✅ Issue #14: Interactive Mind Map for Project Planning (2025-01-31)
-- ✅ Issue #16: Advanced Mind Map Features (2025-01-31)
-- ✅ Issue #25: User Registration System with Admin Control (2025-01-31)
-- ✅ Issue #15: Interactive Gantt Chart (2025-01-31)
+- ✅ Issue #26: Project Archive System with Dashboard Integration (2025-08-02)
+- ✅ Issue #25: User Registration System with Admin Control (2025-08-02)
 - ✅ Issue #24: Create Backlog Page with Advanced Filtering (2025-08-02)
+- ✅ Issue #16: Advanced Mind Map Features (2025-08-02)
+- ✅ Issue #15: Interactive Gantt Chart for Sprint and Project Management (2025-08-02)
 
 **Open Issues on GitHub:**
 - Issue #8: Card Labels/Tags System
@@ -337,13 +340,11 @@ Technical Requirements:
 - Issue #20: Add Colored Labels to Cards
 - Issue #21: Time Tracking for Cards
 - Issue #22: Enhanced Team Collaboration
-
-**Archived Issues:**
-- Issue #13: Database Integration (PostgreSQL) - 📦 Archived (using Firebase instead)
+- Issue #27: Sprint Management System
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #8: Card Labels/Tags System
-2. Issue #9: Time Tracking Features
-3. Issue #11: Mobile Responsive Design
-4. Issue #20: Add Colored Labels to Cards
-5. Issue #10: Team Collaboration Tools
+1. Issue #27: Sprint Management System
+2. Issue #8: Card Labels/Tags System
+3. Issue #9: Time Tracking Features
+4. Issue #11: Mobile Responsive Design
+5. Issue #19: Enhanced Dark Mode Toggle with Better Contrast

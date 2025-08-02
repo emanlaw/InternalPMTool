@@ -247,8 +247,113 @@ Acceptance Criteria:
 
 ---
 
+## Issue #13: [FEATURE] Database Integration (PostgreSQL) ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/13
+
+**Description:**
+The current JSON file storage is not scalable. I want to migrate to a proper PostgreSQL database for better performance and reliability.
+
+**Requirements:**
+- [x] PostgreSQL database setup
+- [x] Migrate all existing data
+- [x] Improved performance
+- [x] Data backup and recovery
+- [x] Database connection pooling
+- [x] Database migrations system
+- [x] All existing features work with database
+
+---
+
+## Issue #14: [FEATURE] Interactive Mind Map for Project Planning ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/14
+
+**Description:**
+I want an interactive mind map feature to visualize project structure, brainstorm ideas, and show relationships between different project components.
+
+**Requirements:**
+- [x] Interactive mind map canvas with drag-and-drop nodes
+- [x] Different node types for different card statuses
+- [x] Visual connections between related cards/ideas
+- [x] Collaborative editing capabilities
+- [x] Export mind maps as images or PDF
+
+---
+
+## Issue #15: [FEATURE] Interactive Gantt Chart for Sprint and Project Management ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/15
+
+**Description:**
+I want an interactive Gantt chart to visualize project timelines, dependencies, and sprint planning.
+
+**Requirements:**
+- [x] Interactive Gantt chart with timeline view
+- [x] Drag tasks to adjust dates and duration
+- [x] Task dependencies with connecting lines
+- [x] Critical path highlighting
+- [x] Sprint boundaries and milestones
+- [x] Resource allocation view
+- [x] Export to PDF and image formats
+
+---
+
+## Issue #16: [FEATURE] Advanced Mind Map Features ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/16
+
+**Description:**
+Enhanced mind mapping capabilities with advanced features for complex project visualization.
+
+**Requirements:**
+- [x] Advanced node types and styling options
+- [x] Real-time collaboration features
+- [x] Integration with existing project data
+- [x] Advanced export and sharing options
+
+---
+
+## Issue #24: [FEATURE] Create Backlog Page with Advanced Filtering ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/24
+
+**Description:**
+Create a dedicated Backlog page to manage and organize all backlog items with advanced filtering and management capabilities.
+
+**Requirements:**
+- [x] Dedicated Backlog page accessible from main navigation
+- [x] Show all issues with status 'Backlog' or similar
+- [x] Same filtering functionality as Issues page
+- [x] Enhanced backlog-specific features
+- [x] Bulk operations for backlog management
+
+---
+
+## Issue #25: [FEATURE] User Registration System with Admin Control ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/25
+
+**Description:**
+Implement a comprehensive user registration system that allows new users to register and provides admin control over user management.
+
+**Requirements:**
+- [x] User registration flow with display name, email, and password
+- [x] Admin notification system for new registrations
+- [x] Admin dashboard to view and manage registered users
+- [x] User permission levels controlled by admin
+- [x] Secure registration process with validation
+
+---
+
 ## Issue #26: [FEATURE] Project Archive System with Dashboard Integration ✅ COMPLETED
-**Implementation Date:** 2025-01-31
+**Implementation Date:** 2025-08-02
 **Status:** ✅ COMPLETED
 **GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/26
 
