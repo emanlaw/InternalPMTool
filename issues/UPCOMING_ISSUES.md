@@ -150,34 +150,6 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #13: Database Integration (PostgreSQL) - OPEN
-```
-Title: [FEATURE] Database Integration (PostgreSQL)
-
-Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/13
-
-Description:
-The current JSON file storage is not scalable. I want to migrate to a proper PostgreSQL database for better performance and reliability.
-
-What I want:
-- PostgreSQL database setup
-- Migrate all existing data
-- Improved performance
-- Data backup and recovery
-
-Acceptance Criteria:
-- [ ] PostgreSQL database schema created
-- [ ] All JSON data migrated successfully
-- [ ] Database connection pooling
-- [ ] Improved query performance
-- [ ] Database migrations system
-- [ ] Backup and restore procedures
-- [ ] All existing features work with database
-
-@coding-agent please implement this feature
-```
-
 ### Issue #14: Interactive Mind Map for Project Planning - OPEN
 ```
 Title: [FEATURE] Interactive Mind Map for Project Planning
@@ -536,8 +508,9 @@ Files to Create/Modify:
 ## 📊 SUMMARY
 - **Total Issues**: 26
 - **Completed**: 15 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #17, #18, #23, #24, #25, #26)
-- **Open/In Progress**: 11 issues 🔄
-- **Completion Rate**: 58%
+- **Archived**: 1 issue 📦 (Issue #13)
+- **Open/In Progress**: 10 issues 🔄
+- **Completion Rate**: 58% (15/26 completed)
 
 **Recently Completed:**
 - ✅ Issue #25: User Registration System with Admin Control (2025-01-31)
@@ -551,7 +524,6 @@ Files to Create/Modify:
 - Issue #9: Time Tracking Features
 - Issue #10: Team Collaboration Tools
 - Issue #11: Mobile Responsive Design
-- Issue #13: Database Integration (PostgreSQL)
 - Issue #14: Interactive Mind Map for Project Planning
 - Issue #15: Interactive Gantt Chart for Sprint and Project Management
 - Issue #16: Advanced Mind Map Features
@@ -560,9 +532,12 @@ Files to Create/Modify:
 - Issue #21: Time Tracking for Cards
 - Issue #22: Enhanced Team Collaboration
 
+**Archived Issues:**
+- Issue #13: Database Integration (PostgreSQL) - 📦 Archived (using Firebase instead)
+
 ## 🎯 NEXT PRIORITIES
 1. Issue #8: Card Labels/Tags System
-3. Issue #9: Time Tracking Features
-4. Issue #11: Mobile Responsive Design
-5. Issue #13: Database Integration (PostgreSQL)
-6. Issue #20: Add Colored Labels to Cards
+2. Issue #9: Time Tracking Features
+3. Issue #11: Mobile Responsive Design
+4. Issue #20: Add Colored Labels to Cards
+5. Issue #10: Team Collaboration Tools
