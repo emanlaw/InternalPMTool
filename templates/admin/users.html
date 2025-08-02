@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - User Management{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <h1>👥 User Management</h1>
+    <p>Manage user accounts, permissions, and access control</p>
+</div>
+
+<!-- User Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_users }}</div>
+        <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.active_users }}</div>
+        <div class="stat-label">Active Users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.pending_users }}</div>
+        <div class="stat-label">Pending Approval</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.suspended_users }}</div>
+        <div class="stat-label">Suspended</div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-container">
+    <form method="GET" class="filters-form">
+        <div class="filters-row">
+            <div class="search-field">
+                <input type="text" name="search" class="search-input" 
+                       placeholder="Search by username, email, or display name..." 
+                       value="{{ current_search }}">
+            </div>
+            <select name="status" class="filter-select">
+                <option value="">All Status</option>
+                <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="suspended" {% if current_status == 'suspended' %}selected{% endif %}>Suspended</option>
+                <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <select name="role" class="filter-select">
+                <option value="">All Roles</option>
+                <option value="admin" {% if current_role == 'admin' %}selected{% endif %}>Admin</option>
+                <option value="manager" {% if current_role == 'manager' %}selected{% endif %}>Manager</option>
+                <option value="user" {% if current_role == 'user' %}selected{% endif %}>User</option>
+                <option value="viewer" {% if current_role == 'viewer' %}selected{% endif %}>Viewer</option>
+            </select>
+            <button type="submit" class="btn">Filter</button>
+        </div>
+    </form>
+    
+    {% if current_search or current_status or current_role %}
+    <div class="search-summary">
+        Showing {{ users|length }} users
+        {% if current_search %} matching "{{ current_search }}"{% endif %}
+        {% if current_status %} with status "{{ current_status }}"{% endif %}
+        {% if current_role %} with role "{{ current_role }}"{% endif %}
+        <a href="{{ url_for('auth.admin_users') }}" style="margin-left: 10px;">Clear filters</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Bulk Actions -->
+<div class="bulk-actions" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none;" id="bulkActions">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span id="selectedCount">0 users selected</span>
+        <button class="btn" onclick="bulkAction('approve')">Approve Selected</button>
+        <button class="btn btn-secondary" onclick="bulkAction('suspend')">Suspend Selected</button>
+        <button class="btn btn-secondary" onclick="bulkAction('reject')">Reject Selected</button>
+        <button class="btn btn-secondary" onclick="clearSelection()">Clear Selection</button>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                <th>User</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Registration Date</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td><input type="checkbox" class="user-checkbox" value="{{ user.id }}" onchange="updateSelection()"></td>
+                <td>
+                    <div>
+                        <strong>{{ user.display_name or user.username }}</strong>
+                        <br>
+                        <small style="color: #5e6c84;">@{{ user.username }}</small>
+                    </div>
+                </td>
+                <td>{{ user.email or '-' }}</td>
+                <td>
+                    <select class="role-select" data-user-id="{{ user.id }}" onchange="updateUserRole(this)">
+                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager</option>
+                        <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
+                        <option value="viewer" {% if user.role == 'viewer' %}selected{% endif %}>Viewer</option>
+                    </select>
+                </td>
+                <td>
+                    <span class="status-badge status-{{ user.status }}">
+                        {{ user.status.title() }}
+                    </span>
+                </td>
+                <td>{{ user.created_at[:10] if user.created_at else '-' }}</td>
+                <td>{{ user.last_login[:10] if user.last_login else 'Never' }}</td>
+                <td>
+                    <div class="action-buttons">
+                        {% if user.status == 'pending' %}
+                            <button class="btn btn-sm" onclick="updateUserStatus({{ user.id }}, 'active')">Approve</button>
+                            <button class="btn btn-secondary btn-sm" onclick="updateUserStatus({{ user.id }}, 'inactive')">Reject</button>
+                        {% elif user.status == 'active' %}
+                            <button class="btn btn-secondary btn-sm" onclick="updateUserStatus({{ user.id }}, 'suspended')">Suspend</button>
+                        {% elif user.status == 'suspended' %}
+                            <button class="btn btn-sm" onclick="updateUserStatus({{ user.id }}, 'active')">Reactivate</button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    {% if not users %}
+    <div style="text-align: center; padding: 40px; color: #5e6c84;">
+        <h3>No users found</h3>
+        <p>No users match your current filters.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.admin-header {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.admin-header h1 {
+    margin: 0 0 10px 0;
+    color: #172b4d;
+    font-size: 32px;
+}
+
+.admin-header p {
+    margin: 0;
+    color: #5e6c84;
+    font-size: 16px;
+}
+
+.filters-form {
+    margin: 0;
+}
+
+.role-select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.role-select:focus {
+    outline: none;
+    border-color: #0079bf;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.user-checkbox {
+    cursor: pointer;
+}
+
+#selectAll {
+    cursor: pointer;
+}
+
+/* Dark mode styles */
+.dark-mode .admin-header {
+    background: #2d3748;
+    color: #f5f5f5;
+}
+
+.dark-mode .admin-header h1 {
+    color: #ffffff !important;
+}
+
+.dark-mode .role-select {
+    background: #374151;
+    color: #f0f0f0;
+    border-color: #555555;
+}
+
+.dark-mode .role-select:focus {
+    border-color: #0079bf;
+}
+</style>
+
+<script>
+let selectedUsers = new Set();
+
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.user-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+        if (selectAll.checked) {
+            selectedUsers.add(parseInt(checkbox.value));
+        } else {
+            selectedUsers.delete(parseInt(checkbox.value));
+        }
+    });
+    
+    updateSelection();
+}
+
+function updateSelection() {
+    const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    selectedUsers.clear();
+    checkboxes.forEach(checkbox => {
+        selectedUsers.add(parseInt(checkbox.value));
+    });
+    
+    if (selectedUsers.size > 0) {
+        bulkActions.style.display = 'block';
+        selectedCount.textContent = `${selectedUsers.size} user${selectedUsers.size > 1 ? 's' : ''} selected`;
+    } else {
+        bulkActions.style.display = 'none';
+    }
+    
+    // Update select all checkbox
+    const allCheckboxes = document.querySelectorAll('.user-checkbox');
+    const selectAll = document.getElementById('selectAll');
+    selectAll.checked = allCheckboxes.length > 0 && selectedUsers.size === allCheckboxes.length;
+}
+
+function clearSelection() {
+    selectedUsers.clear();
+    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('selectAll').checked = false;
+    updateSelection();
+}
+
+function updateUserStatus(userId, newStatus) {
+    if (!confirm(`Are you sure you want to ${newStatus} this user?`)) {
+        return;
+    }
+    
+    fetch('/admin/users/update_status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            status: newStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating user status');
+    });
+}
+
+function updateUserRole(selectElement) {
+    const userId = parseInt(selectElement.dataset.userId);
+    const newRole = selectElement.value;
+    
+    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
+        selectElement.value = selectElement.dataset.originalValue || 'user';
+        return;
+    }
+    
+    fetch('/admin/users/update_role', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_id: userId,
+            role: newRole
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            selectElement.dataset.originalValue = newRole;
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.textContent = 'Role updated successfully';
+            successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #36b37e; color: white; padding: 10px 20px; border-radius: 4px; z-index: 1000;';
+            document.body.appendChild(successMsg);
+            setTimeout(() => successMsg.remove(), 3000);
+        } else {
+            alert('Error: ' + data.error);
+            selectElement.value = selectElement.dataset.originalValue || 'user';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating user role');
+        selectElement.value = selectElement.dataset.originalValue || 'user';
+    });
+}
+
+function bulkAction(action) {
+    if (selectedUsers.size === 0) {
+        alert('Please select users first');
+        return;
+    }
+    
+    const actionText = action === 'approve' ? 'approve' : action === 'suspend' ? 'suspend' : 'reject';
+    if (!confirm(`Are you sure you want to ${actionText} ${selectedUsers.size} user(s)?`)) {
+        return;
+    }
+    
+    fetch('/admin/users/bulk_update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            user_ids: Array.from(selectedUsers),
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while performing bulk action');
+    });
+}
+
+// Store original values for role selects
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.role-select').forEach(select => {
+        select.dataset.originalValue = select.value;
+    });
+});
+</script>
+{% endblock %}

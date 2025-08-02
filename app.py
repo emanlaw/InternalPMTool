@@ -36,7 +36,15 @@ def load_user(user_id):
     data = load_data()
     user_data = next((u for u in data.get('users', []) if u['id'] == int(user_id)), None)
     if user_data:
-        return User(user_data['id'], user_data['username'], user_data['password_hash'])
+        return User(
+            user_data['id'], 
+            user_data['username'], 
+            user_data['password_hash'],
+            user_data.get('email'),
+            user_data.get('display_name'),
+            user_data.get('role', 'user'),
+            user_data.get('status', 'active')
+        )
     return None
 
 
@@ -142,7 +150,33 @@ def login():
         user_data = next((u for u in data.get('users', []) if u['username'] == username), None)
         
         if user_data and check_password_hash(user_data['password_hash'], password):
-            user = User(user_data['id'], user_data['username'], user_data['password_hash'])
+            # Check if user account is active
+            if user_data.get('status') != 'active':
+                status_messages = {
+                    'pending': 'Your account is pending admin approval.',
+                    'suspended': 'Your account has been suspended.',
+                    'inactive': 'Your account is inactive.'
+                }
+                flash(status_messages.get(user_data.get('status'), 'Your account is not active.'))
+                return render_template('login.html')
+            
+            user = User(
+                user_data['id'], 
+                user_data['username'], 
+                user_data['password_hash'],
+                user_data.get('email'),
+                user_data.get('display_name'),
+                user_data.get('role', 'user'),
+                user_data.get('status', 'active')
+            )
+            
+            # Update last login
+            for u in data['users']:
+                if u['id'] == user_data['id']:
+                    u['last_login'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    break
+            save_data(data)
+            
             login_user(user)
             return redirect(url_for('home'))
         else:
@@ -154,25 +188,32 @@ def login():
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
+        display_name = request.form['display_name']
         password = request.form['password']
+        confirm_password = request.form['confirm_password']
         
-        data = load_data()
+        # Import UserService here to avoid circular imports
+        from app_modules.services.user_service import UserService
         
-        if any(u['username'] == username for u in data.get('users', [])):
-            flash('Username already exists')
+        # Validation
+        if password != confirm_password:
+            flash('Passwords do not match')
             return render_template('register.html')
         
-        new_user = {
-            'id': max([u['id'] for u in data.get('users', [])], default=0) + 1,
-            'username': username,
-            'password_hash': generate_password_hash(password)
-        }
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long')
+            return render_template('register.html')
         
-        data['users'].append(new_user)
-        save_data(data)
+        # Create user through service
+        result = UserService.create_user(username, email, display_name, password)
         
-        flash('Registration successful! Please log in.')
-        return redirect(url_for('login'))
+        if result['success']:
+            flash('Registration successful! Your account is pending admin approval. You will receive an email notification once approved.')
+            return redirect(url_for('login'))
+        else:
+            flash(result['error'])
+            return render_template('register.html')
     
     return render_template('register.html')
 
@@ -204,6 +245,74 @@ def profile():
     
     return render_template('profile.html', user=user_data)
 
+# Admin Routes
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    if not current_user.is_admin():
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('home'))
+    
+    from app_modules.services.user_service import UserService
+    
+    # Get filter parameters
+    status_filter = request.args.get('status', '')
+    role_filter = request.args.get('role', '')
+    search_query = request.args.get('search', '')
+    
+    # Get filtered users
+    users = UserService.search_users(search_query, status_filter, role_filter)
+    stats = UserService.get_user_activity_stats()
+    
+    return render_template('admin/users.html', 
+                         users=users, 
+                         stats=stats,
+                         current_status=status_filter,
+                         current_role=role_filter,
+                         current_search=search_query)
+
+@app.route('/admin/users/update_status', methods=['POST'])
+@login_required
+def admin_update_user_status():
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'error': 'Access denied'})
+    
+    from app_modules.services.user_service import UserService
+    
+    user_id = request.json.get('user_id')
+    new_status = request.json.get('status')
+    
+    result = UserService.update_user_status(user_id, new_status, current_user.username)
+    return jsonify(result)
+
+@app.route('/admin/users/update_role', methods=['POST'])
+@login_required
+def admin_update_user_role():
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'error': 'Access denied'})
+    
+    from app_modules.services.user_service import UserService
+    
+    user_id = request.json.get('user_id')
+    new_role = request.json.get('role')
+    
+    result = UserService.update_user_role(user_id, new_role, current_user.username)
+    return jsonify(result)
+
+@app.route('/admin/users/bulk_update', methods=['POST'])
+@login_required
+def admin_bulk_update_users():
+    if not current_user.is_admin():
+        return jsonify({'success': False, 'error': 'Access denied'})
+    
+    from app_modules.services.user_service import UserService
+    
+    user_ids = request.json.get('user_ids', [])
+    action = request.json.get('action')
+    
+    result = UserService.bulk_update_users(user_ids, action, current_user.username)
+    return jsonify(result)
+
 @app.route('/')
 @login_required
 def home():
@@ -222,7 +331,7 @@ def dashboard():
         'done': len([c for c in all_cards if c['status'] == 'done']),
         'total': len(all_cards)
     }
-    return render_template('dashboard.html', projects=active_projects, stats=stats)
+    return render_template('dashboard.html', projects=active_projects, stats=stats, load_data=load_data)
 
 @app.route('/issues')
 @login_required

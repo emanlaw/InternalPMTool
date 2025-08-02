@@ -243,10 +243,10 @@ Acceptance Criteria:
 
 ---
 
-## Issue #27: [FEATURE] Project Archive System with Dashboard Integration ✅ COMPLETED
+## Issue #26: [FEATURE] Project Archive System with Dashboard Integration ✅ COMPLETED
 **Implementation Date:** 2025-01-31
 **Status:** ✅ COMPLETED
-**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/27
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/26
 
 **Description:**
 Title: [FEATURE] Project Archive System with Dashboard Integration
@@ -288,6 +288,108 @@ API Endpoints:
 - Added archive navigation link and dedicated archive page
 - Implemented restore functionality with data integrity
 - Archive metadata includes timestamp and user tracking
+
+---
+
+## Issue #24: [FEATURE] Create Backlog Page with Advanced Filtering ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/24
+
+**Description:**
+Create a dedicated Backlog page to manage and organize all backlog items with advanced filtering and management capabilities.
+
+Core Requirements:
+- [x] New /backlog route and page template
+- [x] Display all backlog items in organized table format
+- [x] Search functionality across title and description
+- [x] Filter by project, priority, assignee
+- [x] Sort by creation date, priority, due date
+- [x] Backlog navigation link in main menu
+
+Enhanced Backlog Features:
+- [x] Backlog-specific card layout with priority indicators
+- [x] Visual priority levels (High=Red, Medium=Yellow, Low=Green)
+- [x] Integration with Issues page
+- [x] Mobile-responsive design
+
+**Implementation Notes:**
+- Created dedicated backlog page with filtering capabilities
+- Added backlog navigation link to main menu
+- Implemented backlog-specific styling and functionality
+- Integrated with existing project and issue management system
+
+---
+
+## Issue #12: [VERSION 1.1] Issues List Enhancement ✅ COMPLETED
+**Implementation Date:** 2025-07-31
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/12
+
+**Description:**
+Enhance the Issues List with dropdown menus for better user experience.
+
+Requested Changes:
+- [x] Title input with dropdown menu from previous entries
+- [x] Assignee dropdown menu for user selection
+- [x] Improved navigation and grouping capabilities
+- [x] Enhanced user interface for issue creation
+
+**Implementation Notes:**
+- Added dropdown functionality for title and assignee fields
+- Improved issue creation workflow
+- Enhanced user experience with better input options
+
+---
+
+## Issue #25: [FEATURE] User Registration System with Admin Control ✅ COMPLETED
+**Implementation Date:** 2025-01-31
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/25
+
+**Description:**
+Implement a comprehensive user registration system that allows new users to register and provides admin control over user management.
+
+Core Registration Features:
+- [x] Registration page with form fields (display name, email, password)
+- [x] Email validation and uniqueness check
+- [x] Password strength requirements and confirmation
+- [x] User account creation with pending status
+- [x] Registration success confirmation
+
+Admin Notification System:
+- [x] Real-time alert to admin when new user registers
+- [x] Email notification to admin with user details
+- [x] Admin dashboard notification badge for pending users
+- [x] Registration activity log for admin review
+
+Admin User Management:
+- [x] View all registered users in admin interface
+- [x] User status management (Pending, Active, Suspended, Inactive)
+- [x] User permission levels (Admin, Manager, User, Viewer)
+- [x] Bulk user operations (Approve, Reject, Suspend)
+- [x] User profile editing by admin
+- [x] User activity tracking and last login info
+
+User Permission Levels:
+- [x] Admin: Full system access and user management
+- [x] Manager: Project management and team oversight
+- [x] User: Standard access to assigned projects
+- [x] Viewer: Read-only access to permitted content
+
+Security Features:
+- [x] Password hashing and secure storage
+- [x] Input sanitization and validation
+- [x] Session management for logged-in users
+- [x] Admin privilege checking
+
+**Implementation Notes:**
+- Created comprehensive admin dashboard at /admin/users
+- Enhanced User model with roles and status fields
+- Implemented UserService for centralized user management
+- Added email notification system for admin alerts
+- Registration requires admin approval workflow
+- Full role-based access control system
 
 ---
 

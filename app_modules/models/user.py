@@ -14,10 +14,23 @@ except (ImportError, Exception) as e:
     USE_FIREBASE = False
 
 class User(UserMixin):
-    def __init__(self, id, username, password_hash):
+    def __init__(self, id, username, password_hash, email=None, display_name=None, role='user', status='active'):
         self.id = id
         self.username = username
         self.password_hash = password_hash
+        self.email = email
+        self.display_name = display_name or username
+        self.role = role  # admin, manager, user, viewer
+        self.status = status  # pending, active, suspended, inactive
+    
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    def is_manager(self):
+        return self.role in ['admin', 'manager']
+    
+    def can_manage_users(self):
+        return self.role == 'admin'
 
 def load_data():
     if USE_FIREBASE:
@@ -64,7 +77,16 @@ def load_data():
             # Ensure users section exists
             if 'users' not in data:
                 data['users'] = [
-                    {'id': 1, 'username': 'admin', 'password_hash': generate_password_hash('admin123')}
+                    {
+                        'id': 1, 
+                        'username': 'admin', 
+                        'password_hash': generate_password_hash('admin123'),
+                        'email': 'admin@pmtool.com',
+                        'display_name': 'Administrator',
+                        'role': 'admin',
+                        'status': 'active',
+                        'created_at': '2024-01-01 00:00:00'
+                    }
                 ]
                 save_data(data)
             # Ensure comments section exists
@@ -74,7 +96,16 @@ def load_data():
             return data
     return {
         'users': [
-            {'id': 1, 'username': 'admin', 'password_hash': generate_password_hash('admin123')}
+            {
+                'id': 1, 
+                'username': 'admin', 
+                'password_hash': generate_password_hash('admin123'),
+                'email': 'admin@pmtool.com',
+                'display_name': 'Administrator',
+                'role': 'admin',
+                'status': 'active',
+                'created_at': '2024-01-01 00:00:00'
+            }
         ],
         'projects': [{
             'id': 1,

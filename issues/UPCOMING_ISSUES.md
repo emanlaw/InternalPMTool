@@ -12,6 +12,7 @@
 - ✅ Issue #17: [FEATURE] Enhanced Gantt Chart Analytics - CLOSED
 - ✅ Issue #18: [BUG] Fix Issues List Status Updates and Filtering - CLOSED
 - ✅ Issue #23: [FEATURE] Add Actions Dropdown for Issue Management - CLOSED
+- ✅ Issue #26: [FEATURE] Project Archive System with Dashboard Integration - CLOSED
 
 **Note:** Issue #24 (Backlog Page) was implemented but remains OPEN on GitHub for additional enhancements.
 
@@ -530,170 +531,20 @@ Files to Create/Modify:
 @coding-agent please implement this comprehensive Gantt chart feature
 ```
 
-### Issue #25: User Registration System with Admin Control - OPEN
-```
-Title: [FEATURE] Issue #25: User Registration System with Admin Control
 
-Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/25
-
-Description:
-Implement a comprehensive user registration system that allows new users to register and provides admin control over user management.
-
-What I want:
-- User registration flow with display name, email, and password
-- Admin notification system for new registrations
-- Admin dashboard to view and manage registered users
-- User permission levels controlled by admin
-- Secure registration process with validation
-
-Core Registration Features:
-- [ ] Registration page with form fields (display name, email, password)
-- [ ] Email validation and uniqueness check
-- [ ] Password strength requirements and confirmation
-- [ ] User account creation with pending status
-- [ ] Email verification system (optional)
-- [ ] Registration success confirmation
-
-Admin Notification System:
-- [ ] Real-time alert to admin when new user registers
-- [ ] Email notification to admin with user details
-- [ ] Admin dashboard notification badge for pending users
-- [ ] Registration activity log for admin review
-
-Admin User Management:
-- [ ] View all registered users in admin interface
-- [ ] User status management (Pending, Active, Suspended, Inactive)
-- [ ] User permission levels (Admin, Manager, User, Viewer)
-- [ ] Bulk user operations (Approve, Reject, Suspend)
-- [ ] User profile editing by admin
-- [ ] User activity tracking and last login info
-
-User Permission Levels:
-- [ ] Admin: Full system access and user management
-- [ ] Manager: Project management and team oversight
-- [ ] User: Standard access to assigned projects
-- [ ] Viewer: Read-only access to permitted content
-
-Registration Flow:
-1. User clicks Register link
-2. User fills registration form (display name, email, password)
-3. System validates input and creates pending account
-4. Admin receives notification of new registration
-5. Admin reviews and approves/rejects user
-6. User receives approval/rejection notification
-7. Approved users can login with assigned permission level
-
-Security Features:
-- [ ] Password hashing and secure storage
-- [ ] CSRF protection on registration forms
-- [ ] Rate limiting for registration attempts
-- [ ] Input sanitization and validation
-- [ ] Session management for logged-in users
-- [ ] Password reset functionality
-
-Files to Create/Modify:
-- templates/register.html - Registration form page
-- templates/admin/users.html - Admin user management dashboard
-- app/routes/auth.py - Registration and user management routes
-- app/models/user.py - User model with permissions
-- app/services/user_service.py - User management logic
-- app/services/notification_service.py - Admin notification system
-- static/js/registration.js - Registration form validation
-- static/css/registration.css - Registration styling
-- templates/base.html - Add registration link
-
-@coding-agent please implement this comprehensive user registration system
-```
-
-### Issue #27: Project Archive System with Dashboard Integration - COMPLETED ✅
-```
-Title: [FEATURE] Project Archive System with Dashboard Integration
-
-Status: COMPLETED ✅
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/27
-Implementation Date: 2025-01-31
-
-Description:
-Implement a comprehensive project archiving system that allows users to archive completed or inactive projects, store them separately, and manage them through a dedicated archive page.
-
-What I want:
-- Archive button on dashboard with confirmation dialog
-- Dedicated archive page to view archived projects
-- Ability to restore archived projects
-- Archived projects excluded from main dashboard
-- Archive status tracking and metadata
-
-Core Archive Features:
-- [x] Archive button on each project card in dashboard
-- [x] Confirmation dialog before archiving ("Are you sure you want to archive this project?")
-- [x] Archive status field added to project data structure
-- [x] Archived projects filtered out from main dashboard view
-- [x] Archive timestamp and user tracking
-
-Archive Page Features:
-- [x] Dedicated /archive route and page template
-- [x] Display all archived projects in organized grid/list view
-- [x] Restore functionality to move projects back to active
-- [x] Archive statistics (total archived, archive dates)
-- [x] Empty state message when no archived projects
-
-Dashboard Integration:
-- [x] Archive button with archive icon on project cards
-- [x] Confirmation modal with project name display
-- [x] Real-time removal from dashboard after archive
-
-Confirmation Dialog Features:
-- [x] Modal popup with project name confirmation
-- [x] Warning message about archiving consequences
-- [x] Cancel and Confirm buttons
-- [x] Prevent accidental archiving
-- [x] Show project details in confirmation
-
-Restore Functionality:
-- [x] Restore button on archived project cards
-- [x] Restore confirmation dialog
-- [x] Move project back to active status
-- [x] Maintain project data integrity during restore
-
-Data Structure Changes:
-- [x] Add 'archived' boolean field to projects
-- [x] Add 'archived_date' timestamp field
-- [x] Add 'archived_by' user field
-- [x] Update project queries to filter archived projects
-
-UI/UX Features:
-- [x] Archive icon (folder with down arrow)
-- [x] Visual distinction for archived projects
-- [x] Archive breadcrumb navigation
-- [x] Empty state message when no archived projects
-- [x] Responsive design for archive page
-
-Files Created/Modified:
-- templates/archive.html - Archive page template ✅
-- app.py - Added /archive route and archive functionality ✅
-- templates/base.html - Added Archive navigation link ✅
-- templates/dashboard.html - Added archive buttons and modal ✅
-
-API Endpoints:
-- [x] POST /api/archive_project - Archive a project
-- [x] POST /api/restore_project - Restore archived project
-
-@coding-agent implementation completed successfully
-```
 
 ## 📊 SUMMARY
-- **Total Issues**: 27
-- **Completed**: 12 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #17, #18, #23, #27)
-- **Open/In Progress**: 15 issues 🔄
-- **Completion Rate**: 44%
+- **Total Issues**: 26
+- **Completed**: 15 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #17, #18, #23, #24, #25, #26)
+- **Open/In Progress**: 11 issues 🔄
+- **Completion Rate**: 58%
 
 **Recently Completed:**
-- ✅ Issue #27: Project Archive System with Dashboard Integration (2025-01-31)
+- ✅ Issue #25: User Registration System with Admin Control (2025-01-31)
+- ✅ Issue #24: Create Backlog Page with Advanced Filtering (2025-08-02)
+- ✅ Issue #26: Project Archive System with Dashboard Integration (2025-01-31)
+- ✅ Issue #12: Issues List Enhancement (2025-07-31)
 - ✅ Issue #23: Actions Dropdown for Issue Management (2025-07-31)
-
-**Implemented but GitHub Open:**
-- 🔄 Issue #24: Backlog Page (implemented, GitHub issue remains open for enhancements)
 
 **Open Issues on GitHub:**
 - Issue #8: Card Labels/Tags System
@@ -708,14 +559,10 @@ API Endpoints:
 - Issue #20: Add Colored Labels to Cards
 - Issue #21: Time Tracking for Cards
 - Issue #22: Enhanced Team Collaboration
-- Issue #24: Create Backlog Page with Advanced Filtering
-- Issue #25: User Registration System with Admin Control
-- Issue #27: Project Archive System with Dashboard Integration
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #26: Interactive Gantt Chart for Project Navigation and Scheduling
-2. Issue #25: User Registration System with Admin Control
-3. Issue #24: Create Backlog Page with Advanced Filtering
-4. Issue #8: Card Labels/Tags System
-5. Issue #9: Time Tracking Features
-6. Issue #11: Mobile Responsive Design
+1. Issue #8: Card Labels/Tags System
+3. Issue #9: Time Tracking Features
+4. Issue #11: Mobile Responsive Design
+5. Issue #13: Database Integration (PostgreSQL)
+6. Issue #20: Add Colored Labels to Cards

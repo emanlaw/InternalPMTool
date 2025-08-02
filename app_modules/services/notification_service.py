@@ -117,3 +117,134 @@ def schedule_daily_notifications():
     # Run in background thread
     thread = threading.Thread(target=run_notifications, daemon=True)
     thread.start()
+
+def send_admin_notification(notification_type, user_data):
+    """Send notification to admin about user registration"""
+    try:
+        data = load_data()
+        admin_users = [u for u in data.get('users', []) if u.get('role') == 'admin' and u.get('email')]
+        
+        if not admin_users:
+            print("No admin users with email found")
+            return
+        
+        if notification_type == 'new_user_registration':
+            subject = f"PM Tool: New User Registration - {user_data['display_name']}"
+            
+            html_body = f"""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: #0079bf; color: white; padding: 20px; text-align: center;">
+                    <h1>👤 New User Registration</h1>
+                </div>
+                
+                <div style="padding: 20px;">
+                    <p>A new user has registered and is awaiting approval:</p>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 10px 0; color: #172b4d;">User Details</h3>
+                        <p><strong>Display Name:</strong> {user_data['display_name']}</p>
+                        <p><strong>Username:</strong> {user_data['username']}</p>
+                        <p><strong>Email:</strong> {user_data['email']}</p>
+                        <p><strong>Registration Date:</strong> {user_data['created_at']}</p>
+                        <p><strong>Status:</strong> <span style="color: #ffab00; font-weight: bold;">Pending Approval</span></p>
+                    </div>
+                    
+                    <p>Please review and approve or reject this registration in the admin dashboard.</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="http://localhost:5000/admin/users" 
+                           style="background: #0079bf; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                            Manage Users
+                        </a>
+                    </div>
+                    
+                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                    <p style="font-size: 12px; color: #5e6c84; text-align: center;">
+                        This is an automated notification from PM Tool.<br>
+                        Generated on {datetime.now().strftime('%Y-%m-%d at %H:%M')}
+                    </p>
+                </div>
+            </body>
+            </html>
+            """
+            
+            for admin in admin_users:
+                try:
+                    msg = Message(
+                        subject=subject,
+                        recipients=[admin['email']],
+                        html=html_body
+                    )
+                    
+                    if current_app.extensions.get('mail'):
+                        current_app.extensions['mail'].send(msg)
+                        print(f"Admin notification sent to {admin['username']}")
+                    else:
+                        print(f"Mail not configured, would send to {admin['username']}: {subject}")
+                        
+                except Exception as e:
+                    print(f"Error sending admin notification to {admin['username']}: {e}")
+                    
+    except Exception as e:
+        print(f"Error sending admin notification: {e}")
+
+def send_user_status_notification(user_data, old_status, new_status):
+    """Send notification to user about status change"""
+    try:
+        if not user_data.get('email'):
+            return
+        
+        status_messages = {
+            'active': 'Your account has been approved and is now active!',
+            'inactive': 'Your account registration has been rejected.',
+            'suspended': 'Your account has been suspended.',
+            'pending': 'Your account is pending approval.'
+        }
+        
+        subject = f"PM Tool: Account Status Update - {new_status.title()}"
+        status_message = status_messages.get(new_status, f'Your account status has been changed to {new_status}.')
+        
+        html_body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #0079bf; color: white; padding: 20px; text-align: center;">
+                <h1>📧 Account Status Update</h1>
+            </div>
+            
+            <div style="padding: 20px;">
+                <p>Hello {user_data['display_name']},</p>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="margin: 0 0 10px 0; color: #172b4d;">Status Update</h3>
+                    <p>{status_message}</p>
+                    <p><strong>Previous Status:</strong> {old_status.title()}</p>
+                    <p><strong>Current Status:</strong> {new_status.title()}</p>
+                </div>
+                
+                {f'<div style="text-align: center; margin: 30px 0;"><a href="http://localhost:5000/login" style="background: #0079bf; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Login to PM Tool</a></div>' if new_status == 'active' else ''}
+                
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                <p style="font-size: 12px; color: #5e6c84; text-align: center;">
+                    This is an automated notification from PM Tool.<br>
+                    Generated on {datetime.now().strftime('%Y-%m-%d at %H:%M')}
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        msg = Message(
+            subject=subject,
+            recipients=[user_data['email']],
+            html=html_body
+        )
+        
+        if current_app.extensions.get('mail'):
+            current_app.extensions['mail'].send(msg)
+            print(f"Status notification sent to {user_data['username']}")
+        else:
+            print(f"Mail not configured, would send to {user_data['username']}: {subject}")
+            
+    except Exception as e:
+        print(f"Error sending user status notification: {e}")

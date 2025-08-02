@@ -254,6 +254,9 @@
             <a href="/archive">📁 Archive</a>
             <a href="/analytics">Analytics</a>
             <a href="/firebase">Firebase</a>
+            {% if current_user.is_authenticated and current_user.can_manage_users() %}
+                <a href="{{ url_for('auth.admin_users') }}">👥 Admin</a>
+            {% endif %}
             <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
                 {% if current_user.is_authenticated %}
                     <button onclick="toggleDarkMode()" class="dark-mode-toggle" title="Toggle Dark Mode">
