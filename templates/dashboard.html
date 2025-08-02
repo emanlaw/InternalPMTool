@@ -32,9 +32,10 @@
     <div class="project-card">
         <h3>{{ project.name }}</h3>
         <p>{{ project.description }}</p>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="btn" onclick="location.href='/board/{{ project.id }}'">Kanban Board</button>
             <button class="btn btn-secondary" onclick="location.href='/issues?project_id={{ project.id }}'">Issues List</button>
+            <button class="btn" style="background: #6c757d;" onclick="archiveProject({{ project.id }}, '{{ project.name }}')">📁 Archive</button>
         </div>
     </div>
     {% endfor %}
@@ -55,7 +56,22 @@
     </div>
 </div>
 
+<!-- Archive Confirmation Modal -->
+<div id="archiveModal" class="modal">
+    <div class="modal-content">
+        <h3>Archive Project</h3>
+        <p>Are you sure you want to archive "<span id="archiveProjectName"></span>"?</p>
+        <p style="color: #5e6c84; font-size: 14px;">This project will be moved to the archive and hidden from the main dashboard.</p>
+        <div style="margin-top: 20px;">
+            <button id="confirmArchive" class="btn" style="background: #ff5630;">Archive Project</button>
+            <button class="btn btn-secondary" onclick="hideArchiveModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
+let currentArchiveId = null;
+
 function showAddProjectModal() {
     document.getElementById('addProjectModal').style.display = 'block';
 }
@@ -63,6 +79,17 @@ function showAddProjectModal() {
 function hideAddProjectModal() {
     document.getElementById('addProjectModal').style.display = 'none';
     document.getElementById('projectForm').reset();
+}
+
+function archiveProject(projectId, projectName) {
+    currentArchiveId = projectId;
+    document.getElementById('archiveProjectName').textContent = projectName;
+    document.getElementById('archiveModal').style.display = 'block';
+}
+
+function hideArchiveModal() {
+    document.getElementById('archiveModal').style.display = 'none';
+    currentArchiveId = null;
 }
 
 document.getElementById('projectForm').addEventListener('submit', async (e) => {
@@ -82,11 +109,35 @@ document.getElementById('projectForm').addEventListener('submit', async (e) => {
     }
 });
 
+document.getElementById('confirmArchive').addEventListener('click', async () => {
+    if (!currentArchiveId) return;
+    
+    try {
+        const response = await fetch('/api/archive_project', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ project_id: currentArchiveId })
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Failed to archive project');
+        }
+    } catch (error) {
+        alert('Error archiving project');
+    }
+});
+
 // Close modal when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById('addProjectModal');
-    if (event.target === modal) {
+    const addModal = document.getElementById('addProjectModal');
+    const archiveModal = document.getElementById('archiveModal');
+    
+    if (event.target === addModal) {
         hideAddProjectModal();
+    } else if (event.target === archiveModal) {
+        hideArchiveModal();
     }
 }
 </script>

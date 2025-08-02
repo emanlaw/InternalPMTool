@@ -213,6 +213,8 @@ def home():
 @login_required
 def dashboard():
     data = load_data()
+    # Filter out archived projects
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
     all_cards = data['cards']
     stats = {
         'todo': len([c for c in all_cards if c['status'] == 'todo']),
@@ -220,7 +222,7 @@ def dashboard():
         'done': len([c for c in all_cards if c['status'] == 'done']),
         'total': len(all_cards)
     }
-    return render_template('dashboard.html', projects=data['projects'], stats=stats)
+    return render_template('dashboard.html', projects=active_projects, stats=stats)
 
 @app.route('/issues')
 @login_required
@@ -552,6 +554,57 @@ def update_card_due_date():
     
     save_data(data)
     return jsonify({'success': True})
+
+@app.route('/archive')
+@login_required
+def archive():
+    data = load_data()
+    archived_projects = [p for p in data['projects'] if p.get('archived', False)]
+    return render_template('archive.html', projects=archived_projects)
+
+@app.route('/api/archive_project', methods=['POST'])
+@login_required
+def archive_project():
+    try:
+        data = load_data()
+        project_id = request.json['project_id']
+        
+        for project in data['projects']:
+            if project['id'] == project_id:
+                project['archived'] = True
+                project['archived_date'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                project['archived_by'] = current_user.username
+                break
+        else:
+            return jsonify({'success': False, 'error': 'Project not found'}), 404
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/restore_project', methods=['POST'])
+@login_required
+def restore_project():
+    try:
+        data = load_data()
+        project_id = request.json['project_id']
+        
+        for project in data['projects']:
+            if project['id'] == project_id:
+                project['archived'] = False
+                project.pop('archived_date', None)
+                project.pop('archived_by', None)
+                break
+        else:
+            return jsonify({'success': False, 'error': 'Project not found'}), 404
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # Template helper functions
 def get_due_date_text_class(due_date_str):

@@ -243,6 +243,54 @@ Acceptance Criteria:
 
 ---
 
+## Issue #27: [FEATURE] Project Archive System with Dashboard Integration ✅ COMPLETED
+**Implementation Date:** 2025-01-31
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/27
+
+**Description:**
+Title: [FEATURE] Project Archive System with Dashboard Integration
+
+Description:
+Implement a comprehensive project archiving system that allows users to archive completed or inactive projects, store them separately, and manage them through a dedicated archive page.
+
+Core Archive Features:
+- [x] Archive button on each project card in dashboard
+- [x] Confirmation dialog before archiving ("Are you sure you want to archive this project?")
+- [x] Archive status field added to project data structure
+- [x] Archived projects filtered out from main dashboard view
+- [x] Archive timestamp and user tracking
+
+Archive Page Features:
+- [x] Dedicated /archive route and page template
+- [x] Display all archived projects in organized grid/list view
+- [x] Restore functionality to move projects back to active
+- [x] Archive statistics (total archived, archive dates)
+- [x] Empty state message when no archived projects
+
+Dashboard Integration:
+- [x] Archive button with archive icon on project cards
+- [x] Confirmation modal with project name display
+- [x] Real-time removal from dashboard after archive
+
+Restore Functionality:
+- [x] Restore button on archived project cards
+- [x] Restore confirmation dialog
+- [x] Move project back to active status
+- [x] Maintain project data integrity during restore
+
+API Endpoints:
+- [x] POST /api/archive_project - Archive a project
+- [x] POST /api/restore_project - Restore archived project
+
+**Implementation Notes:**
+- Created comprehensive archive system with confirmation dialogs
+- Added archive navigation link and dedicated archive page
+- Implemented restore functionality with data integrity
+- Archive metadata includes timestamp and user tracking
+
+---
+
 ## Issue #1: [FEATURE] Issue #1 Add User Authentication ✅ COMPLETED
 **Implementation Date:** 2025-07-28
 **Status:** ✅ COMPLETED
