@@ -11,6 +11,8 @@ from firebase_admin import credentials, firestore
 
 # Initialize Firebase
 if not firebase_admin._apps:
+    # Use emulator for local development
+    os.environ['FIRESTORE_EMULATOR_HOST'] = '127.0.0.1:8080'
     cred = credentials.Certificate('firebase-service-account.json')
     firebase_admin.initialize_app(cred)
 
