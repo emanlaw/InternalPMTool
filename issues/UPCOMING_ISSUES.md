@@ -150,57 +150,6 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #14: Interactive Mind Map for Project Planning - OPEN
-```
-Title: [FEATURE] Interactive Mind Map for Project Planning
-
-Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/14
-
-Description:
-I want an interactive mind map feature to visualize project structure, brainstorm ideas, and show relationships between different project components.
-
-What I want:
-- Interactive mind map canvas with drag-and-drop nodes
-- Different node types for different card statuses (TODO, In Progress, Done)
-- Visual connections between related cards/ideas
-- Collaborative editing capabilities
-- Export mind maps as images or PDF
-
-Detailed Features:
-- [ ] Canvas-based mind map editor using HTML5 Canvas or SVG
-- [ ] Node creation with double-click on canvas
-- [ ] Drag nodes to reposition them
-- [ ] Connect nodes with lines/arrows to show relationships
-- [ ] Different node shapes/colors for different statuses
-- [ ] Node editing (double-click to edit text)
-- [ ] Zoom in/out and pan functionality
-- [ ] Save mind maps per project
-- [ ] Link mind map nodes to actual cards
-- [ ] Export options (PNG, PDF, JSON)
-
-@coding-agent please implement this feature
-```
-
-### Issue #16: Advanced Mind Map Features - OPEN
-```
-Title: [FEATURE] Advanced Mind Map Features
-
-Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/16
-
-Description:
-Enhanced mind mapping capabilities with advanced features for complex project visualization.
-
-What I want:
-- Advanced node types and styling options
-- Real-time collaboration features
-- Integration with existing project data
-- Advanced export and sharing options
-
-@coding-agent please implement this feature
-```
-
 ### Issue #19: Enhanced Dark Mode Toggle with Better Contrast - OPEN
 ```
 Title: [FEATURE] Enhanced Dark Mode Toggle with Better Contrast
@@ -325,27 +274,25 @@ Acceptance Criteria:
 
 ## 📊 SUMMARY
 - **Total Issues**: 26
-- **Completed**: 16 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #15, #17, #18, #23, #24, #25, #26)
+- **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #14, #15, #16, #17, #18, #23, #24, #25, #26)
 - **Archived**: 1 issue 📦 (Issue #13)
-- **Open/In Progress**: 9 issues 🔄
-- **Completion Rate**: 62% (16/26 completed)
+- **Open/In Progress**: 7 issues 🔄
+- **Completion Rate**: 69% (18/26 completed)
 
 **Note**: Issues #24 and #26 are correctly completed and have been removed from the upcoming list
 
 **Recently Completed:**
+- ✅ Issue #14: Interactive Mind Map for Project Planning (2025-01-31)
+- ✅ Issue #16: Advanced Mind Map Features (2025-01-31)
 - ✅ Issue #25: User Registration System with Admin Control (2025-01-31)
+- ✅ Issue #15: Interactive Gantt Chart (2025-01-31)
 - ✅ Issue #24: Create Backlog Page with Advanced Filtering (2025-08-02)
-- ✅ Issue #26: Project Archive System with Dashboard Integration (2025-01-31)
-- ✅ Issue #12: Issues List Enhancement (2025-07-31)
-- ✅ Issue #23: Actions Dropdown for Issue Management (2025-07-31)
 
 **Open Issues on GitHub:**
 - Issue #8: Card Labels/Tags System
 - Issue #9: Time Tracking Features
 - Issue #10: Team Collaboration Tools
 - Issue #11: Mobile Responsive Design
-- Issue #14: Interactive Mind Map for Project Planning
-- Issue #16: Advanced Mind Map Features
 - Issue #19: Enhanced Dark Mode Toggle with Better Contrast
 - Issue #20: Add Colored Labels to Cards
 - Issue #21: Time Tracking for Cards

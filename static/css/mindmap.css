@@ -1,0 +1,258 @@
+/* Mind Map Specific Styles */
+.mindmap-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mindmap-header h1 {
+    margin: 0;
+    color: #172b4d;
+    font-size: 24px;
+}
+
+.mindmap-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.mindmap-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.mindmap-toolbar {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-group label {
+    font-weight: 500;
+    color: #5e6c84;
+    font-size: 14px;
+}
+
+.tool-group select, 
+.tool-group button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.tool-group button:hover {
+    background: #f0f0f0;
+}
+
+#mindmapCanvas {
+    display: block;
+    cursor: crosshair;
+    background: #fafbfc;
+    border: none;
+}
+
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 120px;
+}
+
+.context-menu div {
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #172b4d;
+    transition: background-color 0.2s;
+}
+
+.context-menu div:hover {
+    background: #f8f9fa;
+}
+
+/* Node type indicators */
+.node-type-legend {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid #ddd;
+}
+
+.legend-color.todo { background: #e3fcef; border-color: #36b37e; }
+.legend-color.in_progress { background: #fff4e6; border-color: #ffab00; }
+.legend-color.done { background: #e3f2fd; border-color: #0079bf; }
+.legend-color.idea { background: #f3e5f5; border-color: #9c27b0; }
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .mindmap-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .mindmap-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .mindmap-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .tool-group {
+        justify-content: space-between;
+    }
+    
+    #mindmapCanvas {
+        width: 100%;
+        height: 400px;
+    }
+}
+
+/* Dark mode styles */
+.dark-mode .mindmap-header,
+.dark-mode .mindmap-container {
+    background: #2d3748;
+    color: #f5f5f5;
+}
+
+.dark-mode .mindmap-header h1 {
+    color: #ffffff;
+}
+
+.dark-mode .mindmap-toolbar {
+    background: #374151;
+    border-color: #555555;
+}
+
+.dark-mode .form-select,
+.dark-mode .tool-group select,
+.dark-mode .tool-group button {
+    background: #374151;
+    color: #f0f0f0;
+    border-color: #555555;
+}
+
+.dark-mode .tool-group button:hover {
+    background: #4a5568;
+}
+
+.dark-mode #mindmapCanvas {
+    background: #1a1a1a;
+}
+
+.dark-mode .context-menu {
+    background: #2d3748;
+    border-color: #555555;
+    color: #f5f5f5;
+}
+
+.dark-mode .context-menu div {
+    color: #f5f5f5;
+}
+
+.dark-mode .context-menu div:hover {
+    background: #374151;
+}
+
+.dark-mode .node-type-legend {
+    background: rgba(45, 55, 72, 0.9);
+    color: #f5f5f5;
+}
+
+/* Animation for smooth interactions */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Loading state */
+.mindmap-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 100;
+}
+
+.mindmap-loading::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-top: 2px solid #0079bf;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

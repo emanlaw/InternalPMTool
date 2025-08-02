@@ -313,6 +313,50 @@ def admin_bulk_update_users():
     result = UserService.bulk_update_users(user_ids, action, current_user.username)
     return jsonify(result)
 
+@app.route('/api/save_mindmap', methods=['POST'])
+@login_required
+def save_mindmap():
+    try:
+        data = load_data()
+        project_id = request.json.get('project_id')
+        nodes = request.json.get('nodes', [])
+        connections = request.json.get('connections', [])
+        
+        # Initialize mindmaps if not exists
+        if 'mindmaps' not in data:
+            data['mindmaps'] = {}
+        
+        # Save mind map data
+        data['mindmaps'][str(project_id)] = {
+            'nodes': nodes,
+            'connections': connections,
+            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_by': current_user.username
+        }
+        
+        save_data(data)
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/load_mindmap/<int:project_id>')
+@login_required
+def load_mindmap(project_id):
+    try:
+        data = load_data()
+        mindmaps = data.get('mindmaps', {})
+        mindmap_data = mindmaps.get(str(project_id), {'nodes': [], 'connections': []})
+        
+        return jsonify({
+            'success': True,
+            'nodes': mindmap_data.get('nodes', []),
+            'connections': mindmap_data.get('connections', [])
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 @app.route('/')
 @login_required
 def home():
@@ -670,6 +714,13 @@ def archive():
     data = load_data()
     archived_projects = [p for p in data['projects'] if p.get('archived', False)]
     return render_template('archive.html', projects=archived_projects)
+
+@app.route('/mindmap')
+@login_required
+def mindmap():
+    data = load_data()
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    return render_template('mindmap.html', projects=active_projects)
 
 @app.route('/api/archive_project', methods=['POST'])
 @login_required
