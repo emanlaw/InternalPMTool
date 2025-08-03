@@ -17,7 +17,7 @@
 - ✅ Issue #18: [BUG] Fix Issues List Status Updates and Filtering - CLOSED
 - ✅ Issue #23: [FEATURE] Add Actions Dropdown for Issue Management - CLOSED
 - ✅ Issue #24: [FEATURE] Create Backlog Page with Advanced Filtering - CLOSED
-- ✅ Issue #25: [FEATURE] User Registration System with Admin Control - CLOSED
+
 - ✅ Issue #26: [FEATURE] Project Archive System with Dashboard Integration - CLOSED
 
 **Note:** Issue #24 (Backlog Page) was implemented but remains OPEN on GitHub for additional enhancements.
@@ -103,30 +103,47 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #10: Team Collaboration Tools - OPEN
+### Issue #25: User Registration System with Admin Control - OPEN
 ```
-Title: [FEATURE] Team Collaboration Tools
+Title: [FEATURE] User Registration System with Admin Control
 
 Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/10
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/25
 
 Description:
-I want better team collaboration features like @mentions, notifications, and activity feeds.
+Implement a comprehensive user registration system with admin control that allows new users to register and provides admin management capabilities.
 
 What I want:
-- @mention users in comments
-- Activity feed showing recent changes
-- Real-time notifications
-- Team member assignments
+- Enhanced registration page with display name, email, and password fields
+- Admin notification system for new registrations
+- Admin dashboard to view and manage registered users
+- User permission levels (Admin, Manager, User, Viewer)
+- Secure registration process with validation
 
-Acceptance Criteria:
-- [ ] @mention functionality in comments
-- [ ] Activity feed on dashboard
-- [ ] Browser notifications for mentions
-- [ ] Team member dropdown for assignments
-- [ ] Real-time updates using WebSocket
+Core Registration Features:
+- [ ] Enhanced registration form (display name, email, username, password + confirmation)
+- [ ] Email validation and uniqueness check
+- [ ] Password strength requirements and confirmation validation
+- [ ] User account creation with pending status by default
+- [ ] Client-side form validation with real-time feedback
+- [ ] Registration success confirmation with admin approval notice
 
-@coding-agent please implement this feature
+Admin Management Features:
+- [ ] Admin dashboard at /admin/users
+- [ ] View all registered users with filtering and search
+- [ ] User status management (Pending, Active, Suspended, Inactive)
+- [ ] User permission levels control
+- [ ] Bulk user operations (Approve, Reject, Suspend multiple users)
+- [ ] Real-time status and role updates via AJAX
+
+Security Features:
+- [ ] Password hashing and secure storage
+- [ ] Input sanitization and validation
+- [ ] User status validation during login
+- [ ] Admin privilege checking
+- [ ] Role-based access control
+
+@coding-agent please implement this comprehensive feature
 ```
 
 ### Issue #11: Mobile Responsive Design - OPEN
@@ -349,13 +366,13 @@ Acceptance Criteria:
 
 ## 📊 SUMMARY
 - **Total Issues**: 28
-- **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #13, #14, #15, #16, #17, #18, #23, #24, #25, #26)
-- **Open/In Progress**: 10 issues 🔄
-- **Completion Rate**: 64% (18/28 completed)
+- **Completed**: 17 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #13, #14, #15, #16, #17, #18, #23, #24, #26)
+- **Open/In Progress**: 11 issues 🔄
+- **Completion Rate**: 61% (17/28 completed)
 
 **Recently Completed:**
 - ✅ Issue #26: Project Archive System with Dashboard Integration (2025-08-02)
-- ✅ Issue #25: User Registration System with Admin Control (2025-08-02)
+
 - ✅ Issue #24: Create Backlog Page with Advanced Filtering (2025-08-02)
 - ✅ Issue #16: Advanced Mind Map Features (2025-08-02)
 - ✅ Issue #15: Interactive Gantt Chart for Sprint and Project Management (2025-08-02)
@@ -369,12 +386,13 @@ Acceptance Criteria:
 - Issue #20: Add Colored Labels to Cards
 - Issue #21: Time Tracking for Cards
 - Issue #22: Enhanced Team Collaboration
+- Issue #25: User Registration System with Admin Control
 - Issue #27: Sprint Management System
 - Issue #28: Enhanced Issues List Modal with Required Fields
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #28: Enhanced Issues List Modal with Required Fields
-2. Issue #27: Sprint Management System
-3. Issue #8: Card Labels/Tags System
+1. Issue #25: User Registration System with Admin Control
+2. Issue #28: Enhanced Issues List Modal with Required Fields
+3. Issue #27: Sprint Management System
 4. Issue #9: Time Tracking Features
 5. Issue #11: Mobile Responsive Design
