@@ -1,7 +1,30 @@
 # Firebase service account keys (keep secure!)
 firebase-service-account.json
 pm-tool-internal-firebase-adminsdk-*.json
-*.json
+
+# User data protection
+data.json
+user_data.json
+users.json
+backup_*.json
+export_*.json
+*.csv
+*.xlsx
+*.xls
+
+# Database dumps and exports
+database_backup/
+exports/
+user_exports/
+data_dumps/
+
+# Configuration files with sensitive data
+config.json
+settings.json
+local_config.py
+.env
+.env.local
+.env.production
 
 # Python
 __pycache__/

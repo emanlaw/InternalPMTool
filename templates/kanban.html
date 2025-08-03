@@ -128,7 +128,10 @@
             </div>
             
             <div style="display: flex; gap: 10px;">
-                <textarea id="newCommentText" placeholder="Add a comment..." rows="2" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                <div style="flex: 1; position: relative;">
+                    <textarea id="newCommentText" placeholder="Add a comment... (use @username to mention someone)" rows="2" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                    <div id="mentionSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto; z-index: 1000;"></div>
+                </div>
                 <button onclick="addComment()" class="btn" style="height: fit-content;">Add Comment</button>
             </div>
         </div>
@@ -272,7 +275,7 @@ function loadComments(comments) {
                 <strong>${comment.author}</strong>
                 <small style="color: #5e6c84;">${comment.created_at}</small>
             </div>
-            <p style="margin: 0; color: #172b4d;">${comment.content}</p>
+            <p style="margin: 0; color: #172b4d;">${highlightMentions(comment.content)}</p>
         </div>
     `).join('');
 }
@@ -312,16 +315,86 @@ function hideCardDetailsModal() {
     currentCardId = null;
 }
 
+// Highlight @mentions in comments
+function highlightMentions(content) {
+    return content.replace(/@(\w+)/g, '<span style="background: #e3f2fd; color: #0052cc; padding: 2px 4px; border-radius: 3px; font-weight: bold;">@$1</span>');
+}
+
+// Team member suggestions for @mentions
+let teamMembers = [];
+
+// Load team members
+fetch('/api/team_members')
+    .then(response => response.json())
+    .then(members => {
+        teamMembers = members;
+    });
+
+// Handle @mention suggestions
+document.addEventListener('DOMContentLoaded', function() {
+    const commentTextarea = document.getElementById('newCommentText');
+    const suggestionsDiv = document.getElementById('mentionSuggestions');
+    
+    if (commentTextarea) {
+        commentTextarea.addEventListener('input', function(e) {
+            const text = e.target.value;
+            const cursorPos = e.target.selectionStart;
+            const textBeforeCursor = text.substring(0, cursorPos);
+            const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+            
+            if (lastAtIndex !== -1) {
+                const searchTerm = textBeforeCursor.substring(lastAtIndex + 1);
+                if (searchTerm.length > 0 && !searchTerm.includes(' ')) {
+                    const matches = teamMembers.filter(member => 
+                        member.username.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                    
+                    if (matches.length > 0) {
+                        suggestionsDiv.innerHTML = matches.map(member => 
+                            `<div onclick="insertMention('${member.username}')" style="padding: 8px; cursor: pointer; border-bottom: 1px solid #eee;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='white'">@${member.username}</div>`
+                        ).join('');
+                        suggestionsDiv.style.display = 'block';
+                        return;
+                    }
+                }
+            }
+            
+            suggestionsDiv.style.display = 'none';
+        });
+    }
+});
+
+function insertMention(username) {
+    const textarea = document.getElementById('newCommentText');
+    const text = textarea.value;
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex !== -1) {
+        const newText = text.substring(0, lastAtIndex) + '@' + username + ' ' + text.substring(cursorPos);
+        textarea.value = newText;
+        textarea.focus();
+        textarea.setSelectionRange(lastAtIndex + username.length + 2, lastAtIndex + username.length + 2);
+    }
+    
+    document.getElementById('mentionSuggestions').style.display = 'none';
+}
+
 // Close modal when clicking outside
 window.onclick = function(event) {
     const addModal = document.getElementById('addCardModal');
     const detailsModal = document.getElementById('cardDetailsModal');
+    const suggestions = document.getElementById('mentionSuggestions');
     
     if (event.target === addModal) {
         hideAddCardModal();
     }
     if (event.target === detailsModal) {
         hideCardDetailsModal();
+    }
+    if (suggestions && !suggestions.contains(event.target) && event.target.id !== 'newCommentText') {
+        suggestions.style.display = 'none';
     }
 }
 </script>

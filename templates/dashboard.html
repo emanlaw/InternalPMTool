@@ -66,6 +66,14 @@
     {% endfor %}
 </div>
 
+<!-- Activity Feed -->
+<div class="project-card">
+    <h3>📈 Recent Activity</h3>
+    <div id="activityFeed" style="max-height: 300px; overflow-y: auto;">
+        <div style="text-align: center; color: #5e6c84; padding: 20px;">Loading activity...</div>
+    </div>
+</div>
+
 <!-- Add Project Modal -->
 <div id="addProjectModal" class="modal">
     <div class="modal-content">
@@ -153,6 +161,30 @@ document.getElementById('confirmArchive').addEventListener('click', async () => 
         alert('Error archiving project');
     }
 });
+
+// Load activity feed
+fetch('/api/activity_feed')
+    .then(response => response.json())
+    .then(activities => {
+        const feedDiv = document.getElementById('activityFeed');
+        if (activities.length === 0) {
+            feedDiv.innerHTML = '<div style="text-align: center; color: #5e6c84; padding: 20px;">No recent activity</div>';
+            return;
+        }
+        
+        feedDiv.innerHTML = activities.map(activity => `
+            <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+                <div>
+                    <span style="color: #172b4d;">${activity.message}</span>
+                </div>
+                <div style="color: #5e6c84; font-size: 12px;">${activity.timestamp}</div>
+            </div>
+        `).join('');
+    })
+    .catch(error => {
+        console.error('Error loading activity feed:', error);
+        document.getElementById('activityFeed').innerHTML = '<div style="text-align: center; color: #dc3545; padding: 20px;">Error loading activity</div>';
+    });
 
 // Close modal when clicking outside
 window.onclick = function(event) {

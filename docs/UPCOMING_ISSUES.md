@@ -19,12 +19,13 @@
 - ✅ Issue #24: [FEATURE] Create Backlog Page with Advanced Filtering - CLOSED
 
 - ✅ Issue #26: [FEATURE] Project Archive System with Dashboard Integration - CLOSED
+- ✅ Issue #10: [FEATURE] Team Collaboration Tools - CLOSED
 
 **Note:** Issue #24 (Backlog Page) was implemented but remains OPEN on GitHub for additional enhancements.
 
 ## 🔄 OPEN ISSUES (IN PROGRESS/TODO)
 
-### Issue #8: Card Labels/Tags System - OPEN
+### 🔵 **Issue #8:** ***Card Labels/Tags System*** - OPEN
 ```
 Title: [FEATURE] #8 Card Labels/Tags System
 
@@ -50,7 +51,7 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #9: Time Tracking Features - OPEN
+### 🔵 **Issue #9:** ~~Time Tracking Features~~ - OPEN
 ```
 Title: [FEATURE] Time Tracking Features
 
@@ -77,33 +78,7 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #10: Team Collaboration Tools - OPEN
-```
-Title: [FEATURE] Team Collaboration Tools
-
-Status: OPEN
-GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/10
-
-Description:
-I want better team collaboration features like @mentions, notifications, and activity feeds.
-
-What I want:
-- @mention users in comments
-- Activity feed showing recent changes
-- Real-time notifications
-- Team member assignments
-
-Acceptance Criteria:
-- [ ] @mention functionality in comments
-- [ ] Activity feed on dashboard
-- [ ] Browser notifications for mentions
-- [ ] Team member dropdown for assignments
-- [ ] Real-time updates using WebSocket
-
-@coding-agent please implement this feature
-```
-
-### Issue #25: User Registration System with Admin Control - OPEN
+### 🔵 **Issue #25:** __User Registration System with Admin Control__ - OPEN
 ```
 Title: [FEATURE] User Registration System with Admin Control
 
@@ -146,7 +121,7 @@ Security Features:
 @coding-agent please implement this comprehensive feature
 ```
 
-### Issue #11: Mobile Responsive Design - OPEN
+### 🔵 **Issue #11:** *Mobile Responsive Design* - OPEN
 ```
 Title: [FEATURE] Mobile Responsive Design
 
@@ -173,7 +148,7 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #19: Enhanced Dark Mode Toggle with Better Contrast - OPEN
+### 🔵 **Issue #19:** **Enhanced Dark Mode Toggle with Better Contrast** - OPEN
 ```
 Title: [FEATURE] Enhanced Dark Mode Toggle with Better Contrast
 
@@ -214,7 +189,7 @@ Technical Requirements:
 @coding-agent please implement this enhanced feature with proper contrast
 ```
 
-### Issue #20: Add Colored Labels to Cards - OPEN
+### 🔵 **Issue #20:** _Add Colored Labels to Cards_ - OPEN
 ```
 Title: [FEATURE] Add Colored Labels to Cards
 
@@ -240,7 +215,7 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #21: Time Tracking for Cards - OPEN
+### 🔵 **Issue #21:** > Time Tracking for Cards - OPEN
 ```
 Title: [FEATURE] Time Tracking for Cards
 
@@ -267,7 +242,7 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### Issue #22: Enhanced Team Collaboration - OPEN
+### 🔵 **Issue #22:** # Enhanced Team Collaboration - OPEN
 ```
 Title: [FEATURE] Enhanced Team Collaboration
 
@@ -335,7 +310,7 @@ Technical Requirements:
 
 
 
-### Issue #28: Enhanced Issues List Modal with Required Fields - OPEN
+### 🔵 **Issue #28:** Enhanced Issues List Modal with Required Fields - OPEN
 ```
 Title: [FEATURE] Enhanced Issues List Modal with Required Fields
 
@@ -364,11 +339,111 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
+### 🔴 **Issue #30:** **[BUG] Gantt Chart Shows Archived Projects** - OPEN
+```
+Title: [BUG] Gantt Chart Shows Archived Projects in Dropdown
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/30
+
+Description:
+The Gantt Chart page is displaying archived projects in the project dropdown list and throughout the interface. Archived projects should only appear on the Archive page.
+
+What I want:
+- Gantt Chart should only show active (non-archived) projects
+- Project dropdown should exclude archived projects
+- Archived projects should not appear in any charts or analytics
+- Only the Archive page should display archived projects
+
+Current Issues:
+- [ ] Gantt Chart dropdown includes archived projects
+- [ ] Analytics may include archived project data
+- [ ] Project selection shows inactive projects
+- [ ] Inconsistent filtering across pages
+
+Acceptance Criteria:
+- [ ] Gantt Chart project dropdown only shows active projects
+- [ ] All charts and analytics exclude archived projects
+- [ ] Project filtering is consistent across all pages
+- [ ] Archived projects only visible on Archive page
+- [ ] No archived project data in reports or exports
+- [ ] Clear separation between active and archived projects
+
+Technical Requirements:
+- [ ] Update gantt.html template to filter archived projects
+- [ ] Modify backend routes to exclude archived projects
+- [ ] Ensure consistent project filtering logic
+- [ ] Test all project-related dropdowns and lists
+
+@coding-agent please fix this bug
+```
+
+### 🟢 **Issue #31:** ***[FEATURE] Enhanced Gantt Chart Date Navigation and Timeline View*** - OPEN
+```
+Title: [FEATURE] Enhanced Gantt Chart Date Navigation and Timeline View
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/31
+
+Description:
+Improve the Gantt Chart date indication and schedule navigation with a better timeline view similar to modern project management tools like Monday.com, Asana, or Microsoft Project.
+
+What I want:
+- Better date navigation with timeline controls
+- Improved date indication and visual timeline
+- Modern schedule navigation interface
+- Zoom levels for different time periods (days, weeks, months)
+- Clear date markers and grid lines
+
+Current Issues:
+- [ ] Basic date display lacks visual clarity
+- [ ] No timeline navigation controls
+- [ ] Missing zoom functionality for different time scales
+- [ ] Poor date indication on project bars
+- [ ] No interactive date selection
+
+Desired Features:
+- [ ] Timeline header with clear date markers
+- [ ] Zoom controls (Day/Week/Month/Quarter view)
+- [ ] Interactive date navigation (prev/next buttons)
+- [ ] Today indicator line
+- [ ] Weekend highlighting
+- [ ] Milestone markers
+- [ ] Date range selector
+- [ ] Mini calendar for quick navigation
+
+Inspiration from Market Leaders:
+- [ ] Monday.com style timeline header
+- [ ] Asana's zoom and navigation controls
+- [ ] Microsoft Project's date grid system
+- [ ] Smartsheet's timeline interface
+- [ ] TeamGantt's date navigation
+
+Technical Requirements:
+- [ ] Update gantt.html with modern timeline header
+- [ ] Add JavaScript for zoom and navigation controls
+- [ ] Implement responsive date scaling
+- [ ] Add CSS for better visual date indicators
+- [ ] Create interactive timeline controls
+- [ ] Ensure mobile-friendly date navigation
+
+Acceptance Criteria:
+- [ ] Timeline header shows clear date markers
+- [ ] Zoom controls work smoothly (Day/Week/Month)
+- [ ] Navigation buttons allow easy date browsing
+- [ ] Today indicator is clearly visible
+- [ ] Date selection is intuitive and responsive
+- [ ] Visual design matches modern PM tools
+- [ ] Works well on both desktop and mobile
+
+@coding-agent please implement this enhanced timeline feature
+```
+
 ## 📊 SUMMARY
-- **Total Issues**: 28
-- **Completed**: 17 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #13, #14, #15, #16, #17, #18, #23, #24, #26)
-- **Open/In Progress**: 11 issues 🔄
-- **Completion Rate**: 61% (17/28 completed)
+- **Total Issues**: 30
+- **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #10, #12, #13, #14, #15, #16, #17, #18, #23, #24, #26)
+- **Open/In Progress**: 12 issues 🔄
+- **Completion Rate**: 60% (18/30 completed)
 
 **Recently Completed:**
 - ✅ Issue #26: Project Archive System with Dashboard Integration (2025-08-02)
@@ -389,10 +464,12 @@ Acceptance Criteria:
 - Issue #25: User Registration System with Admin Control
 - Issue #27: Sprint Management System
 - Issue #28: Enhanced Issues List Modal with Required Fields
+- Issue #30: [BUG] Gantt Chart Shows Archived Projects
+- Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation and Timeline View
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #25: User Registration System with Admin Control
-2. Issue #28: Enhanced Issues List Modal with Required Fields
-3. Issue #27: Sprint Management System
+1. Issue #30: [BUG] Gantt Chart Shows Archived Projects (HIGH PRIORITY)
+2. Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation (HIGH PRIORITY)
+3. Issue #25: User Registration System with Admin Control
 4. Issue #9: Time Tracking Features
 5. Issue #11: Mobile Responsive Design

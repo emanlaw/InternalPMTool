@@ -12,7 +12,7 @@ from firebase_admin import credentials, firestore
 # Initialize Firebase
 try:
     if not firebase_admin._apps:
-        cred = credentials.Certificate('pm-tool-internal-firebase-adminsdk-fbsvc-828aade312.json')
+        cred = credentials.Certificate('firebase-service-account.json')
         firebase_admin.initialize_app(cred)
     
     db = firestore.client()
@@ -20,7 +20,7 @@ try:
     
 except Exception as e:
     print(f"Firebase initialization failed: {e}")
-    print("Falling back to local JSON storage")
+    print("ERROR: Please ensure firebase-service-account.json exists with valid credentials")
     db = None
 
 # Simple Flask app for Windows
@@ -68,10 +68,11 @@ def load_user(user_id):
 
 def load_data():
     """Load data from Firebase"""
-    data = {'users': [], 'projects': [], 'cards': [], 'comments': []}
+    data = {'users': [], 'projects': [], 'cards': [], 'comments': [], 'notifications': []}
     
     if db is None:
-        print("Firebase not initialized - cannot load data")
+        print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
+        print("You need to download the real service account key from Firebase Console.")
         return data
     
     try:
@@ -109,12 +110,52 @@ def load_data():
     except Exception as e:
         print(f"Firebase error: {e}")
     
+    # Create default admin user if no users exist
+    if not data['users']:
+        default_admin = {
+            'username': 'admin',
+            'password_hash': generate_password_hash('admin123'),
+            'email': 'admin@example.com',
+            'display_name': 'Administrator',
+            'role': 'admin',
+            'status': 'active',
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if db:
+            try:
+                db.collection('users').document('1').set(default_admin)
+                print("Default admin user created in Firebase")
+            except Exception as e:
+                print(f"Error creating admin user in Firebase: {e}")
+        
+        data['users'].append({'id': 1, **default_admin})
+        print("Default admin user created: admin/admin123")
+    
+    # Create default project if no projects exist
+    if not data['projects']:
+        default_project = {
+            'name': 'Sample Project',
+            'description': 'Your first project',
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if db:
+            try:
+                db.collection('projects').document('1').set(default_project)
+                print("Default project created in Firebase")
+            except Exception as e:
+                print(f"Error creating project in Firebase: {e}")
+        
+        data['projects'].append({'id': 1, **default_project})
+        print("Default project created")
+    
     return data
 
 def save_data(data):
     """Save data to Firebase"""
     if db is None:
-        print("Firebase not initialized - cannot save data")
+        print("ERROR: Firebase not initialized! Cannot save data.")
         return
     
     try:
@@ -642,6 +683,64 @@ def delete_card():
 def send_to_assignee():
     return jsonify({'success': True})
 
+@app.route('/api/notifications')
+@login_required
+def get_notifications():
+    data = load_data()
+    user_notifications = [n for n in data.get('notifications', []) if n['user_id'] == current_user.id]
+    return jsonify(user_notifications)
+
+@app.route('/api/notifications/mark_read', methods=['POST'])
+@login_required
+def mark_notification_read():
+    data = load_data()
+    notification_id = request.json['notification_id']
+    
+    for notification in data.get('notifications', []):
+        if notification['id'] == notification_id and notification['user_id'] == current_user.id:
+            notification['read'] = True
+            break
+    
+    save_data(data)
+    return jsonify({'success': True})
+
+@app.route('/api/activity_feed')
+@login_required
+def activity_feed():
+    data = load_data()
+    activities = []
+    
+    # Recent card updates
+    for card in data['cards'][-10:]:  # Last 10 cards
+        activities.append({
+            'type': 'card_created',
+            'message': f'Card "{card["title"]}" was created',
+            'timestamp': card.get('created_at', ''),
+            'card_id': card['id']
+        })
+    
+    # Recent comments
+    for comment in data.get('comments', [])[-10:]:  # Last 10 comments
+        card = next((c for c in data['cards'] if c['id'] == comment['card_id']), None)
+        if card:
+            activities.append({
+                'type': 'comment_added',
+                'message': f'{comment["author"]} commented on "{card["title"]}"',
+                'timestamp': comment['created_at'],
+                'card_id': card['id']
+            })
+    
+    # Sort by timestamp
+    activities.sort(key=lambda x: x['timestamp'], reverse=True)
+    return jsonify(activities[:20])  # Return last 20 activities
+
+@app.route('/api/team_members')
+@login_required
+def get_team_members():
+    data = load_data()
+    team_members = [{'id': u['id'], 'username': u['username']} for u in data['users']]
+    return jsonify(team_members)
+
 @app.route('/api/add_project', methods=['POST'])
 @login_required
 def add_project():
@@ -689,16 +788,24 @@ def card_comments(card_id):
     data = load_data()
     
     if request.method == 'POST':
+        content = request.json['content']
+        mentions = extract_mentions(content)
+        
         new_comment = {
             'id': max([c['id'] for c in data.get('comments', [])], default=0) + 1,
             'card_id': card_id,
             'author': current_user.username,
-            'content': request.json['content'],
+            'content': content,
+            'mentions': mentions,
             'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         if 'comments' not in data:
             data['comments'] = []
         data['comments'].append(new_comment)
+        
+        # Create notifications for mentioned users
+        create_mention_notifications(mentions, card_id, current_user.username)
+        
         save_data(data)
         return jsonify(new_comment)
     
@@ -923,6 +1030,36 @@ def format_timestamp(timestamp):
         return timestamp
     except:
         return timestamp
+
+def extract_mentions(content):
+    """Extract @mentions from comment content"""
+    import re
+    mentions = re.findall(r'@(\w+)', content)
+    return list(set(mentions))  # Remove duplicates
+
+def create_mention_notifications(mentions, card_id, author):
+    """Create notifications for mentioned users"""
+    data = load_data()
+    
+    for username in mentions:
+        # Check if user exists
+        user = next((u for u in data['users'] if u['username'] == username), None)
+        if user:
+            notification = {
+                'id': max([n.get('id', 0) for n in data.get('notifications', [])], default=0) + 1,
+                'user_id': user['id'],
+                'type': 'mention',
+                'message': f'{author} mentioned you in a comment',
+                'card_id': card_id,
+                'read': False,
+                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            if 'notifications' not in data:
+                data['notifications'] = []
+            data['notifications'].append(notification)
+    
+    save_data(data)
 
 # Register template functions
 app.jinja_env.globals.update(
