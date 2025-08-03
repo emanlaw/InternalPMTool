@@ -144,9 +144,10 @@
 </div>
 
 <!-- Add Issue Modal -->
-<div id="addCardModal" class="modal">
+<div id="addCardModal" class="modal" style="z-index: 10000;">
     <div class="modal-content">
         <h3>Create New Issue</h3>
+        <div id="validationErrors" style="display: none; background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px;"></div>
         <form id="cardForm">
             <select id="cardProject" required>
                 <option value="">Select Project</option>
@@ -156,15 +157,27 @@
                 </option>
                 {% endfor %}
             </select>
-            <input type="text" id="cardTitle" placeholder="Issue Title" required>
+            
+            <input type="text" id="cardTitle" placeholder="Issue Title *" required style="border: 1px solid #ddd;">
+            
             <textarea id="cardDescription" placeholder="Description" rows="3"></textarea>
-            <input type="text" id="cardAssignee" placeholder="Assignee">
-            <input type="date" id="cardDueDate" placeholder="Due Date">
+            
+            <select id="cardAssignee" required style="border: 1px solid #ddd;">
+                <option value="">Select Assignee *</option>
+                <option value="admin">admin</option>
+                <option value="John">John</option>
+                <option value="Jane">Jane</option>
+                <option value="Bob">Bob</option>
+            </select>
+            
+            <input type="date" id="cardDueDate" required style="border: 1px solid #ddd;" placeholder="Target Date *">
+            
             <select id="cardPriority">
                 <option value="Low">Low Priority</option>
                 <option value="Medium" selected>Medium Priority</option>
                 <option value="High">High Priority</option>
             </select>
+            
             <div style="margin-top: 15px;">
                 <button type="submit" class="btn">Create Issue</button>
                 <button type="button" class="btn btn-secondary" onclick="hideAddCardModal()">Cancel</button>
@@ -472,15 +485,72 @@ async function updateStatus(cardId, newStatus) {
 
 function showAddCardModal() {
     document.getElementById('addCardModal').style.display = 'block';
+    document.getElementById('validationErrors').style.display = 'none';
+    // Clear any previous validation styling
+    clearValidationErrors();
 }
 
 function hideAddCardModal() {
     document.getElementById('addCardModal').style.display = 'none';
     document.getElementById('cardForm').reset();
+    document.getElementById('validationErrors').style.display = 'none';
+    clearValidationErrors();
+}
+
+function clearValidationErrors() {
+    const fields = ['cardTitle', 'cardAssignee', 'cardDueDate'];
+    fields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.style.border = '1px solid #ddd';
+        }
+    });
+}
+
+function validateForm() {
+    const errors = [];
+    const title = document.getElementById('cardTitle').value.trim();
+    const assignee = document.getElementById('cardAssignee').value;
+    const dueDate = document.getElementById('cardDueDate').value;
+    
+    // Clear previous validation styling
+    clearValidationErrors();
+    
+    // Validate title
+    if (!title) {
+        errors.push('Issue title is required');
+        document.getElementById('cardTitle').style.border = '2px solid #dc3545';
+    }
+    
+    // Validate assignee
+    if (!assignee) {
+        errors.push('Assignee is required');
+        document.getElementById('cardAssignee').style.border = '2px solid #dc3545';
+    }
+    
+    // Validate due date
+    if (!dueDate) {
+        errors.push('Target date is required');
+        document.getElementById('cardDueDate').style.border = '2px solid #dc3545';
+    }
+    
+    if (errors.length > 0) {
+        const errorDiv = document.getElementById('validationErrors');
+        errorDiv.innerHTML = '<strong>Please fix the following errors:</strong><br>' + errors.join('<br>');
+        errorDiv.style.display = 'block';
+        return false;
+    }
+    
+    return true;
 }
 
 document.getElementById('cardForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+        return;
+    }
     
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
@@ -493,7 +563,7 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 project_id: parseInt(document.getElementById('cardProject').value),
-                title: document.getElementById('cardTitle').value,
+                title: document.getElementById('cardTitle').value.trim(),
                 description: document.getElementById('cardDescription').value,
                 assignee: document.getElementById('cardAssignee').value,
                 priority: document.getElementById('cardPriority').value,
@@ -508,13 +578,18 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             // Refresh the page to show the new issue
             window.location.reload();
         } else {
-            alert('Error creating card');
+            const errorData = await response.json();
+            const errorDiv = document.getElementById('validationErrors');
+            errorDiv.innerHTML = '<strong>Error:</strong> ' + (errorData.error || 'Failed to create issue');
+            errorDiv.style.display = 'block';
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
         }
     } catch (error) {
         console.error('Error creating card:', error);
-        alert('Error creating card');
+        const errorDiv = document.getElementById('validationErrors');
+        errorDiv.innerHTML = '<strong>Error:</strong> Failed to create issue. Please try again.';
+        errorDiv.style.display = 'block';
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
     }
@@ -751,14 +826,12 @@ function showNotification(message, type) {
     }, 3000);
 }
 
-// Close modal when clicking outside
+// Enhanced modal click handling - prevent closing Add Issue modal by clicking outside
 window.onclick = function(event) {
     const addModal = document.getElementById('addCardModal');
     const detailsModal = document.getElementById('cardDetailsModal');
     
-    if (event.target === addModal) {
-        hideAddCardModal();
-    }
+    // Only allow closing details modal by clicking outside (not add modal)
     if (event.target === detailsModal) {
         hideCardDetailsModal();
     }
@@ -770,5 +843,23 @@ window.onclick = function(event) {
         });
     }
 }
+
+// Prevent ESC key from closing the Add Issue modal
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const addModal = document.getElementById('addCardModal');
+        const detailsModal = document.getElementById('cardDetailsModal');
+        
+        // Only allow ESC to close details modal, not add modal
+        if (detailsModal.style.display === 'block') {
+            hideCardDetailsModal();
+        }
+        // Prevent ESC from closing add modal
+        if (addModal.style.display === 'block') {
+            event.preventDefault();
+            return false;
+        }
+    }
+});
 </script>
 {% endblock %}

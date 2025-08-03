@@ -318,11 +318,40 @@ Technical Requirements:
 
 
 
+### Issue #28: Enhanced Issues List Modal with Required Fields - OPEN
+```
+Title: [FEATURE] Enhanced Issues List Modal with Required Fields
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/28
+
+Description:
+Improve the Issues List page Add Issue modal to prevent accidental closure and enforce required field validation.
+
+What I want:
+- Modal that only closes via Create Issue or Cancel buttons
+- Prevent clicking outside modal to close
+- Required field validation for issue title, assignee, and target date
+- Better user experience with clear validation messages
+
+Acceptance Criteria:
+- [ ] Modal cannot be closed by clicking outside the modal area
+- [ ] Only "Create Issue" and "Cancel" buttons can close the modal
+- [ ] Issue title field is required and validated
+- [ ] Assignee field is required with dropdown selection
+- [ ] Target date field is required with date picker
+- [ ] Form validation prevents submission with missing required fields
+- [ ] Clear error messages for validation failures
+- [ ] Improved modal styling and user experience
+
+@coding-agent please implement this feature
+```
+
 ## 📊 SUMMARY
-- **Total Issues**: 27
+- **Total Issues**: 28
 - **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #12, #13, #14, #15, #16, #17, #18, #23, #24, #25, #26)
-- **Open/In Progress**: 9 issues 🔄
-- **Completion Rate**: 67% (18/27 completed)
+- **Open/In Progress**: 10 issues 🔄
+- **Completion Rate**: 64% (18/28 completed)
 
 **Recently Completed:**
 - ✅ Issue #26: Project Archive System with Dashboard Integration (2025-08-02)
@@ -341,10 +370,11 @@ Technical Requirements:
 - Issue #21: Time Tracking for Cards
 - Issue #22: Enhanced Team Collaboration
 - Issue #27: Sprint Management System
+- Issue #28: Enhanced Issues List Modal with Required Fields
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #27: Sprint Management System
-2. Issue #8: Card Labels/Tags System
-3. Issue #9: Time Tracking Features
-4. Issue #11: Mobile Responsive Design
-5. Issue #19: Enhanced Dark Mode Toggle with Better Contrast
+1. Issue #28: Enhanced Issues List Modal with Required Fields
+2. Issue #27: Sprint Management System
+3. Issue #8: Card Labels/Tags System
+4. Issue #9: Time Tracking Features
+5. Issue #11: Mobile Responsive Design
