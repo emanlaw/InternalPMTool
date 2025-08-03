@@ -2,9 +2,9 @@
 
 This file tracks all issues that have been successfully implemented and deployed.
 
-**Current Status:** 19 out of 27 total issues completed (70% completion rate)
-**Last Updated:** 2025-01-31
-**Recent Completion:** Issue #27 (Sprint Management System) - Comprehensive sprint planning and tracking
+**Current Status:** 18 out of 30 total issues completed (60% completion rate)
+**Last Updated:** 2025-08-03
+**Recent Completion:** Issue #10 (Team Collaboration Tools) - @mentions, notifications, activity feed
 
 ## How to Move Issues Here
 
@@ -16,26 +16,157 @@ When an issue is completed:
 
 ---
 
-## Issue #18: [BUG] Fix Issues List Status Updates and Filtering ✅ COMPLETED
-**Implementation Date:** 2025-07-31
+## Issue #1: [FEATURE] Issue #1 Add User Authentication ✅ COMPLETED
+**Implementation Date:** 2025-07-28
 **Status:** ✅ COMPLETED
-**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/18
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/1
 
 **Description:**
-Fix multiple issues with the Issues List functionality that are affecting user experience.
+Title: [FEATURE] Issue #1 Add User Authentication System
 
-Problems to Fix:
-- [x] Status update: When clicking Done button, issue status doesn't change accordingly
-- [x] Created timestamp: Remove milliseconds from issue creation time display
-- [x] Missing column: Add Project column to issues table for better organization
-- [x] Filter bug: Project filter dropdown doesn't filter issues when different projects are selected
+Description:
+Implement user login/logout functionality for the PM Tool.
 
 Requirements:
-- [x] Fix Done button to properly update issue status in real-time
-- [x] Format creation timestamp to exclude milliseconds (YYYY-MM-DD HH:MM:SS format)
-- [x] Add Project column to issues table with proper data binding
-- [x] Fix project filter functionality to show only issues from selected project
-- [x] Ensure all changes persist after page refresh
+- [x] Login page with username/password form
+- [x] Session management using Flask-Login
+- [x] Protect routes (require login to access dashboard/issues/kanban)
+- [x] Simple user registration
+- [x] Logout functionality with redirect
+
+Acceptance Criteria:
+- [x] Users can register with username/password
+- [x] Users can login and access protected pages
+- [x] Session persists across browser refresh
+- [x] Logout clears session and redirects to login
+
+---
+
+## Issue #2: [FEATURE] #2 Add Due Dates to Cards ✅ COMPLETED
+**Implementation Date:** 2025-07-28
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/2
+
+**Description:**
+Title: [FEATURE] Add Due Dates to Kanban Cards
+
+Description:
+Add due date functionality to cards with visual indicators for overdue items.
+
+Requirements:
+- [x] Due date field in card creation modal
+- [x] Due date picker (HTML5 date input)
+- [x] Visual indicators (red border for overdue cards)
+- [x] Due date display on cards
+- [x] Sort/filter by due date in issues list
+
+Acceptance Criteria:
+- [x] Cards can have optional due dates
+- [x] Overdue cards show red border/indicator
+- [x] Due dates visible on both Kanban and Issues views
+- [x] Issues list can be filtered by due date
+
+---
+
+## Issue #3: [FEATURE] #3 Add Card Comments System ✅ COMPLETED
+**Implementation Date:** 2025-07-28
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/3
+
+**Description:**
+Title: [FEATURE] Add Comments to Cards
+
+Description:
+Allow users to add comments to cards for better collaboration.
+
+Requirements:
+- [x] Comment section on card details
+- [x] Add new comments with timestamp
+- [x] Display all comments for a card
+- [x] Simple comment storage in JSON
+
+Acceptance Criteria:
+- [x] Click card to open details modal
+- [x] Comments section shows all comments
+- [x] Can add new comments
+- [x] Comments show timestamp and author
+
+---
+
+## Issue #4: [FEATURE] #4 Add Search and Filter ✅ COMPLETED
+**Implementation Date:** 2025-07-28
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/4
+
+**Description:**
+Title: [FEATURE] Add Search and Filter Functionality
+
+Description:
+Add search and filter capabilities across issues and cards.
+
+Requirements:
+- [x] Search bar in issues list
+- [x] Filter by status, priority, assignee
+- [x] Real-time search (JavaScript)
+- [x] Clear filters button
+
+Acceptance Criteria:
+- [x] Search works across title and description
+- [x] Multiple filters can be applied
+- [x] Search results update in real-time
+- [x] URL reflects current filters
+
+---
+
+## Issue #5: [FEATURE] #5 Export to Excel Functionality ✅ COMPLETED
+**Implementation Date:** 2025-07-28
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/5
+
+**Description:**
+Title: [FEATURE] Export Issues to Excel
+
+Description:
+I want to export all issues/cards to an Excel file for reporting and offline analysis.
+
+What I want:
+- Export button on Issues page
+- Download Excel file with all card data
+- Include all important columns
+- Professional formatting
+
+Acceptance Criteria:
+- [x] Export button downloads Excel file immediately
+- [x] File contains: Title, Status, Priority, Assignee, Due Date, Created Date, Comments Count
+- [x] File opens properly in Excel/Google Sheets
+- [x] Filename includes current date
+- [x] Works with filtered results
+
+---
+
+## Issue #6: [FEATURE] #6 Email Notifications for Overdue Cards ✅ COMPLETED
+**Implementation Date:** 2025-07-28
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/6
+
+**Description:**
+Title: [FEATURE] Email Notifications System
+
+Description:
+As a project manager, I want to receive email notifications when cards are overdue, so I can follow up with team members.
+
+What I want:
+- Daily email digest of overdue cards
+- Email settings in user profile
+- Professional email templates
+- Option to enable/disable notifications
+
+Acceptance Criteria:
+- [x] Users can set email preferences
+- [x] Daily email sent with overdue cards list
+- [x] Email includes card details and direct links
+- [x] Users can unsubscribe from notifications
+- [x] Email template looks professional
 
 ---
 
@@ -62,6 +193,129 @@ Acceptance Criteria:
 - [x] User preference saved in browser
 - [x] Dark theme is easy on the eyes
 - [x] Maintains good contrast and readability
+
+---
+
+## Issue #10: [FEATURE] Team Collaboration Tools ✅ COMPLETED
+**Implementation Date:** 2025-08-03
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/10
+
+**Description:**
+Implemented comprehensive team collaboration features including @mentions, notifications, activity feeds, and team member management.
+
+**What was implemented:**
+- @mention users in comments with auto-complete suggestions
+- Activity feed showing recent changes on dashboard
+- Real-time notifications with notification bell in header
+- Team member dropdown for assignments
+- Mention highlighting and notification system
+
+**Acceptance Criteria:**
+- [x] @mention functionality in comments
+- [x] Activity feed on dashboard
+- [x] Browser notifications for mentions
+- [x] Team member dropdown for assignments
+- [x] Real-time notification system
+
+**Technical Implementation:**
+- Added notification bell with badge count in base template
+- Implemented @mention extraction and highlighting
+- Created notification system with Firebase storage
+- Added activity feed to dashboard
+- Team member API endpoints for auto-complete
+
+---
+
+## Issue #12: [VERSION 1.1] Issues List Enhancement ✅ COMPLETED
+**Implementation Date:** 2025-07-31
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/12
+
+**Description:**
+Enhance the Issues List with dropdown menus for better user experience.
+
+Requested Changes:
+- [x] Title input with dropdown menu from previous entries
+- [x] Assignee dropdown menu for user selection
+- [x] Improved navigation and grouping capabilities
+- [x] Enhanced user interface for issue creation
+
+**Implementation Notes:**
+- Added dropdown functionality for title and assignee fields
+- Improved issue creation workflow
+- Enhanced user experience with better input options
+
+---
+
+## Issue #13: [FEATURE] Database Integration (PostgreSQL) ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/13
+
+**Description:**
+The current JSON file storage is not scalable. I want to migrate to a proper PostgreSQL database for better performance and reliability.
+
+**Requirements:**
+- [x] PostgreSQL database setup
+- [x] Migrate all existing data
+- [x] Improved performance
+- [x] Data backup and recovery
+- [x] Database connection pooling
+- [x] Database migrations system
+- [x] All existing features work with database
+
+---
+
+## Issue #14: [FEATURE] Interactive Mind Map for Project Planning ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/14
+
+**Description:**
+I want an interactive mind map feature to visualize project structure, brainstorm ideas, and show relationships between different project components.
+
+**Requirements:**
+- [x] Interactive mind map canvas with drag-and-drop nodes
+- [x] Different node types for different card statuses
+- [x] Visual connections between related cards/ideas
+- [x] Collaborative editing capabilities
+- [x] Export mind maps as images or PDF
+
+---
+
+## Issue #15: [FEATURE] Interactive Gantt Chart for Sprint and Project Management ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/15
+
+**Description:**
+I want an interactive Gantt chart to visualize project timelines, dependencies, and sprint planning.
+
+**Requirements:**
+- [x] Interactive Gantt chart with timeline view
+- [x] Drag tasks to adjust dates and duration
+- [x] Task dependencies with connecting lines
+- [x] Critical path highlighting
+- [x] Sprint boundaries and milestones
+- [x] Resource allocation view
+- [x] Export to PDF and image formats
+
+---
+
+## Issue #16: [FEATURE] Advanced Mind Map Features ✅ COMPLETED
+**Implementation Date:** 2025-08-02
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/16
+
+**Description:**
+Enhanced mind mapping capabilities with advanced features for complex project visualization.
+
+**Requirements:**
+- [x] Advanced node types and styling options
+- [x] Real-time collaboration features
+- [x] Integration with existing project data
+- [x] Advanced export and sharing options
 
 ---
 
@@ -92,33 +346,57 @@ Analytics Features:
 
 ---
 
-## Issue #6: [FEATURE] #6 Email Notifications for Overdue Cards ✅ COMPLETED
-**Implementation Date:** 2025-07-28
+## Issue #18: [BUG] Fix Issues List Status Updates and Filtering ✅ COMPLETED
+**Implementation Date:** 2025-07-31
 **Status:** ✅ COMPLETED
-**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/6
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/18
 
 **Description:**
-Title: [FEATURE] Email Notifications System
+Fix multiple issues with the Issues List functionality that are affecting user experience.
 
-Description:
-As a project manager, I want to receive email notifications when cards are overdue, so I can follow up with team members.
+Problems to Fix:
+- [x] Status update: When clicking Done button, issue status doesn't change accordingly
+- [x] Created timestamp: Remove milliseconds from issue creation time display
+- [x] Missing column: Add Project column to issues table for better organization
+- [x] Filter bug: Project filter dropdown doesn't filter issues when different projects are selected
 
-What I want:
-- Daily email digest of overdue cards
-- Email settings in user profile
-- Professional email templates
-- Option to enable/disable notifications
-
-Acceptance Criteria:
-- [x] Users can set email preferences
-- [x] Daily email sent with overdue cards list
-- [x] Email includes card details and direct links
-- [x] Users can unsubscribe from notifications
-- [x] Email template looks professional
+Requirements:
+- [x] Fix Done button to properly update issue status in real-time
+- [x] Format creation timestamp to exclude milliseconds (YYYY-MM-DD HH:MM:SS format)
+- [x] Add Project column to issues table with proper data binding
+- [x] Fix project filter functionality to show only issues from selected project
+- [x] Ensure all changes persist after page refresh
 
 ---
 
-## Issue #5: [FEATURE] #5 Export to Excel Functionality ✅ COMPLETED
+## Issue #17: [FEATURE] #16 Enhanced Gantt Chart Analytics ✅ COMPLETED
+**Implementation Date:** 2025-07-31
+**Status:** ✅ COMPLETED
+**GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/17
+
+**Description:**
+Title: [FEATURE] Gantt Chart Analytics and Reporting
+
+Description:
+Add comprehensive analytics and reporting capabilities to the Gantt chart for better project insights.
+
+Analytics Features:
+- [x] Project health dashboard
+- [x] Predictive analytics for project completion
+- [x] Resource utilization reports
+- [x] Budget tracking integration
+- [x] Risk assessment and mitigation tracking
+- [x] Performance metrics and KPIs
+- [x] Automated project status reports
+- [x] Trend analysis and forecasting
+- [x] Comparative analysis between projects
+- [x] Custom report builder
+- [x] Scheduled report delivery via email
+- [x] Interactive dashboards with drill-down capabilities
+
+---
+
+## Issue #23: [FEATURE] Add Actions Dropdown for Issue Management ✅ COMPLETED
 **Implementation Date:** 2025-07-28
 **Status:** ✅ COMPLETED
 **GitHub URL:** https://github.com/emanlaw/InternalPMTool/issues/5
