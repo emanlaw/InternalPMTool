@@ -27,8 +27,13 @@ class DataManager:
             filepath = os.path.join(self.data_dir, filename)
             try:
                 with open(filepath, 'r') as f:
-                    data[key] = json.load(f)
-            except FileNotFoundError:
+                    content = f.read().strip()
+                    if content:
+                        data[key] = json.loads(content)
+                    else:
+                        data[key] = []
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                print(f"Error loading {filepath}: {e}")
                 data[key] = []
                 # Create empty file
                 self._save_file(key, [])

@@ -68,14 +68,6 @@ def load_user(user_id):
 
 def load_data():
     """Load data from Firebase or local files"""
-    # Try to load from separate files first (fallback)
-    try:
-        from data_manager import DataManager
-        dm = DataManager()
-        local_data = dm.load_data()
-    except:
-        local_data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
-    
     data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
     
     if db is None:
@@ -146,10 +138,17 @@ def load_data():
         print(f"Firebase error: {e}")
     
     # Create default admin user if no users exist
-    # If Firebase fails, use local data
-    if not data['users'] and local_data['users']:
-        data = local_data
-        print(f"Using local data files: {len(data['users'])} users, {len(data['projects'])} projects")
+    # If Firebase fails or has no data, use local files
+    if not data['users']:
+        try:
+            from data_manager import DataManager
+            dm = DataManager()
+            local_data = dm.load_data()
+            if local_data['users']:
+                data = local_data
+                print(f"Using local data files: {len(data['users'])} users, {len(data['projects'])} projects")
+        except Exception as e:
+            print(f"Error loading local data: {e}")
     
     if not data['users']:
         default_admin = {
