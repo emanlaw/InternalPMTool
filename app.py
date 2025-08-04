@@ -68,7 +68,7 @@ def load_user(user_id):
 
 def load_data():
     """Load data from Firebase"""
-    data = {'users': [], 'projects': [], 'cards': [], 'comments': [], 'notifications': []}
+    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
     
     if db is None:
         print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
@@ -87,23 +87,50 @@ def load_data():
             project_data['id'] = int(doc.id)
             data['projects'].append(project_data)
         
-        # Load cards from projects/{projectId}/cards subcollection
+        # Load epics
         for project_doc in db.collection('projects').stream():
             project_id = int(project_doc.id)
-            cards_ref = db.collection('projects').document(project_doc.id).collection('cards')
-            for card_doc in cards_ref.stream():
-                card_data = card_doc.to_dict()
-                card_data['id'] = int(card_doc.id)
-                card_data['project_id'] = project_id
-                data['cards'].append(card_data)
+            epics_ref = db.collection('projects').document(project_doc.id).collection('epics')
+            for epic_doc in epics_ref.stream():
+                epic_data = epic_doc.to_dict()
+                epic_data['id'] = int(epic_doc.id)
+                epic_data['project_id'] = project_id
+                data['epics'].append(epic_data)
                 
-                # Load comments for this card
-                comments_ref = cards_ref.document(card_doc.id).collection('comments')
-                for comment_doc in comments_ref.stream():
-                    comment_data = comment_doc.to_dict()
-                    comment_data['id'] = int(comment_doc.id)
-                    comment_data['card_id'] = int(card_doc.id)
-                    data['comments'].append(comment_data)
+                # Load stories for this epic
+                stories_ref = epics_ref.document(epic_doc.id).collection('stories')
+                for story_doc in stories_ref.stream():
+                    story_data = story_doc.to_dict()
+                    story_data['id'] = int(story_doc.id)
+                    story_data['epic_id'] = int(epic_doc.id)
+                    story_data['project_id'] = project_id
+                    data['stories'].append(story_data)
+        
+        # Load cards from stories/{storyId}/issues subcollection
+        for project_doc in db.collection('projects').stream():
+            project_id = int(project_doc.id)
+            epics_ref = db.collection('projects').document(project_doc.id).collection('epics')
+            for epic_doc in epics_ref.stream():
+                epic_id = int(epic_doc.id)
+                stories_ref = epics_ref.document(epic_doc.id).collection('stories')
+                for story_doc in stories_ref.stream():
+                    story_id = int(story_doc.id)
+                    issues_ref = stories_ref.document(story_doc.id).collection('issues')
+                    for issue_doc in issues_ref.stream():
+                        card_data = issue_doc.to_dict()
+                        card_data['id'] = int(issue_doc.id)
+                        card_data['story_id'] = story_id
+                        card_data['epic_id'] = epic_id
+                        card_data['project_id'] = project_id
+                        data['cards'].append(card_data)
+                
+                        # Load comments for this issue
+                        comments_ref = issues_ref.document(issue_doc.id).collection('comments')
+                        for comment_doc in comments_ref.stream():
+                            comment_data = comment_doc.to_dict()
+                            comment_data['id'] = int(comment_doc.id)
+                            comment_data['card_id'] = int(issue_doc.id)
+                            data['comments'].append(comment_data)
                     
         print(f"Loaded from Firebase: {len(data['users'])} users, {len(data['projects'])} projects, {len(data['cards'])} cards")
         
@@ -170,15 +197,37 @@ def save_data(data):
             project_copy.pop('id', None)
             db.collection('projects').document(str(project['id'])).set(project_copy)
         
-        # Save cards to projects/{projectId}/cards subcollection
+        # Save epics to projects/{projectId}/epics subcollection
+        for epic in data.get('epics', []):
+            epic_copy = epic.copy()
+            epic_copy.pop('id', None)
+            epic_copy.pop('project_id', None)
+            project_ref = db.collection('projects').document(str(epic['project_id']))
+            project_ref.collection('epics').document(str(epic['id'])).set(epic_copy)
+        
+        # Save stories to projects/{projectId}/epics/{epicId}/stories subcollection
+        for story in data.get('stories', []):
+            story_copy = story.copy()
+            story_copy.pop('id', None)
+            story_copy.pop('epic_id', None)
+            story_copy.pop('project_id', None)
+            project_ref = db.collection('projects').document(str(story['project_id']))
+            epic_ref = project_ref.collection('epics').document(str(story['epic_id']))
+            epic_ref.collection('stories').document(str(story['id'])).set(story_copy)
+        
+        # Save cards to projects/{projectId}/epics/{epicId}/stories/{storyId}/issues subcollection
         for card in data.get('cards', []):
             card_copy = card.copy()
             card_copy.pop('id', None)
+            card_copy.pop('story_id', None)
+            card_copy.pop('epic_id', None)
             card_copy.pop('project_id', None)
             project_ref = db.collection('projects').document(str(card['project_id']))
-            project_ref.collection('cards').document(str(card['id'])).set(card_copy)
+            epic_ref = project_ref.collection('epics').document(str(card['epic_id']))
+            story_ref = epic_ref.collection('stories').document(str(card['story_id']))
+            story_ref.collection('issues').document(str(card['id'])).set(card_copy)
         
-        # Save comments to projects/{projectId}/cards/{cardId}/comments
+        # Save comments to projects/{projectId}/epics/{epicId}/stories/{storyId}/issues/{issueId}/comments
         for comment in data.get('comments', []):
             comment_copy = comment.copy()
             comment_copy.pop('id', None)
@@ -186,8 +235,10 @@ def save_data(data):
             card = next((c for c in data.get('cards', []) if c['id'] == card_id), None)
             if card:
                 project_ref = db.collection('projects').document(str(card['project_id']))
-                card_ref = project_ref.collection('cards').document(str(card_id))
-                card_ref.collection('comments').document(str(comment['id'])).set(comment_copy)
+                epic_ref = project_ref.collection('epics').document(str(card['epic_id']))
+                story_ref = epic_ref.collection('stories').document(str(card['story_id']))
+                issue_ref = story_ref.collection('issues').document(str(card_id))
+                issue_ref.collection('comments').document(str(comment['id'])).set(comment_copy)
                 
         print("Data saved to Firebase successfully")
         
@@ -444,11 +495,15 @@ def issues_list():
     if project_id:
         cards = [c for c in data['cards'] if c['project_id'] == project_id]
         project = next((p for p in data['projects'] if p['id'] == project_id), None)
+        epics = [e for e in data['epics'] if e['project_id'] == project_id]
+        stories = [s for s in data['stories'] if s['project_id'] == project_id]
     else:
         cards = data['cards']
         project = None
+        epics = data['epics']
+        stories = data['stories']
     
-    return render_template('issues.html', cards=cards, projects=data['projects'], current_project=project)
+    return render_template('issues.html', cards=cards, projects=data['projects'], epics=epics, stories=stories, current_project=project)
 
 @app.route('/backlog')
 @login_required
@@ -456,6 +511,38 @@ def backlog():
     data = load_data()
     backlog_cards = [c for c in data['cards'] if c['status'] == 'todo']
     return render_template('backlog.html', cards=backlog_cards, projects=data['projects'])
+
+@app.route('/stories')
+@login_required
+def stories():
+    data = load_data()
+    project_id = request.args.get('project_id', type=int)
+    
+    if project_id:
+        epics = [e for e in data['epics'] if e['project_id'] == project_id]
+        stories = [s for s in data['stories'] if s['project_id'] == project_id]
+        project = next((p for p in data['projects'] if p['id'] == project_id), None)
+    else:
+        epics = data['epics']
+        stories = data['stories']
+        project = None
+    
+    return render_template('stories.html', epics=epics, stories=stories, projects=data['projects'], current_project=project)
+
+@app.route('/epics')
+@login_required
+def epics():
+    data = load_data()
+    project_id = request.args.get('project_id', type=int)
+    
+    if project_id:
+        epics = [e for e in data['epics'] if e['project_id'] == project_id]
+        project = next((p for p in data['projects'] if p['id'] == project_id), None)
+    else:
+        epics = data['epics']
+        project = None
+    
+    return render_template('epics.html', epics=epics, projects=data['projects'], current_project=project)
 
 @app.route('/analytics')
 @login_required
@@ -551,25 +638,93 @@ def kanban_board(project_id):
     in_progress_cards = [c for c in cards if c['status'] == 'in_progress']
     done_cards = [c for c in cards if c['status'] == 'done']
     
+    # Get epics and stories for context
+    epics = [e for e in data['epics'] if e['project_id'] == project_id]
+    stories = [s for s in data['stories'] if s['project_id'] == project_id]
+    
     return render_template('kanban.html', 
                          project=project,
+                         epics=epics,
+                         stories=stories,
                          todo_cards=todo_cards,
                          in_progress_cards=in_progress_cards,
                          done_cards=done_cards)
 
+@app.route('/api/add_epic', methods=['POST'])
+@login_required
+def add_epic():
+    data = load_data()
+    project_id = request.json['project_id']
+    
+    next_id = max([e['id'] for e in data['epics']], default=0) + 1
+    
+    new_epic = {
+        'id': next_id,
+        'project_id': project_id,
+        'title': request.json['title'],
+        'description': request.json.get('description', ''),
+        'status': 'active',
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'created_by': current_user.username
+    }
+    
+    data['epics'].append(new_epic)
+    save_data(data)
+    return jsonify(new_epic)
+
+@app.route('/api/add_story', methods=['POST'])
+@login_required
+def add_story():
+    data = load_data()
+    epic_id = request.json['epic_id']
+    epic = next((e for e in data['epics'] if e['id'] == epic_id), None)
+    
+    if not epic:
+        return jsonify({'error': 'Epic not found'}), 404
+    
+    next_id = max([s['id'] for s in data['stories']], default=0) + 1
+    
+    new_story = {
+        'id': next_id,
+        'epic_id': epic_id,
+        'project_id': epic['project_id'],
+        'title': request.json['title'],
+        'description': request.json.get('description', ''),
+        'status': 'todo',
+        'story_points': request.json.get('story_points', 0),
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'created_by': current_user.username
+    }
+    
+    data['stories'].append(new_story)
+    save_data(data)
+    return jsonify(new_story)
+
 @app.route('/api/add_card', methods=['POST'])
 @login_required
 def add_card():
-    project_id = request.json['project_id']
     data = load_data()
+    story_id = request.json.get('story_id')
     
-    # Get next card ID for this project
-    project_cards = [c for c in data['cards'] if c['project_id'] == project_id]
-    next_id = max([c['id'] for c in project_cards], default=0) + 1
+    if story_id:
+        story = next((s for s in data['stories'] if s['id'] == story_id), None)
+        if not story:
+            return jsonify({'error': 'Story not found'}), 404
+        project_id = story['project_id']
+        epic_id = story['epic_id']
+    else:
+        # Legacy support for direct project cards
+        project_id = request.json['project_id']
+        story_id = None
+        epic_id = None
+    
+    next_id = max([c['id'] for c in data['cards']], default=0) + 1
     
     new_card = {
         'id': next_id,
         'project_id': project_id,
+        'epic_id': epic_id,
+        'story_id': story_id,
         'title': request.json['title'],
         'description': request.json.get('description', ''),
         'status': 'todo',
@@ -580,10 +735,8 @@ def add_card():
         'story_points': request.json.get('story_points')
     }
     
-    # Add to data and save
     data['cards'].append(new_card)
     save_data(data)
-    
     return jsonify(new_card)
 
 @app.route('/api/update_card_status', methods=['POST'])
@@ -600,6 +753,20 @@ def update_card_status():
     
     save_data(data)
     return jsonify({'success': True})
+
+@app.route('/api/get_epics/<int:project_id>')
+@login_required
+def get_epics(project_id):
+    data = load_data()
+    epics = [e for e in data['epics'] if e['project_id'] == project_id]
+    return jsonify(epics)
+
+@app.route('/api/get_stories/<int:epic_id>')
+@login_required
+def get_stories(epic_id):
+    data = load_data()
+    stories = [s for s in data['stories'] if s['epic_id'] == epic_id]
+    return jsonify(stories)
 
 @app.route('/api/search')
 @login_required

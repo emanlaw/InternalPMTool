@@ -434,11 +434,90 @@ Optional Enhancements:
 @coding-agent please implement this enhanced backlog creation feature
 ```
 
+### 🔴 **Issue #33:** **[FEATURE] Implement Hierarchical Project Structure: Project > Epic > Story > Issue > Sub-Issue** - OPEN
+```
+Title: [FEATURE] Implement Hierarchical Project Structure: Project > Epic > Story > Issue > Sub-Issue
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/33
+
+Description:
+Implement a proper hierarchical project management structure to better organize work items and improve sprint planning capabilities.
+
+Current Structure:
+- Projects contain Cards/Issues (flat structure)
+
+Proposed Hierarchy:
+Project (highest level)
+├── Epic (large feature/initiative)
+│   ├── Story (user story/feature)
+│   │   ├── Issue (task/bug)
+│   │   │   └── Sub-Issue (optional subtasks)
+│   │   └── Issue
+│   └── Story
+└── Epic
+
+Sprint Integration:
+- Sprints can pick entire Epics or individual Stories
+- Flexible sprint planning based on capacity
+- Better tracking of epic/story completion
+
+Data Structure Changes:
+- [ ] Create Epic model with project relationship
+- [ ] Create Story model with epic relationship
+- [ ] Update Issue model to belong to Story
+- [ ] Add Sub-Issue model for task breakdown
+- [ ] Update Firebase schema for hierarchical data
+
+New Pages & Features:
+- [ ] Stories page (/stories) for story management
+- [ ] Epic management within projects
+- [ ] Hierarchical navigation and breadcrumbs
+- [ ] Story creation and editing interface
+- [ ] Epic-to-story assignment interface
+
+Sprint Planning Updates:
+- [ ] Sprint planning board with epic/story selection
+- [ ] Drag-and-drop from epics/stories to sprints
+- [ ] Sprint capacity planning by story points
+- [ ] Epic progress tracking across sprints
+
+UI/UX Improvements:
+- [ ] Hierarchical tree view for project structure
+- [ ] Epic/Story/Issue status indicators
+- [ ] Progress bars for epic completion
+- [ ] Filtering by epic/story in all views
+
+Database Schema:
+projects/
+├── {projectId}/
+│   ├── epics/
+│   │   ├── {epicId}/
+│   │   │   └── stories/
+│   │   │       ├── {storyId}/
+│   │   │       │   └── issues/
+│   │   │       │       ├── {issueId}/
+│   │   │       │       │   └── sub_issues/
+│   │   │       │       │       └── {subIssueId}/
+
+Acceptance Criteria:
+- [ ] All existing functionality preserved during migration
+- [ ] New hierarchical structure fully functional
+- [ ] Sprint planning works with new structure
+- [ ] Data migration script for existing projects
+- [ ] Comprehensive testing of all levels
+
+Priority: High
+Estimated Effort: Large (3-5 days)
+
+@coding-agent please implement this hierarchical structure
+```
+
 ## 📊 SUMMARY
-- **Total Issues**: 30
+- **Total Issues**: 31
 - **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #10, #12, #13, #14, #15, #16, #17, #18, #23, #24, #26)
-- **Open/In Progress**: 12 issues 🔄
-- **Completion Rate**: 60% (18/30 completed)
+- **Open/In Progress**: 13 issues 🔄
+- **Completion Rate**: 58% (18/31 completed)
 
 **Recently Completed:**
 - ✅ Issue #26: Project Archive System with Dashboard Integration (2025-08-02)
@@ -455,17 +534,18 @@ Optional Enhancements:
 - Issue #19: Enhanced Dark Mode Toggle with Better Contrast
 - Issue #20: Add Colored Labels to Cards
 - Issue #21: Time Tracking for Cards
-
 - Issue #25: User Registration System with Admin Control
 - Issue #27: Sprint Management System
 - Issue #28: Enhanced Issues List Modal with Required Fields
 - Issue #30: [BUG] Gantt Chart Shows Archived Projects
 - Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation and Timeline View
 - Issue #32: [FEATURE] Enhanced Product Backlog Item Creation with Required Fields
+- Issue #33: [FEATURE] Hierarchical Project Structure (Project > Epic > Story > Issue)
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #30: [BUG] Gantt Chart Shows Archived Projects (HIGH PRIORITY)
-2. Issue #32: [FEATURE] Enhanced Product Backlog Item Creation (HIGH PRIORITY)
-3. Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation (HIGH PRIORITY)
-4. Issue #9: Time Tracking Features
-5. Issue #11: Mobile Responsive Design
+1. Issue #33: [FEATURE] Hierarchical Project Structure (HIGHEST PRIORITY - ARCHITECTURAL)
+2. Issue #30: [BUG] Gantt Chart Shows Archived Projects (HIGH PRIORITY)
+3. Issue #32: [FEATURE] Enhanced Product Backlog Item Creation (HIGH PRIORITY)
+4. Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation (HIGH PRIORITY)
+5. Issue #9: Time Tracking Features
+6. Issue #11: Mobile Responsive Design

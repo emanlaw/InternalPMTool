@@ -71,6 +71,8 @@
                 <th>Title</th>
                 <th>Description</th>
                 <th>Project</th>
+                <th>Epic</th>
+                <th>Story</th>
                 <th>Status</th>
                 <th>Priority</th>
                 <th>Assignee</th>
@@ -92,6 +94,22 @@
                             <span style="background: #e3f2fd; color: #0052cc; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">{{ project.name }}</span>
                         {% endif %}
                     {% endfor %}
+                </td>
+                <td>
+                    {% set epic = epics | selectattr('id', 'equalto', card.epic_id) | first %}
+                    {% if epic %}
+                        <span style="background: #e8f5e8; color: #2e7d32; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">{{ epic.title }}</span>
+                    {% else %}
+                        <span style="color: #999;">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% set story = stories | selectattr('id', 'equalto', card.story_id) | first %}
+                    {% if story %}
+                        <span style="background: #fff3e0; color: #f57c00; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">{{ story.title }}</span>
+                    {% else %}
+                        <span style="color: #999;">-</span>
+                    {% endif %}
                 </td>
                 <td>
                     <select class="status-badge status-{{ card.status }}" onchange="updateStatus({{ card.id }}, this.value)" style="border: none; background: transparent; font-size: 12px;">
@@ -134,7 +152,7 @@
             
             {% if not cards %}
             <tr>
-                <td colspan="11" style="text-align: center; color: #5e6c84; padding: 40px;">
+                <td colspan="13" style="text-align: center; color: #5e6c84; padding: 40px;">
                     No issues found. Create your first issue!
                 </td>
             </tr>

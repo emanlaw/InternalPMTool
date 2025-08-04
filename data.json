@@ -20,7 +20,9 @@
       "status": "done",
       "assignee": "John",
       "priority": "High",
-      "created_at": "2024-01-01"
+      "created_at": "2024-01-01",
+      "epic_id": 1,
+      "story_id": 1
     },
     {
       "id": 2,
@@ -30,7 +32,9 @@
       "status": "in_progress",
       "assignee": "Jane",
       "priority": "Medium",
-      "created_at": "2024-01-02"
+      "created_at": "2024-01-02",
+      "epic_id": 1,
+      "story_id": 1
     },
     {
       "id": 3,
@@ -40,7 +44,9 @@
       "status": "todo",
       "assignee": "Bob",
       "priority": "High",
-      "created_at": "2024-01-03"
+      "created_at": "2024-01-03",
+      "epic_id": 1,
+      "story_id": 1
     }
   ],
   "users": [
@@ -55,5 +61,49 @@
       "last_login": "2025-08-03 16:25:32"
     }
   ],
-  "comments": []
+  "comments": [],
+  "epics": [
+    {
+      "id": 1,
+      "project_id": 1,
+      "title": "Sample Project - Main Epic",
+      "description": "Default epic created during migration for Sample Project",
+      "status": "active",
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    },
+    {
+      "id": 2,
+      "project_id": 2,
+      "title": "Sample - Main Epic",
+      "description": "Default epic created during migration for Sample",
+      "status": "active",
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    }
+  ],
+  "stories": [
+    {
+      "id": 1,
+      "epic_id": 1,
+      "project_id": 1,
+      "title": "Sample Project - Main Story",
+      "description": "Default story created during migration for Sample Project",
+      "status": "in_progress",
+      "story_points": 0,
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    },
+    {
+      "id": 2,
+      "epic_id": 2,
+      "project_id": 2,
+      "title": "Sample - Main Story",
+      "description": "Default story created during migration for Sample",
+      "status": "in_progress",
+      "story_points": 0,
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    }
+  ]
 }
