@@ -248,16 +248,16 @@
         <nav>
             <a href="{{ url_for('home') }}">Home</a>
             <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('issues_list') }}">Issues</a>
-            <a href="{{ url_for('stories') }}">📖 Stories</a>
-            <a href="/backlog">📋 Backlog</a>
             <a href="/sprints">🏃‍♂️ Sprints</a>
+            <a href="{{ url_for('stories') }}">📖 Stories</a>
+            <a href="{{ url_for('issues_list') }}">Issues</a>
+            <a href="/backlog">📋 Backlog</a>
             <a href="/gantt">📊 Gantt Chart</a>
             <a href="/mindmap">🧠 Mind Map</a>
             <a href="/archive">📁 Archive</a>
-            <a href="/analytics">Analytics</a>
-            <a href="/firebase">Firebase</a>
             {% if current_user.is_authenticated and current_user.can_manage_users() %}
+                <a href="/analytics">Analytics</a>
+                <a href="/firebase">Firebase</a>
                 <a href="{{ url_for('admin_users') }}">👥 Admin</a>
             {% endif %}
             <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
