@@ -23,6 +23,11 @@
                     📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
                 </div>
                 {% endif %}
+                {% if card.estimated_hours or card.total_time_spent %}
+                <div style="font-size: 11px; color: #6b778c; margin: 5px 0;">
+                    ⏱️ {{ "%.1f"|format((card.total_time_spent or 0) / 60) }}h{% if card.estimated_hours %} / {{ card.estimated_hours }}h{% endif %}
+                </div>
+                {% endif %}
                 <div class="card-meta">
                     <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
                     <span>{{ card.priority }}</span>
@@ -43,6 +48,11 @@
                 {% if card.due_date %}
                 <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
                     📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
+                </div>
+                {% endif %}
+                {% if card.estimated_hours or card.total_time_spent %}
+                <div style="font-size: 11px; color: #6b778c; margin: 5px 0;">
+                    ⏱️ {{ "%.1f"|format((card.total_time_spent or 0) / 60) }}h{% if card.estimated_hours %} / {{ card.estimated_hours }}h{% endif %}
                 </div>
                 {% endif %}
                 <div class="card-meta">
@@ -67,6 +77,11 @@
                     📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
                 </div>
                 {% endif %}
+                {% if card.estimated_hours or card.total_time_spent %}
+                <div style="font-size: 11px; color: #6b778c; margin: 5px 0;">
+                    ⏱️ {{ "%.1f"|format((card.total_time_spent or 0) / 60) }}h{% if card.estimated_hours %} / {{ card.estimated_hours }}h{% endif %}
+                </div>
+                {% endif %}
                 <div class="card-meta">
                     <span class="card-assignee">{{ card.assignee or 'Unassigned' }}</span>
                     <span>{{ card.priority }}</span>
@@ -86,6 +101,7 @@
             <textarea id="cardDescription" placeholder="Description" rows="3"></textarea>
             <input type="text" id="cardAssignee" placeholder="Assignee">
             <input type="date" id="cardDueDate" placeholder="Due Date">
+            <input type="number" id="cardEstimatedHours" placeholder="Estimated Hours" min="0" step="0.5" style="margin-top: 10px;">
             <select id="cardPriority">
                 <option value="Low">Low Priority</option>
                 <option value="Medium" selected>Medium Priority</option>
@@ -118,6 +134,49 @@
                 <div><strong>Priority:</strong> <span id="cardDetailsPriority"></span></div>
                 <div><strong>Assignee:</strong> <span id="cardDetailsAssignee"></span></div>
                 <div><strong>Due Date:</strong> <span id="cardDetailsDueDate"></span></div>
+            </div>
+            
+            <!-- Time Tracking Section -->
+            <div style="display: flex; gap: 20px; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 6px;">
+                <div><strong>Estimated:</strong> <span id="cardDetailsEstimatedHours">0</span>h</div>
+                <div><strong>Time Spent:</strong> <span id="cardDetailsTotalTime">0</span>h</div>
+                <div style="margin-left: auto;">
+                    <button id="timerButton" class="btn" onclick="toggleTimer()" style="margin-right: 10px;">Start Timer</button>
+                    <button class="btn btn-secondary" onclick="showManualTimeEntry()">Add Time</button>
+                </div>
+            </div>
+            
+            <!-- Active Timer Display -->
+            <div id="activeTimerDisplay" style="display: none; margin-bottom: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 6px; border-left: 4px solid #2196f3;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><strong>⏱️ Timer Running:</strong> <span id="timerDuration">00:00:00</span></span>
+                    <button class="btn btn-sm" onclick="stopTimer()">Stop Timer</button>
+                </div>
+            </div>
+            
+            <!-- Manual Time Entry Form -->
+            <div id="manualTimeEntry" style="display: none; margin-bottom: 15px; padding: 15px; background-color: #f0f0f0; border-radius: 6px;">
+                <h5>Add Time Manually</h5>
+                <div style="display: flex; gap: 10px; align-items: end; margin-top: 10px;">
+                    <div style="flex: 1;">
+                        <label for="manualHours" style="display: block; margin-bottom: 5px; font-size: 12px;">Hours:</label>
+                        <input type="number" id="manualHours" placeholder="Hours" min="0" step="0.25" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="flex: 2;">
+                        <label for="manualDescription" style="display: block; margin-bottom: 5px; font-size: 12px;">Description:</label>
+                        <input type="text" id="manualDescription" placeholder="What did you work on?" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <button onclick="addManualTime()" class="btn" style="height: fit-content;">Add</button>
+                    <button onclick="hideManualTimeEntry()" class="btn btn-secondary" style="height: fit-content;">Cancel</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Time Logs Section -->
+        <div style="border-top: 1px solid #eee; padding-top: 20px; margin-bottom: 20px;">
+            <h4>⏰ Time Logs</h4>
+            <div id="timeLogsSection" style="max-height: 200px; overflow-y: auto; margin: 15px 0;">
+                <!-- Time logs will be loaded here -->
             </div>
         </div>
         
@@ -216,7 +275,8 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             description: document.getElementById('cardDescription').value,
             assignee: document.getElementById('cardAssignee').value,
             priority: document.getElementById('cardPriority').value,
-            due_date: document.getElementById('cardDueDate').value
+            due_date: document.getElementById('cardDueDate').value,
+            estimated_hours: parseFloat(document.getElementById('cardEstimatedHours').value) || 0
         })
     });
     
@@ -249,6 +309,17 @@ async function openCardDetails(cardId) {
         document.getElementById('cardDetailsPriority').textContent = card.priority;
         document.getElementById('cardDetailsAssignee').textContent = card.assignee || 'Unassigned';
         document.getElementById('cardDetailsDueDate').textContent = card.due_date || 'No due date';
+        
+        // Populate time tracking details
+        document.getElementById('cardDetailsEstimatedHours').textContent = card.estimated_hours || 0;
+        const totalTimeHours = ((card.total_time_spent || 0) / 60).toFixed(1);
+        document.getElementById('cardDetailsTotalTime').textContent = totalTimeHours;
+        
+        // Load time logs
+        loadTimeLogs(cardId);
+        
+        // Check for active timer
+        checkActiveTimer();
         
         // Load comments
         loadComments(comments);
@@ -313,6 +384,13 @@ async function addComment() {
 function hideCardDetailsModal() {
     document.getElementById('cardDetailsModal').style.display = 'none';
     currentCardId = null;
+    // Clean up timer
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    activeTimer = null;
+    hideManualTimeEntry();
 }
 
 // Highlight @mentions in comments
@@ -379,6 +457,204 @@ function insertMention(username) {
     }
     
     document.getElementById('mentionSuggestions').style.display = 'none';
+}
+
+// Time Tracking Functions
+let activeTimer = null;
+let timerInterval = null;
+
+async function loadTimeLogs(cardId) {
+    try {
+        const response = await fetch(`/api/card/${cardId}/time_logs`);
+        const timeLogs = await response.json();
+        
+        const timeLogsSection = document.getElementById('timeLogsSection');
+        
+        if (timeLogs.length === 0) {
+            timeLogsSection.innerHTML = '<p style="color: #5e6c84; text-align: center;">No time logs yet.</p>';
+            return;
+        }
+        
+        timeLogsSection.innerHTML = timeLogs.map(log => {
+            const hours = (log.duration_minutes / 60).toFixed(1);
+            const icon = log.type === 'timer' ? '⏱️' : '✏️';
+            return `
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span><strong>${icon} ${log.username}</strong> - ${hours}h</span>
+                        <small style="color: #5e6c84;">${log.created_at}</small>
+                    </div>
+                    ${log.description ? `<p style="margin: 0; color: #172b4d; font-size: 14px;">${log.description}</p>` : ''}
+                </div>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading time logs:', error);
+    }
+}
+
+async function checkActiveTimer() {
+    try {
+        const response = await fetch('/api/user/active_timer');
+        const timer = await response.json();
+        
+        if (timer && timer.card_id === currentCardId) {
+            activeTimer = timer;
+            showActiveTimer();
+            startTimerDisplay();
+        } else {
+            hideActiveTimer();
+        }
+    } catch (error) {
+        console.error('Error checking active timer:', error);
+    }
+}
+
+function showActiveTimer() {
+    document.getElementById('activeTimerDisplay').style.display = 'block';
+    document.getElementById('timerButton').textContent = 'Stop Timer';
+    document.getElementById('timerButton').onclick = stopTimer;
+}
+
+function hideActiveTimer() {
+    document.getElementById('activeTimerDisplay').style.display = 'none';
+    document.getElementById('timerButton').textContent = 'Start Timer';
+    document.getElementById('timerButton').onclick = startTimer;
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function startTimerDisplay() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    timerInterval = setInterval(() => {
+        if (activeTimer) {
+            const startTime = new Date(activeTimer.start_time);
+            const now = new Date();
+            const elapsed = Math.floor((now - startTime) / 1000);
+            
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timerDuration').textContent = timeString;
+        }
+    }, 1000);
+}
+
+async function startTimer() {
+    try {
+        const response = await fetch(`/api/card/${currentCardId}/timer/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const timer = await response.json();
+            activeTimer = timer;
+            showActiveTimer();
+            startTimerDisplay();
+        } else {
+            const error = await response.json();
+            alert(error.error || 'Error starting timer');
+        }
+    } catch (error) {
+        console.error('Error starting timer:', error);
+        alert('Error starting timer');
+    }
+}
+
+async function stopTimer() {
+    const description = prompt('Add a description for this time entry (optional):') || '';
+    
+    try {
+        const response = await fetch(`/api/card/${currentCardId}/timer/stop`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description })
+        });
+        
+        if (response.ok) {
+            activeTimer = null;
+            hideActiveTimer();
+            loadTimeLogs(currentCardId);
+            updateCardTotalTime();
+        } else {
+            const error = await response.json();
+            alert(error.error || 'Error stopping timer');
+        }
+    } catch (error) {
+        console.error('Error stopping timer:', error);
+        alert('Error stopping timer');
+    }
+}
+
+function toggleTimer() {
+    if (activeTimer) {
+        stopTimer();
+    } else {
+        startTimer();
+    }
+}
+
+function showManualTimeEntry() {
+    document.getElementById('manualTimeEntry').style.display = 'block';
+}
+
+function hideManualTimeEntry() {
+    document.getElementById('manualTimeEntry').style.display = 'none';
+    document.getElementById('manualHours').value = '';
+    document.getElementById('manualDescription').value = '';
+}
+
+async function addManualTime() {
+    const hours = parseFloat(document.getElementById('manualHours').value);
+    const description = document.getElementById('manualDescription').value;
+    
+    if (!hours || hours <= 0) {
+        alert('Please enter a valid number of hours');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/card/${currentCardId}/time_logs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'manual',
+                hours: hours,
+                description: description
+            })
+        });
+        
+        if (response.ok) {
+            hideManualTimeEntry();
+            loadTimeLogs(currentCardId);
+            updateCardTotalTime();
+        } else {
+            alert('Error adding time log');
+        }
+    } catch (error) {
+        console.error('Error adding manual time:', error);
+        alert('Error adding time log');
+    }
+}
+
+async function updateCardTotalTime() {
+    try {
+        const response = await fetch(`/api/card/${currentCardId}`);
+        const data = await response.json();
+        
+        if (data.card) {
+            const totalTimeHours = ((data.card.total_time_spent || 0) / 60).toFixed(1);
+            document.getElementById('cardDetailsTotalTime').textContent = totalTimeHours;
+        }
+    } catch (error) {
+        console.error('Error updating total time:', error);
+    }
 }
 
 // Close modal when clicking outside

@@ -68,7 +68,7 @@ def load_user(user_id):
 
 def load_data():
     """Load data from Firebase or local files"""
-    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': [], 'sprints': []}
+    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': [], 'sprints': [], 'time_logs': []}
     
     if db is None:
         print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
@@ -809,7 +809,9 @@ def add_card():
         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'due_date': request.json.get('due_date', ''),
         'story_points': request.json.get('story_points'),
-        'labels': request.json.get('labels', [])
+        'labels': request.json.get('labels', []),
+        'estimated_hours': request.json.get('estimated_hours', 0),
+        'total_time_spent': 0
     }
     
     data['cards'].append(new_card)
@@ -1057,6 +1059,157 @@ def card_comments(card_id):
     
     comments = [c for c in data.get('comments', []) if c['card_id'] == card_id]
     return jsonify(comments)
+
+# Time Tracking API Endpoints
+@app.route('/api/card/<int:card_id>/time_logs', methods=['GET', 'POST'])
+@login_required
+def card_time_logs(card_id):
+    data = load_data()
+    
+    if request.method == 'POST':
+        # Add new time log entry
+        log_type = request.json.get('type', 'manual')  # 'manual' or 'timer'
+        hours = float(request.json.get('hours', 0))
+        description = request.json.get('description', '')
+        start_time = request.json.get('start_time')
+        end_time = request.json.get('end_time')
+        
+        # Convert hours to minutes for storage
+        duration_minutes = int(hours * 60)
+        
+        new_time_log = {
+            'id': max([tl['id'] for tl in data.get('time_logs', [])], default=0) + 1,
+            'card_id': card_id,
+            'user_id': current_user.id,
+            'username': current_user.username,
+            'type': log_type,
+            'duration_minutes': duration_minutes,
+            'description': description,
+            'start_time': start_time,
+            'end_time': end_time,
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if 'time_logs' not in data:
+            data['time_logs'] = []
+        data['time_logs'].append(new_time_log)
+        
+        # Update card's total time spent
+        update_card_total_time(data, card_id)
+        
+        save_data(data)
+        return jsonify(new_time_log)
+    
+    # GET - return time logs for this card
+    time_logs = [tl for tl in data.get('time_logs', []) if tl['card_id'] == card_id]
+    # Sort by created_at descending (newest first)
+    time_logs.sort(key=lambda x: x['created_at'], reverse=True)
+    return jsonify(time_logs)
+
+@app.route('/api/card/<int:card_id>/timer/start', methods=['POST'])
+@login_required
+def start_timer(card_id):
+    data = load_data()
+    
+    # Check if user already has an active timer
+    active_timers = [tl for tl in data.get('time_logs', []) 
+                    if tl.get('user_id') == current_user.id 
+                    and tl.get('type') == 'timer' 
+                    and tl.get('end_time') is None]
+    
+    if active_timers:
+        return jsonify({'error': 'You already have an active timer running'}), 400
+    
+    # Create new timer entry
+    new_timer = {
+        'id': max([tl['id'] for tl in data.get('time_logs', [])], default=0) + 1,
+        'card_id': card_id,
+        'user_id': current_user.id,
+        'username': current_user.username,
+        'type': 'timer',
+        'duration_minutes': 0,
+        'description': '',
+        'start_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'end_time': None,
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    
+    if 'time_logs' not in data:
+        data['time_logs'] = []
+    data['time_logs'].append(new_timer)
+    
+    save_data(data)
+    return jsonify(new_timer)
+
+@app.route('/api/card/<int:card_id>/timer/stop', methods=['POST'])
+@login_required
+def stop_timer(card_id):
+    data = load_data()
+    description = request.json.get('description', '')
+    
+    # Find active timer for this user and card
+    active_timer = None
+    for tl in data.get('time_logs', []):
+        if (tl.get('user_id') == current_user.id 
+            and tl.get('card_id') == card_id
+            and tl.get('type') == 'timer' 
+            and tl.get('end_time') is None):
+            active_timer = tl
+            break
+    
+    if not active_timer:
+        return jsonify({'error': 'No active timer found for this card'}), 400
+    
+    # Calculate duration
+    start_time = datetime.strptime(active_timer['start_time'], '%Y-%m-%d %H:%M:%S')
+    end_time = datetime.now()
+    duration_seconds = (end_time - start_time).total_seconds()
+    duration_minutes = int(duration_seconds / 60)
+    
+    # Update timer entry
+    active_timer['end_time'] = end_time.strftime('%Y-%m-%d %H:%M:%S')
+    active_timer['duration_minutes'] = duration_minutes
+    active_timer['description'] = description
+    
+    # Update card's total time spent
+    update_card_total_time(data, card_id)
+    
+    save_data(data)
+    return jsonify(active_timer)
+
+@app.route('/api/user/active_timer', methods=['GET'])
+@login_required
+def get_active_timer():
+    data = load_data()
+    
+    # Find active timer for current user
+    active_timer = None
+    for tl in data.get('time_logs', []):
+        if (tl.get('user_id') == current_user.id 
+            and tl.get('type') == 'timer' 
+            and tl.get('end_time') is None):
+            active_timer = tl
+            break
+    
+    if active_timer:
+        # Calculate current duration
+        start_time = datetime.strptime(active_timer['start_time'], '%Y-%m-%d %H:%M:%S')
+        current_duration = int((datetime.now() - start_time).total_seconds())
+        active_timer['current_duration_seconds'] = current_duration
+        
+    return jsonify(active_timer)
+
+def update_card_total_time(data, card_id):
+    """Update the total time spent on a card"""
+    # Calculate total time from all completed time logs
+    total_minutes = sum(tl['duration_minutes'] for tl in data.get('time_logs', []) 
+                       if tl['card_id'] == card_id and tl.get('end_time') is not None)
+    
+    # Update card's total_time_spent
+    for card in data['cards']:
+        if card['id'] == card_id:
+            card['total_time_spent'] = total_minutes
+            break
 
 @app.route('/api/update_card_due_date', methods=['POST'])
 @login_required
