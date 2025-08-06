@@ -16,7 +16,8 @@ class DataManager:
             'epics': 'epics.json',
             'stories': 'stories.json',
             'cards': 'cards.json',
-            'comments': 'comments.json'
+            'comments': 'comments.json',
+            'sprints': 'sprints.json'
         }
         
     def load_data(self):
@@ -38,9 +39,11 @@ class DataManager:
                 # Create empty file
                 self._save_file(key, [])
         
-        # Add notifications if not exists
+        # Add missing collections if not exist
         if 'notifications' not in data:
             data['notifications'] = []
+        if 'sprints' not in data:
+            data['sprints'] = []
             
         return data
     

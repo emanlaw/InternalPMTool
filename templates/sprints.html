@@ -51,7 +51,6 @@
                         <span class="date-range">
                             📅 {{ sprint.start_date }} - {{ sprint.end_date }}
                         </span>
-                        <span class="duration">{{ sprint.get_duration_days() }} days</span>
                     </div>
                     
                     {% if sprint.goal %}
@@ -63,11 +62,11 @@
                     <div class="sprint-metrics">
                         <div class="metric">
                             <span class="metric-label">Story Points:</span>
-                            <span class="metric-value">{{ sprint.story_points }}</span>
+                            <span class="metric-value">{{ sprint.story_points or 0 }}</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label">Issues:</span>
-                            <span class="metric-value">{{ sprint.issues|length }}</span>
+                            <span class="metric-value">{{ sprint.issues|length if sprint.issues else 0 }}</span>
                         </div>
                     </div>
                 </div>
