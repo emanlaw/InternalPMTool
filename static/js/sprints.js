@@ -575,50 +575,42 @@ function toggleItem(checkbox) {
     const itemId = parseInt(checkbox.dataset.id);
     const isChecked = checkbox.checked;
     
-    // Move item between trees
-    const item = checkbox.closest('.tree-item');
-    const availableTree = document.getElementById('availableItemsTree');
-    const selectedTree = document.getElementById('selectedItemsTree');
-    
-    if (isChecked) {
-        // Move to selected
-        if (item.parentElement === availableTree) {
-            selectedTree.appendChild(item);
-        }
-    } else {
-        // Move to available
-        if (item.parentElement === selectedTree) {
-            availableTree.appendChild(item);
-        }
-    }
-    
-    // Update story points
+    // Update story points immediately
     updateStoryPointsDisplay();
+    
+    // For now, we'll rely on the checkbox state and let the user see the changes
+    // The actual assignment will happen when they save
+    // This is simpler and more reliable than complex DOM manipulation
 }
 
 function updateStoryPointsDisplay() {
-    const selectedTree = document.getElementById('selectedItemsTree');
     const totalElement = document.getElementById('totalStoryPoints');
     
-    if (!selectedTree || !totalElement) return;
+    if (!totalElement) return;
     
     let total = 0;
     
-    // Calculate from selected items
-    selectedTree.querySelectorAll('.story-points, .card-points').forEach(pointsElement => {
-        const points = parseInt(pointsElement.textContent.replace(' pts', '')) || 0;
-        total += points;
+    // Calculate from all checked items across both trees
+    document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+        const treeItem = checkbox.closest('.tree-item');
+        const pointsElements = treeItem.querySelectorAll('.story-points, .card-points');
+        
+        // Get points from this specific item (not children)
+        const directPointsElement = treeItem.querySelector('.tree-item-header .story-points, .tree-item-header .card-points');
+        if (directPointsElement) {
+            const points = parseInt(directPointsElement.textContent.replace(' pts', '')) || 0;
+            total += points;
+        }
     });
     
     totalElement.textContent = total;
 }
 
 function saveSprintChanges(sprintId) {
-    // Collect selected items
+    // Collect selected items from all checked checkboxes
     const selectedItems = [];
-    const selectedTree = document.getElementById('selectedItemsTree');
     
-    selectedTree.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+    document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
         selectedItems.push({
             type: checkbox.dataset.type,
             id: parseInt(checkbox.dataset.id)
@@ -634,7 +626,7 @@ function saveSprintChanges(sprintId) {
         items: selectedItems
     };
     
-    // Update sprint via API (this would need a PUT endpoint)
+    // Update sprint via API
     fetch(`/api/sprints/${sprintId}/items`, {
         method: 'POST',
         headers: {
