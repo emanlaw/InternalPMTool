@@ -207,55 +207,61 @@
     }
 }
 
-/* Dark mode styles */
-.dark-mode .mindmap-header,
-.dark-mode .mindmap-container {
-    background: #2d3748;
-    color: #f5f5f5;
+/* Updated to use CSS custom properties from base.html */
+.mindmap-header,
+.mindmap-container {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.dark-mode .mindmap-header h1 {
-    color: #ffffff;
+.mindmap-header h1 {
+    color: var(--text-primary);
 }
 
-.dark-mode .mindmap-toolbar {
-    background: #374151;
-    border-color: #555555;
+.mindmap-toolbar {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.dark-mode .form-select,
-.dark-mode .tool-group select,
-.dark-mode .tool-group button {
-    background: #374151;
-    color: #f0f0f0;
-    border-color: #555555;
+.form-select,
+.tool-group select,
+.tool-group button {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-.dark-mode .tool-group button:hover {
-    background: #4a5568;
+.tool-group button:hover {
+    background: var(--bg-tertiary);
 }
 
-.dark-mode #mindmapCanvas {
-    background: #1a1a1a;
+#mindmapCanvas {
+    background: var(--bg-primary);
+    transition: background-color 0.3s ease;
 }
 
-.dark-mode .context-menu {
-    background: #2d3748;
-    border-color: #555555;
-    color: #f5f5f5;
+.context-menu {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
-.dark-mode .context-menu div {
-    color: #f5f5f5;
+.context-menu div {
+    color: var(--text-primary);
 }
 
-.dark-mode .context-menu div:hover {
-    background: #374151;
+.context-menu div:hover {
+    background: var(--bg-tertiary);
 }
 
-.dark-mode .node-type-legend {
-    background: rgba(45, 55, 72, 0.9);
-    color: #f5f5f5;
+.node-type-legend {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Animation for smooth interactions */

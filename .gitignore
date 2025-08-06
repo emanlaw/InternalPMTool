@@ -3,6 +3,7 @@ firebase-service-account.json
 pm-tool-internal-firebase-adminsdk-*.json
 
 # User data protection
+data/
 data.json
 user_data.json
 users.json
@@ -11,6 +12,7 @@ export_*.json
 *.csv
 *.xlsx
 *.xls
+data_backup_*.json
 
 # Database dumps and exports
 database_backup/

@@ -67,8 +67,8 @@ def load_user(user_id):
 
 
 def load_data():
-    """Load data from Firebase"""
-    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
+    """Load data from Firebase or local files"""
+    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': [], 'sprints': []}
     
     if db is None:
         print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
@@ -84,12 +84,19 @@ def load_data():
         
         for doc in db.collection('projects').stream():
             project_data = doc.to_dict()
-            project_data['id'] = int(doc.id)
-            data['projects'].append(project_data)
+            try:
+                project_data['id'] = int(doc.id)
+                data['projects'].append(project_data)
+            except ValueError:
+                print(f"Skipping project with non-numeric ID: {doc.id}")
+                continue
         
         # Load epics
         for project_doc in db.collection('projects').stream():
-            project_id = int(project_doc.id)
+            try:
+                project_id = int(project_doc.id)
+            except ValueError:
+                continue
             epics_ref = db.collection('projects').document(project_doc.id).collection('epics')
             for epic_doc in epics_ref.stream():
                 epic_data = epic_doc.to_dict()
@@ -106,9 +113,18 @@ def load_data():
                     story_data['project_id'] = project_id
                     data['stories'].append(story_data)
         
+        # Load sprints
+        for doc in db.collection('sprints').stream():
+            sprint_data = doc.to_dict()
+            sprint_data['id'] = int(doc.id)
+            data['sprints'].append(sprint_data)
+        
         # Load cards from stories/{storyId}/issues subcollection
         for project_doc in db.collection('projects').stream():
-            project_id = int(project_doc.id)
+            try:
+                project_id = int(project_doc.id)
+            except ValueError:
+                continue
             epics_ref = db.collection('projects').document(project_doc.id).collection('epics')
             for epic_doc in epics_ref.stream():
                 epic_id = int(epic_doc.id)
@@ -132,12 +148,24 @@ def load_data():
                             comment_data['card_id'] = int(issue_doc.id)
                             data['comments'].append(comment_data)
                     
-        print(f"Loaded from Firebase: {len(data['users'])} users, {len(data['projects'])} projects, {len(data['cards'])} cards")
+        print(f"Loaded from Firebase: {len(data['users'])} users, {len(data['projects'])} projects, {len(data['cards'])} cards, {len(data['sprints'])} sprints")
         
     except Exception as e:
         print(f"Firebase error: {e}")
     
     # Create default admin user if no users exist
+    # If Firebase fails or has no data, use local files
+    if not data['users']:
+        try:
+            from data_manager import DataManager
+            dm = DataManager()
+            local_data = dm.load_data()
+            if local_data['users']:
+                data = local_data
+                print(f"Using local data files: {len(data['users'])} users, {len(data['projects'])} projects, {len(data.get('sprints', []))} sprints")
+        except Exception as e:
+            print(f"Error loading local data: {e}")
+    
     if not data['users']:
         default_admin = {
             'username': 'admin',
@@ -180,9 +208,17 @@ def load_data():
     return data
 
 def save_data(data):
-    """Save data to Firebase"""
+    """Save data to Firebase and local files"""
+    # Always save to local files as backup
+    try:
+        from data_manager import DataManager
+        dm = DataManager()
+        dm.save_data(data)
+    except Exception as e:
+        print(f"Error saving to local files: {e}")
+    
     if db is None:
-        print("ERROR: Firebase not initialized! Cannot save data.")
+        print("WARNING: Firebase not initialized! Data saved locally only.")
         return
     
     try:
@@ -226,6 +262,12 @@ def save_data(data):
             epic_ref = project_ref.collection('epics').document(str(card['epic_id']))
             story_ref = epic_ref.collection('stories').document(str(card['story_id']))
             story_ref.collection('issues').document(str(card['id'])).set(card_copy)
+        
+        # Save sprints to Firebase
+        for sprint in data.get('sprints', []):
+            sprint_copy = sprint.copy()
+            sprint_copy.pop('id', None)
+            db.collection('sprints').document(str(sprint['id'])).set(sprint_copy)
         
         # Save comments to projects/{projectId}/epics/{epicId}/stories/{storyId}/issues/{issueId}/comments
         for comment in data.get('comments', []):
@@ -503,14 +545,18 @@ def issues_list():
         epics = data['epics']
         stories = data['stories']
     
-    return render_template('issues.html', cards=cards, projects=data['projects'], epics=epics, stories=stories, current_project=project)
+    # Filter out archived projects for the dropdown
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    return render_template('issues.html', cards=cards, projects=active_projects, epics=epics, stories=stories, current_project=project)
 
 @app.route('/backlog')
 @login_required
 def backlog():
     data = load_data()
     backlog_cards = [c for c in data['cards'] if c['status'] == 'todo']
-    return render_template('backlog.html', cards=backlog_cards, projects=data['projects'])
+    # Filter out archived projects
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    return render_template('backlog.html', cards=backlog_cards, projects=active_projects)
 
 @app.route('/stories')
 @login_required
@@ -527,7 +573,9 @@ def stories():
         stories = data['stories']
         project = None
     
-    return render_template('stories.html', epics=epics, stories=stories, projects=data['projects'], current_project=project)
+    # Filter out archived projects
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    return render_template('stories.html', epics=epics, stories=stories, projects=active_projects, current_project=project)
 
 @app.route('/epics')
 @login_required
@@ -542,19 +590,24 @@ def epics():
         epics = data['epics']
         project = None
     
-    return render_template('epics.html', epics=epics, projects=data['projects'], current_project=project)
+    # Filter out archived projects
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    return render_template('epics.html', epics=epics, projects=active_projects, current_project=project)
 
 @app.route('/analytics')
 @login_required
 def analytics():
     data = load_data()
-    return render_template('gantt_analytics.html', projects=data['projects'], cards=data['cards'])
+    # Filter out archived projects
+    active_projects = [p for p in data['projects'] if not p.get('archived', False)]
+    return render_template('gantt_analytics.html', projects=active_projects, cards=data['cards'])
 
 @app.route('/gantt')
 @login_required
 def gantt():
     data = load_data()
-    projects = data.get('projects', [])
+    # Filter out archived projects
+    projects = [p for p in data.get('projects', []) if not p.get('archived', False)]
     cards = data.get('cards', [])
     
     # Calculate project progress
@@ -732,7 +785,8 @@ def add_card():
         'priority': request.json.get('priority', 'Medium'),
         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'due_date': request.json.get('due_date', ''),
-        'story_points': request.json.get('story_points')
+        'story_points': request.json.get('story_points'),
+        'labels': request.json.get('labels', [])
     }
     
     data['cards'].append(new_card)
@@ -932,6 +986,8 @@ def update_card():
     for card in data['cards']:
         if card['id'] == card_id:
             card.update(updates)
+            if 'labels' in updates:
+                card['labels'] = updates['labels']
             card['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             break
     
@@ -1015,10 +1071,9 @@ def mindmap():
 def sprints():
     data = load_data()
     
-    # Simple sprint data structure for now
-    all_sprints = []
-    active_sprints = []
-    completed_sprints = []
+    all_sprints = data.get('sprints', [])
+    active_sprints = [s for s in all_sprints if s.get('status') == 'active']
+    completed_sprints = [s for s in all_sprints if s.get('status') == 'completed']
     active_projects = [p for p in data['projects'] if not p.get('archived', False)]
     
     return render_template('sprints.html', 
@@ -1038,8 +1093,30 @@ def sprint_detail(sprint_id):
 @login_required
 def create_sprint():
     try:
-        # Placeholder for sprint creation - will implement later
-        return jsonify({'success': True, 'message': 'Sprint creation coming soon!'})
+        data = load_data()
+        
+        next_id = max([s['id'] for s in data.get('sprints', [])], default=0) + 1
+        
+        new_sprint = {
+            'id': next_id,
+            'name': request.json['name'],
+            'project_id': int(request.json['project_id']),
+            'start_date': request.json['start_date'],
+            'end_date': request.json['end_date'],
+            'goal': request.json.get('goal', ''),
+            'story_points': int(request.json.get('story_points', 0)),
+            'status': 'planning',
+            'issues': [],
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'created_by': current_user.username
+        }
+        
+        if 'sprints' not in data:
+            data['sprints'] = []
+        data['sprints'].append(new_sprint)
+        save_data(data)
+        
+        return jsonify({'success': True, 'sprint': new_sprint})
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
