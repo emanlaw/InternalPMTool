@@ -9,6 +9,18 @@
       "id": 2,
       "name": "Sample",
       "description": "testing\n"
+    },
+    {
+      "id": 3,
+      "name": "Archived Project 1",
+      "description": "This project is archived",
+      "archived": true
+    },
+    {
+      "id": 4,
+      "name": "Archived Project 2", 
+      "description": "Another archived project",
+      "archived": true
     }
   ],
   "cards": [
@@ -47,6 +59,30 @@
       "created_at": "2024-01-03",
       "epic_id": 1,
       "story_id": 1
+    },
+    {
+      "id": 4,
+      "project_id": 3,
+      "title": "Archived Task 1",
+      "description": "This is a task in an archived project",
+      "status": "done",
+      "assignee": "Alice",
+      "priority": "Low",
+      "created_at": "2024-01-04",
+      "epic_id": 3,
+      "story_id": 3
+    },
+    {
+      "id": 5,
+      "project_id": 4,
+      "title": "Archived Task 2",
+      "description": "Another task in an archived project",
+      "status": "todo",
+      "assignee": "Charlie",
+      "priority": "Medium",
+      "created_at": "2024-01-05",
+      "epic_id": 4,
+      "story_id": 4
     }
   ],
   "users": [
@@ -100,6 +136,24 @@
       "status": "active",
       "created_at": "2025-08-04 10:11:51",
       "created_by": "migration_script"
+    },
+    {
+      "id": 3,
+      "project_id": 3,
+      "title": "Archived Project 1 - Main Epic",
+      "description": "Epic for archived project 1",
+      "status": "active",
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    },
+    {
+      "id": 4,
+      "project_id": 4,
+      "title": "Archived Project 2 - Main Epic",
+      "description": "Epic for archived project 2",
+      "status": "active",
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
     }
   ],
   "stories": [
@@ -121,6 +175,28 @@
       "title": "Sample - Main Story",
       "description": "Default story created during migration for Sample",
       "status": "in_progress",
+      "story_points": 0,
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    },
+    {
+      "id": 3,
+      "epic_id": 3,
+      "project_id": 3,
+      "title": "Archived Project 1 - Main Story",
+      "description": "Story for archived project 1",
+      "status": "done",
+      "story_points": 0,
+      "created_at": "2025-08-04 10:11:51",
+      "created_by": "migration_script"
+    },
+    {
+      "id": 4,
+      "epic_id": 4,
+      "project_id": 4,
+      "title": "Archived Project 2 - Main Story", 
+      "description": "Story for archived project 2",
+      "status": "todo",
       "story_points": 0,
       "created_at": "2025-08-04 10:11:51",
       "created_by": "migration_script"
