@@ -1171,8 +1171,46 @@ def sprints():
 @app.route('/sprints/<int:sprint_id>')
 @login_required
 def sprint_detail(sprint_id):
-    # Placeholder for sprint detail - will implement later
-    return "Sprint detail page - Coming soon!", 200
+    try:
+        data = load_data()
+        sprint = next((s for s in data.get('sprints', []) if s['id'] == sprint_id), None)
+        if not sprint:
+            flash('Sprint not found', 'error')
+            return redirect(url_for('sprints'))
+        
+        # Get project info
+        project = next((p for p in data.get('projects', []) if p['id'] == sprint['project_id']), None)
+        
+        # Get sprint items
+        sprint_cards = [c for c in data.get('cards', []) if c.get('sprint_id') == sprint_id]
+        project_cards = [c for c in data.get('cards', []) if c['project_id'] == sprint['project_id'] and not c.get('sprint_id')]
+        
+        # Calculate completed issues
+        completed_issues = [c for c in sprint_cards if c['status'] == 'done']
+        
+        # Calculate days remaining
+        from datetime import datetime, date
+        try:
+            end_date = datetime.strptime(sprint['end_date'], '%Y-%m-%d').date()
+            days_remaining = max(0, (end_date - date.today()).days)
+        except:
+            days_remaining = 0
+        
+        # Add helper methods to sprint object for template
+        sprint['get_duration_days'] = lambda: (datetime.strptime(sprint['end_date'], '%Y-%m-%d') - datetime.strptime(sprint['start_date'], '%Y-%m-%d')).days
+        sprint['to_dict'] = lambda: sprint
+        
+        return render_template('sprint_detail.html', 
+                             sprint=sprint, 
+                             project=project,
+                             sprint_issues=sprint_cards,
+                             backlog_issues=project_cards,
+                             completed_issues=completed_issues,
+                             days_remaining=days_remaining)
+        
+    except Exception as e:
+        flash(f'Error loading sprint: {str(e)}', 'error')
+        return redirect(url_for('sprints'))
 
 # Sprint API Routes
 @app.route('/api/sprints', methods=['POST'])
@@ -1211,7 +1249,30 @@ def create_sprint():
 @login_required
 def start_sprint(sprint_id):
     try:
-        return jsonify({'success': True, 'message': 'Sprint start coming soon!'})
+        data = load_data()
+        if 'sprints' not in data:
+            return jsonify({'success': False, 'error': 'No sprints found'})
+        
+        sprint = next((s for s in data['sprints'] if s['id'] == sprint_id), None)
+        if not sprint:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+        
+        if sprint['status'] != 'planning':
+            return jsonify({'success': False, 'error': 'Sprint must be in planning status to start'})
+        
+        # Validate start date is not in the past
+        from datetime import datetime, date
+        start_date = datetime.strptime(sprint['start_date'], '%Y-%m-%d').date()
+        if start_date < date.today():
+            return jsonify({'success': False, 'error': 'Cannot start sprint with past start date'})
+        
+        # Update sprint status
+        sprint['status'] = 'active'
+        sprint['started_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sprint['started_by'] = current_user.username
+        
+        save_data(data)
+        return jsonify({'success': True, 'message': 'Sprint started successfully!', 'sprint': sprint})
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1220,8 +1281,203 @@ def start_sprint(sprint_id):
 @login_required
 def complete_sprint(sprint_id):
     try:
-        return jsonify({'success': True, 'message': 'Sprint completion coming soon!'})
+        data = load_data()
+        if 'sprints' not in data:
+            return jsonify({'success': False, 'error': 'No sprints found'})
+        
+        sprint = next((s for s in data['sprints'] if s['id'] == sprint_id), None)
+        if not sprint:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+        
+        if sprint['status'] != 'active':
+            return jsonify({'success': False, 'error': 'Sprint must be active to complete'})
+        
+        # Update sprint status
+        sprint['status'] = 'completed'
+        sprint['completed_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sprint['completed_by'] = current_user.username
+        
+        save_data(data)
+        return jsonify({'success': True, 'message': 'Sprint completed successfully!', 'sprint': sprint})
             
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Get sprint items (epics, stories, issues)
+@app.route('/api/sprints/<int:sprint_id>/items', methods=['GET'])
+@login_required
+def get_sprint_items(sprint_id):
+    try:
+        data = load_data()
+        sprint = next((s for s in data.get('sprints', []) if s['id'] == sprint_id), None)
+        if not sprint:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+        
+        # Get all items assigned to this sprint
+        sprint_cards = [c for c in data.get('cards', []) if c.get('sprint_id') == sprint_id]
+        sprint_stories = [s for s in data.get('stories', []) if s.get('sprint_id') == sprint_id]
+        sprint_epics = [e for e in data.get('epics', []) if e.get('sprint_id') == sprint_id]
+        
+        # Build hierarchical structure
+        result = {
+            'epics': [],
+            'stories': [],
+            'cards': sprint_cards,
+            'total_story_points': 0
+        }
+        
+        # Calculate total story points
+        total_points = 0
+        for card in sprint_cards:
+            if card.get('story_points'):
+                total_points += card['story_points']
+        for story in sprint_stories:
+            if story.get('story_points'):
+                total_points += story['story_points']
+        
+        result['total_story_points'] = total_points
+        
+        # Group by epics and stories
+        for epic in sprint_epics:
+            epic_stories = [s for s in sprint_stories if s.get('epic_id') == epic['id']]
+            epic_data = {
+                **epic,
+                'stories': []
+            }
+            
+            for story in epic_stories:
+                story_cards = [c for c in sprint_cards if c.get('story_id') == story['id']]
+                epic_data['stories'].append({
+                    **story,
+                    'cards': story_cards
+                })
+            
+            result['epics'].append(epic_data)
+        
+        # Add standalone stories (not in epics)
+        standalone_stories = [s for s in sprint_stories if not any(e['id'] == s.get('epic_id') for e in sprint_epics)]
+        for story in standalone_stories:
+            story_cards = [c for c in sprint_cards if c.get('story_id') == story['id']]
+            result['stories'].append({
+                **story,
+                'cards': story_cards
+            })
+        
+        return jsonify({'success': True, 'items': result})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/items', methods=['POST'])
+@login_required
+def add_sprint_items(sprint_id):
+    try:
+        data = load_data()
+        sprint = next((s for s in data.get('sprints', []) if s['id'] == sprint_id), None)
+        if not sprint:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+        
+        items = request.json.get('items', [])
+        
+        for item in items:
+            item_type = item.get('type')  # 'epic', 'story', or 'card'
+            item_id = item.get('id')
+            
+            if item_type == 'epic':
+                # Add epic to sprint
+                for epic in data.get('epics', []):
+                    if epic['id'] == item_id:
+                        epic['sprint_id'] = sprint_id
+                        break
+            elif item_type == 'story':
+                # Add story to sprint
+                for story in data.get('stories', []):
+                    if story['id'] == item_id:
+                        story['sprint_id'] = sprint_id
+                        break
+            elif item_type == 'card':
+                # Add card to sprint
+                for card in data.get('cards', []):
+                    if card['id'] == item_id:
+                        card['sprint_id'] = sprint_id
+                        break
+        
+        save_data(data)
+        return jsonify({'success': True, 'message': 'Items added to sprint successfully'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/sprints/<int:sprint_id>/items/<item_type>/<int:item_id>', methods=['DELETE'])
+@login_required
+def remove_sprint_item(sprint_id, item_type, item_id):
+    try:
+        data = load_data()
+        sprint = next((s for s in data.get('sprints', []) if s['id'] == sprint_id), None)
+        if not sprint:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+        
+        if item_type == 'epic':
+            for epic in data.get('epics', []):
+                if epic['id'] == item_id and epic.get('sprint_id') == sprint_id:
+                    epic.pop('sprint_id', None)
+                    break
+        elif item_type == 'story':
+            for story in data.get('stories', []):
+                if story['id'] == item_id and story.get('sprint_id') == sprint_id:
+                    story.pop('sprint_id', None)
+                    break
+        elif item_type == 'card':
+            for card in data.get('cards', []):
+                if card['id'] == item_id and card.get('sprint_id') == sprint_id:
+                    card.pop('sprint_id', None)
+                    break
+        
+        save_data(data)
+        return jsonify({'success': True, 'message': 'Item removed from sprint successfully'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Get project hierarchy for sprint planning
+@app.route('/api/projects/<int:project_id>/hierarchy', methods=['GET'])
+@login_required
+def get_project_hierarchy(project_id):
+    try:
+        data = load_data()
+        project = next((p for p in data.get('projects', []) if p['id'] == project_id), None)
+        if not project:
+            return jsonify({'success': False, 'error': 'Project not found'})
+        
+        # Get all epics, stories, and cards for this project
+        project_epics = [e for e in data.get('epics', []) if e['project_id'] == project_id]
+        project_stories = [s for s in data.get('stories', []) if s['project_id'] == project_id]
+        project_cards = [c for c in data.get('cards', []) if c['project_id'] == project_id]
+        
+        # Build hierarchical structure
+        hierarchy = {
+            'project': project,
+            'epics': []
+        }
+        
+        for epic in project_epics:
+            epic_stories = [s for s in project_stories if s.get('epic_id') == epic['id']]
+            epic_data = {
+                **epic,
+                'stories': []
+            }
+            
+            for story in epic_stories:
+                story_cards = [c for c in project_cards if c.get('story_id') == story['id']]
+                epic_data['stories'].append({
+                    **story,
+                    'cards': story_cards
+                })
+            
+            hierarchy['epics'].append(epic_data)
+        
+        return jsonify({'success': True, 'hierarchy': hierarchy})
+        
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -1229,7 +1485,8 @@ def complete_sprint(sprint_id):
 @login_required
 def add_issue_to_sprint(sprint_id):
     try:
-        return jsonify({'success': True, 'message': 'Issue assignment coming soon!'})
+        # Legacy endpoint - redirect to new items endpoint
+        return add_sprint_items(sprint_id)
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
@@ -1238,7 +1495,8 @@ def add_issue_to_sprint(sprint_id):
 @login_required
 def remove_issue_from_sprint(sprint_id, issue_id):
     try:
-        return jsonify({'success': True, 'message': 'Issue removal coming soon!'})
+        # Legacy endpoint - redirect to new items endpoint
+        return remove_sprint_item(sprint_id, 'card', issue_id)
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

@@ -22,7 +22,7 @@
     <div class="sprint-meta">
         <div class="meta-item">
             <span class="meta-label">Duration:</span>
-            <span class="meta-value">{{ sprint.start_date }} - {{ sprint.end_date }} ({{ sprint.get_duration_days() }} days)</span>
+            <span class="meta-value">{{ sprint.start_date }} - {{ sprint.end_date }} ({{ (sprint.end_date|d|strptime('%Y-%m-%d') - sprint.start_date|d|strptime('%Y-%m-%d')).days }} days)</span>
         </div>
         {% if sprint.goal %}
         <div class="meta-item">
@@ -37,7 +37,7 @@
     <div class="dashboard-section">
         <div class="progress-cards">
             <div class="progress-card">
-                <div class="progress-number">{{ sprint.issues|length }}</div>
+                <div class="progress-number">{{ sprint_issues|length }}</div>
                 <div class="progress-label">Total Issues</div>
             </div>
             <div class="progress-card">
@@ -45,7 +45,7 @@
                 <div class="progress-label">Completed</div>
             </div>
             <div class="progress-card">
-                <div class="progress-number">{{ sprint.story_points }}</div>
+                <div class="progress-number">{{ sprint.story_points or 0 }}</div>
                 <div class="progress-label">Story Points</div>
             </div>
             <div class="progress-card">
@@ -157,12 +157,16 @@
 
 <script>
 const sprintId = {{ sprint.id }};
-const sprintData = {{ sprint.to_dict()|tojson }};
+const sprintData = {{ sprint|tojson }};
 
 // Initialize drag and drop
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDragAndDrop();
-    initializeBurndownChart();
+    if (typeof initializeDragAndDrop === 'function') {
+        initializeDragAndDrop();
+    }
+    if (typeof initializeBurndownChart === 'function') {
+        initializeBurndownChart();
+    }
 });
 </script>
 <script src="/static/js/sprint-detail.js"></script>
