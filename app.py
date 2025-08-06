@@ -73,6 +73,29 @@ def load_data():
     if db is None:
         print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
         print("You need to download the real service account key from Firebase Console.")
+        print("Falling back to local data files...")
+        # Try to load from local files
+        try:
+            from data_manager import DataManager
+            dm = DataManager()
+            local_data = dm.load_data()
+            if local_data and local_data.get('users'):
+                print(f"Using local data: {len(local_data['users'])} users, {len(local_data.get('projects', []))} projects")
+                return local_data
+        except Exception as e:
+            print(f"Error loading local data: {e}")
+        
+        # If local data fails, try data.json directly
+        try:
+            import json
+            with open('data.json', 'r') as f:
+                local_data = json.load(f)
+                if local_data and local_data.get('users'):
+                    print(f"Using data.json: {len(local_data['users'])} users, {len(local_data.get('projects', []))} projects")
+                    return local_data
+        except Exception as e:
+            print(f"Error loading data.json: {e}")
+        
         return data
     
     try:
