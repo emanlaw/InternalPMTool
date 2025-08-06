@@ -49,10 +49,7 @@
         
         <select id="assigneeFilter" onchange="performSearch()" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
             <option value="">All Assignees</option>
-            <option value="John">John</option>
-            <option value="Jane">Jane</option>
-            <option value="Bob">Bob</option>
-            <option value="admin">admin</option>
+            <!-- Options will be populated by JavaScript -->
         </select>
         
         <button onclick="clearFilters()" class="btn btn-secondary" style="padding: 10px 15px;">Clear Filters</button>
@@ -182,10 +179,7 @@
             
             <select id="cardAssignee" required style="border: 1px solid #ddd;">
                 <option value="">Select Assignee *</option>
-                <option value="admin">admin</option>
-                <option value="John">John</option>
-                <option value="Jane">Jane</option>
-                <option value="Bob">Bob</option>
+                <!-- Options will be populated by JavaScript -->
             </select>
             
             <input type="date" id="cardDueDate" required style="border: 1px solid #ddd;" placeholder="Target Date *">
@@ -233,7 +227,10 @@
             </div>
             
             <div style="display: flex; gap: 10px;">
-                <textarea id="newCommentText" placeholder="Add a comment..." rows="2" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                <div style="flex: 1; position: relative;">
+                    <textarea id="newCommentText" placeholder="Add a comment... Use @username to mention team members" rows="2" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%;"></textarea>
+                    <div id="mentionAutocomplete" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000; max-height: 150px; overflow-y: auto; width: 100%;"></div>
+                </div>
                 <button onclick="addComment()" class="btn" style="height: fit-content;">Add Comment</button>
             </div>
         </div>
@@ -255,9 +252,180 @@ if (!CSS.escape) {
 
 let searchTimeout;
 let projects = {{ projects | tojson }};
+let users = []; // Will be loaded for @mentions
+let currentCardId = null;
 
 console.log('Issues page JavaScript loaded');
 console.log('Projects:', projects);
+
+// Load users for @mention functionality
+async function loadUsers() {
+    try {
+        const response = await fetch('/api/users');
+        users = await response.json();
+        console.log('Users loaded for mentions:', users);
+        
+        // Populate assignee dropdowns
+        populateAssigneeDropdowns();
+    } catch (error) {
+        console.error('Error loading users:', error);
+    }
+}
+
+// Populate assignee select dropdowns
+function populateAssigneeDropdowns() {
+    const cardAssigneeSelect = document.getElementById('cardAssignee');
+    const assigneeFilterSelect = document.getElementById('assigneeFilter');
+    
+    if (cardAssigneeSelect) {
+        // Keep the placeholder option
+        cardAssigneeSelect.innerHTML = '<option value="">Select Assignee *</option>';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.username;
+            option.textContent = user.display_name !== user.username ? 
+                `${user.display_name} (${user.username})` : user.username;
+            cardAssigneeSelect.appendChild(option);
+        });
+    }
+    
+    if (assigneeFilterSelect) {
+        // Keep the "All Assignees" option
+        const allOption = assigneeFilterSelect.querySelector('option[value=""]');
+        assigneeFilterSelect.innerHTML = '';
+        assigneeFilterSelect.appendChild(allOption);
+        
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.username;
+            option.textContent = user.display_name !== user.username ? 
+                `${user.display_name} (${user.username})` : user.username;
+            assigneeFilterSelect.appendChild(option);
+        });
+    }
+}
+
+// Initialize users on page load
+loadUsers();
+
+// @mention autocomplete functionality
+function setupMentionAutocomplete() {
+    const textarea = document.getElementById('newCommentText');
+    const autocompleteDiv = document.getElementById('mentionAutocomplete');
+    
+    if (!textarea || !autocompleteDiv) return;
+    
+    textarea.addEventListener('input', function(e) {
+        const text = e.target.value;
+        const cursorPos = e.target.selectionStart;
+        
+        // Find @ symbol before cursor
+        const beforeCursor = text.substring(0, cursorPos);
+        const atMatch = beforeCursor.match(/@(\w*)$/);
+        
+        if (atMatch) {
+            const query = atMatch[1].toLowerCase();
+            const filteredUsers = users.filter(user => 
+                user.username.toLowerCase().includes(query) ||
+                user.display_name.toLowerCase().includes(query)
+            ).slice(0, 5);
+            
+            if (filteredUsers.length > 0) {
+                showMentionDropdown(filteredUsers, atMatch[0], cursorPos - atMatch[0].length);
+            } else {
+                hideMentionDropdown();
+            }
+        } else {
+            hideMentionDropdown();
+        }
+    });
+    
+    textarea.addEventListener('keydown', function(e) {
+        if (autocompleteDiv.style.display === 'block') {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateMentionDropdown(e.key === 'ArrowDown' ? 1 : -1);
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                selectMention();
+            } else if (e.key === 'Escape') {
+                hideMentionDropdown();
+            }
+        }
+    });
+}
+
+function showMentionDropdown(filteredUsers, matchText, startPos) {
+    const autocompleteDiv = document.getElementById('mentionAutocomplete');
+    
+    autocompleteDiv.innerHTML = filteredUsers.map((user, index) => `
+        <div class="mention-option" data-index="${index}" data-username="${user.username}" 
+             style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #eee; ${index === 0 ? 'background: #f0f8ff;' : ''}"
+             onmouseover="highlightMentionOption(${index})"
+             onclick="selectMentionOption('${user.username}')">
+            <strong>@${user.username}</strong>
+            ${user.display_name !== user.username ? `<span style="color: #5e6c84; margin-left: 8px;">${user.display_name}</span>` : ''}
+        </div>
+    `).join('');
+    
+    autocompleteDiv.style.display = 'block';
+    autocompleteDiv.dataset.matchText = matchText;
+    autocompleteDiv.dataset.startPos = startPos;
+}
+
+function hideMentionDropdown() {
+    document.getElementById('mentionAutocomplete').style.display = 'none';
+}
+
+function highlightMentionOption(index) {
+    const options = document.querySelectorAll('.mention-option');
+    options.forEach((option, i) => {
+        option.style.background = i === index ? '#f0f8ff' : '';
+    });
+}
+
+function navigateMentionDropdown(direction) {
+    const options = document.querySelectorAll('.mention-option');
+    let currentIndex = -1;
+    
+    options.forEach((option, i) => {
+        if (option.style.background === 'rgb(240, 248, 255)') {
+            currentIndex = i;
+        }
+    });
+    
+    let newIndex = currentIndex + direction;
+    if (newIndex < 0) newIndex = options.length - 1;
+    if (newIndex >= options.length) newIndex = 0;
+    
+    highlightMentionOption(newIndex);
+}
+
+function selectMention() {
+    const highlighted = document.querySelector('.mention-option[style*="rgb(240, 248, 255)"]');
+    if (highlighted) {
+        selectMentionOption(highlighted.dataset.username);
+    }
+}
+
+function selectMentionOption(username) {
+    const textarea = document.getElementById('newCommentText');
+    const autocompleteDiv = document.getElementById('mentionAutocomplete');
+    const matchText = autocompleteDiv.dataset.matchText;
+    const startPos = parseInt(autocompleteDiv.dataset.startPos);
+    
+    const beforeMatch = textarea.value.substring(0, startPos);
+    const afterMatch = textarea.value.substring(startPos + matchText.length);
+    
+    textarea.value = beforeMatch + '@' + username + ' ' + afterMatch;
+    textarea.focus();
+    
+    // Set cursor position after the mention
+    const newCursorPos = startPos + username.length + 2;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    
+    hideMentionDropdown();
+}
 
 function performSearch() {
     // Clear previous timeout
@@ -644,6 +812,9 @@ async function openCardDetails(cardId) {
         
         // Show modal
         document.getElementById('cardDetailsModal').style.display = 'block';
+        
+        // Setup @mention functionality for comment textarea
+        setupMentionAutocomplete();
     } catch (error) {
         console.error('Error loading card details:', error);
         alert('Error loading card details');

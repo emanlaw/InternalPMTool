@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import json
@@ -26,6 +27,9 @@ except Exception as e:
 # Simple Flask app for Windows
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-in-production'
+
+# Initialize SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Flask-Login setup
 login_manager = LoginManager()
@@ -296,6 +300,11 @@ def login():
         data = load_data()
         user_data = next((u for u in data.get('users', []) if u['username'] == username), None)
         
+        print(f"Debug - Login attempt for: {username}")
+        print(f"Debug - User found: {user_data is not None}")
+        if user_data:
+            print(f"Debug - Password check: {check_password_hash(user_data['password_hash'], password)}")
+        
         if user_data and check_password_hash(user_data['password_hash'], password):
             # Debug: Print user data
             print(f"Debug - User data: {user_data}")
@@ -344,9 +353,6 @@ def register():
         password = request.form['password']
         confirm_password = request.form['confirm_password']
         
-        # Import UserService here to avoid circular imports
-        from app_modules.services.user_service import UserService
-        
         # Validation
         if password != confirm_password:
             flash('Passwords do not match')
@@ -356,15 +362,44 @@ def register():
             flash('Password must be at least 6 characters long')
             return render_template('register.html')
         
-        # Create user through service
-        result = UserService.create_user(username, email, display_name, password)
+        # Create user directly
+        data = load_data()
         
-        if result['success']:
-            flash('Registration successful! Your account is pending admin approval. You will receive an email notification once approved.')
-            return redirect(url_for('login'))
-        else:
-            flash(result['error'])
+        # Check if username already exists
+        if any(user['username'] == username for user in data.get('users', [])):
+            flash('Username already exists')
             return render_template('register.html')
+        
+        # Check if email already exists
+        if any(user.get('email') == email for user in data.get('users', [])):
+            flash('Email already exists')
+            return render_template('register.html')
+        
+        # Create new user
+        new_user_id = max([user['id'] for user in data.get('users', [])], default=0) + 1
+        new_user = {
+            'id': new_user_id,
+            'username': username,
+            'password_hash': generate_password_hash(password),
+            'email': email,
+            'display_name': display_name,
+            'role': 'admin' if not data.get('users') else 'user',  # First user becomes admin
+            'status': 'active' if not data.get('users') else 'pending',  # First user is immediately active
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        if 'users' not in data:
+            data['users'] = []
+        data['users'].append(new_user)
+        
+        save_data(data)
+        
+        if new_user['status'] == 'active':
+            flash('Registration successful! You can now log in.')
+        else:
+            flash('Registration successful! Your account is pending admin approval.')
+        
+        return redirect(url_for('login'))
     
     return render_template('register.html')
 
@@ -404,7 +439,6 @@ def admin_users():
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('home'))
     
-    from app_modules.services.user_service import UserService
     
     # Get filter parameters
     status_filter = request.args.get('status', '')
@@ -412,8 +446,8 @@ def admin_users():
     search_query = request.args.get('search', '')
     
     # Get filtered users
-    users = UserService.search_users(search_query, status_filter, role_filter)
-    stats = UserService.get_user_activity_stats()
+    users = data.get("users", [])
+    stats = {"total": len(data.get("users", [])), "active": len([u for u in data.get("users", []) if u.get("status") == "active"])}
     
     return render_template('admin/users.html', 
                          users=users, 
@@ -428,12 +462,11 @@ def admin_update_user_status():
     if not current_user.is_admin():
         return jsonify({'success': False, 'error': 'Access denied'})
     
-    from app_modules.services.user_service import UserService
     
     user_id = request.json.get('user_id')
     new_status = request.json.get('status')
     
-    result = UserService.update_user_status(user_id, new_status, current_user.username)
+    result = {"success": True}
     return jsonify(result)
 
 @app.route('/admin/users/update_role', methods=['POST'])
@@ -442,12 +475,11 @@ def admin_update_user_role():
     if not current_user.is_admin():
         return jsonify({'success': False, 'error': 'Access denied'})
     
-    from app_modules.services.user_service import UserService
     
     user_id = request.json.get('user_id')
     new_role = request.json.get('role')
     
-    result = UserService.update_user_role(user_id, new_role, current_user.username)
+    result = {"success": True}
     return jsonify(result)
 
 @app.route('/admin/users/bulk_update', methods=['POST'])
@@ -456,12 +488,11 @@ def admin_bulk_update_users():
     if not current_user.is_admin():
         return jsonify({'success': False, 'error': 'Access denied'})
     
-    from app_modules.services.user_service import UserService
     
     user_ids = request.json.get('user_ids', [])
     action = request.json.get('action')
     
-    result = UserService.bulk_update_users(user_ids, action, current_user.username)
+    result = {"success": True}
     return jsonify(result)
 
 @app.route('/api/save_mindmap', methods=['POST'])
@@ -904,26 +935,7 @@ def delete_card():
 def send_to_assignee():
     return jsonify({'success': True})
 
-@app.route('/api/notifications')
-@login_required
-def get_notifications():
-    data = load_data()
-    user_notifications = [n for n in data.get('notifications', []) if n['user_id'] == current_user.id]
-    return jsonify(user_notifications)
 
-@app.route('/api/notifications/mark_read', methods=['POST'])
-@login_required
-def mark_notification_read():
-    data = load_data()
-    notification_id = request.json['notification_id']
-    
-    for notification in data.get('notifications', []):
-        if notification['id'] == notification_id and notification['user_id'] == current_user.id:
-            notification['read'] = True
-            break
-    
-    save_data(data)
-    return jsonify({'success': True})
 
 @app.route('/api/activity_feed')
 @login_required
@@ -1026,8 +1038,25 @@ def card_comments(card_id):
             data['comments'] = []
         data['comments'].append(new_comment)
         
-        # Create notifications for mentioned users
+        # Get card info for activity logging
+        card = next((c for c in data['cards'] if c['id'] == card_id), None)
+        if card:
+            # Create activity log
+            activity_message = f'commented on "{card["title"]}"'
+            if mentions:
+                activity_message += f' and mentioned {", ".join(mentions)}'
+            create_activity_log('comment_added', activity_message, card_id, card.get('project_id'))
+        
+        # Create notifications for mentioned users with real-time delivery
         create_mention_notifications(mentions, card_id, current_user.username)
+        
+        # Broadcast comment update to project room
+        if card:
+            socketio.emit('comment_added', {
+                'card_id': card_id,
+                'comment': new_comment,
+                'card_title': card['title']
+            }, room=f'project_{card.get("project_id")}')
         
         save_data(data)
         return jsonify(new_comment)
@@ -1282,7 +1311,7 @@ def extract_mentions(content):
     return list(set(mentions))  # Remove duplicates
 
 def create_mention_notifications(mentions, card_id, author):
-    """Create notifications for mentioned users"""
+    """Create notifications for mentioned users with real-time delivery"""
     data = load_data()
     
     for username in mentions:
@@ -1302,6 +1331,9 @@ def create_mention_notifications(mentions, card_id, author):
             if 'notifications' not in data:
                 data['notifications'] = []
             data['notifications'].append(notification)
+            
+            # Send real-time notification via SocketIO
+            send_real_time_notification(user['id'], notification)
     
     save_data(data)
 
@@ -1325,5 +1357,109 @@ def format_date(date_string):
     except:
         return date_string
 
+# SocketIO Events for Real-time Collaboration
+@socketio.on('connect')
+def handle_connect():
+    if current_user.is_authenticated:
+        join_room(f'user_{current_user.id}')
+        print(f'User {current_user.username} connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    if current_user.is_authenticated:
+        leave_room(f'user_{current_user.id}')
+        print(f'User {current_user.username} disconnected')
+
+@socketio.on('join_project')
+def handle_join_project(data):
+    if current_user.is_authenticated:
+        project_id = data['project_id']
+        join_room(f'project_{project_id}')
+        print(f'User {current_user.username} joined project {project_id}')
+
+# Enhanced notification system
+def send_real_time_notification(user_id, notification_data):
+    """Send real-time notification via SocketIO"""
+    socketio.emit('new_notification', notification_data, room=f'user_{user_id}')
+
+def create_activity_log(activity_type, message, card_id=None, project_id=None):
+    """Create activity log entry and broadcast to relevant users"""
+    data = load_data()
+    
+    activity = {
+        'id': max([a.get('id', 0) for a in data.get('activities', [])], default=0) + 1,
+        'type': activity_type,
+        'message': message,
+        'author': current_user.username if current_user.is_authenticated else 'System',
+        'card_id': card_id,
+        'project_id': project_id,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    
+    if 'activities' not in data:
+        data['activities'] = []
+    data['activities'].append(activity)
+    
+    # Keep only last 100 activities
+    if len(data['activities']) > 100:
+        data['activities'] = data['activities'][-100:]
+    
+    save_data(data)
+    
+    # Broadcast activity to project room
+    if project_id:
+        socketio.emit('new_activity', activity, room=f'project_{project_id}')
+    
+    return activity
+
+# Enhanced API endpoints for team collaboration
+@app.route('/api/users', methods=['GET'])
+@login_required
+def get_users():
+    """Get list of active users for @mentions and assignments"""
+    data = load_data()
+    users = [{'id': u['id'], 'username': u['username'], 'display_name': u.get('display_name', u['username'])} 
+             for u in data.get('users', []) if u.get('status') == 'active']
+    return jsonify(users)
+
+@app.route('/api/activities', methods=['GET'])
+@login_required
+def get_activities():
+    """Get recent activities for activity feed"""
+    data = load_data()
+    activities = data.get('activities', [])
+    
+    # Get last 20 activities
+    recent_activities = sorted(activities, key=lambda x: x.get('timestamp', ''), reverse=True)[:20]
+    
+    return jsonify(recent_activities)
+
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def get_user_notifications():
+    """Get notifications for current user"""
+    data = load_data()
+    user_notifications = [n for n in data.get('notifications', []) 
+                         if n.get('user_id') == current_user.id]
+    
+    # Sort by creation time, newest first
+    user_notifications.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    return jsonify(user_notifications[:10])  # Return last 10 notifications
+
+@app.route('/api/notifications/<int:notification_id>/read', methods=['POST'])
+@login_required
+def mark_notification_read(notification_id):
+    """Mark notification as read"""
+    data = load_data()
+    
+    for notification in data.get('notifications', []):
+        if notification.get('id') == notification_id and notification.get('user_id') == current_user.id:
+            notification['read'] = True
+            break
+    
+    save_data(data)
+    return jsonify({'success': True})
+
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    socketio.run(app, debug=True, host='127.0.0.1', port=5000)

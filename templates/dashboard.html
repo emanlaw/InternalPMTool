@@ -163,28 +163,63 @@ document.getElementById('confirmArchive').addEventListener('click', async () => 
 });
 
 // Load activity feed
-fetch('/api/activity_feed')
-    .then(response => response.json())
-    .then(activities => {
-        const feedDiv = document.getElementById('activityFeed');
-        if (activities.length === 0) {
-            feedDiv.innerHTML = '<div style="text-align: center; color: #5e6c84; padding: 20px;">No recent activity</div>';
-            return;
-        }
-        
-        feedDiv.innerHTML = activities.map(activity => `
-            <div style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-                <div>
-                    <span style="color: #172b4d;">${activity.message}</span>
+function loadActivityFeed() {
+    fetch('/api/activities')
+        .then(response => response.json())
+        .then(activities => {
+            const feedDiv = document.getElementById('activityFeed');
+            if (activities.length === 0) {
+                feedDiv.innerHTML = '<div style="text-align: center; color: #5e6c84; padding: 20px;">No recent activity</div>';
+                return;
+            }
+            
+            feedDiv.innerHTML = activities.map(activity => `
+                <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="font-weight: 500; color: #172b4d;">${activity.author}</span>
+                            <span style="color: #5e6c84;">${activity.message}</span>
+                        </div>
+                        ${activity.card_id ? `<div style="font-size: 12px; color: #0079bf; cursor: pointer;" onclick="openCardDetails(${activity.card_id})">View Card →</div>` : ''}
+                    </div>
+                    <div style="color: #5e6c84; font-size: 12px; white-space: nowrap; margin-left: 10px;">${formatTimestamp(activity.timestamp)}</div>
                 </div>
-                <div style="color: #5e6c84; font-size: 12px;">${activity.timestamp}</div>
-            </div>
-        `).join('');
-    })
-    .catch(error => {
-        console.error('Error loading activity feed:', error);
-        document.getElementById('activityFeed').innerHTML = '<div style="text-align: center; color: #dc3545; padding: 20px;">Error loading activity</div>';
-    });
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading activity feed:', error);
+            document.getElementById('activityFeed').innerHTML = '<div style="text-align: center; color: #dc3545; padding: 20px;">Error loading activity</div>';
+        });
+}
+
+// Initialize activity feed
+loadActivityFeed();
+
+// Add SocketIO connection for dashboard
+{% if current_user.is_authenticated %}
+if (typeof socket !== 'undefined') {
+    // Join project rooms for real-time updates
+    socket.emit('join_project', { project_id: 'all' });
+}
+{% endif %}
+
+// Helper function to format timestamps
+function formatTimestamp(timestamp) {
+    if (!timestamp) return '';
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffInMs = now - date;
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        
+        if (diffInMinutes < 1) return 'Just now';
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+        return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    } catch (e) {
+        return timestamp;
+    }
+}
 
 // Close modal when clicking outside
 window.onclick = function(event) {

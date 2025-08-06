@@ -633,10 +633,9 @@
         }
         
         function markAsRead(notificationId) {
-            fetch('/api/notifications/mark_read', {
+            fetch(`/api/notifications/${notificationId}/read`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ notification_id: notificationId })
+                headers: { 'Content-Type': 'application/json' }
             })
             .then(response => response.json())
             .then(() => {
@@ -664,5 +663,53 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // Initialize SocketIO connection for real-time features
+        {% if current_user.is_authenticated %}
+        const socket = io();
+        
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
+        
+        socket.on('new_notification', function(notification) {
+            // Show browser notification if permission granted
+            if (Notification.permission === 'granted') {
+                new Notification('PM Tool - ' + notification.type, {
+                    body: notification.message,
+                    icon: '/static/favicon.ico'
+                });
+            }
+            
+            // Reload notifications in UI
+            if (typeof loadNotifications === 'function') {
+                loadNotifications();
+            }
+        });
+        
+        socket.on('new_activity', function(activity) {
+            // Refresh activity feed if on dashboard
+            if (window.location.pathname === '/dashboard' && typeof loadActivityFeed === 'function') {
+                loadActivityFeed();
+            }
+        });
+        
+        socket.on('comment_added', function(data) {
+            // Refresh comments if viewing the same card
+            if (typeof currentCardId !== 'undefined' && currentCardId === data.card_id) {
+                if (typeof loadComments === 'function') {
+                    // Reload card details to show new comment
+                    openCardDetails(currentCardId);
+                }
+            }
+        });
+        
+        // Request notification permission on page load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        {% endif %}
+    </script>
 </body>
 </html>
