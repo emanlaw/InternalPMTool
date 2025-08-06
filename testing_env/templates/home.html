@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 40px 0;">
+    <h1 style="font-size: 48px; margin-bottom: 20px; color: #172b4d;">🚀 Welcome to PM Tool</h1>
+    <p style="font-size: 18px; color: #5e6c84; margin-bottom: 50px;">Your complete project management solution</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto;">
+    
+    <!-- Dashboard Card -->
+    <div class="nav-card" onclick="location.href='/dashboard'">
+        <div class="nav-icon">📊</div>
+        <h3>Dashboard</h3>
+        <p>View overall project statistics, progress tracking, and manage all your projects in one place.</p>
+        <div class="nav-features">
+            <span>• Project Overview</span>
+            <span>• Progress Statistics</span>
+            <span>• Quick Actions</span>
+        </div>
+    </div>
+
+    <!-- Issues List Card -->
+    <div class="nav-card" onclick="location.href='/issues'">
+        <div class="nav-icon">📋</div>
+        <h3>Issues List</h3>
+        <p>Manage all issues in a detailed table view with filtering, status updates, and comprehensive tracking.</p>
+        <div class="nav-features">
+            <span>• Table View</span>
+            <span>• Filter by Project</span>
+            <span>• Status Management</span>
+        </div>
+    </div>
+
+    <!-- Kanban Boards Card -->
+    <div class="nav-card" onclick="showProjectsModal()">
+        <div class="nav-icon">🗂️</div>
+        <h3>Kanban Boards</h3>
+        <p>Visual workflow management with drag-and-drop cards across To Do, In Progress, and Done columns.</p>
+        <div class="nav-features">
+            <span>• Drag & Drop</span>
+            <span>• Visual Workflow</span>
+            <span>• Real-time Updates</span>
+        </div>
+    </div>
+
+</div>
+
+<div style="text-align: center; margin-top: 60px; padding: 40px; background: #f8f9fa; border-radius: 12px;">
+    <h3 style="color: #172b4d; margin-bottom: 15px;">🎯 Key Features</h3>
+    <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+        <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">⚡</div>
+            <strong>Fast & Responsive</strong>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🎨</div>
+            <strong>Modern UI</strong>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🔄</div>
+            <strong>Real-time Updates</strong>
+        </div>
+        <div style="text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 8px;">📱</div>
+            <strong>Web-based</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Modal for Kanban -->
+<div id="projectsModal" class="modal">
+    <div class="modal-content">
+        <h3>Select Project Board</h3>
+        <div id="projectsList" style="margin: 20px 0;">
+            <!-- Projects will be loaded here -->
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="hideProjectsModal()">Cancel</button>
+    </div>
+</div>
+
+<style>
+.nav-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.nav-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.nav-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.nav-card h3 {
+    color: #172b4d;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.nav-card p {
+    color: #5e6c84;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.nav-features {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    color: #0079bf;
+}
+
+.nav-features span {
+    text-align: left;
+}
+</style>
+
+<script>
+async function showProjectsModal() {
+    const response = await fetch('/dashboard');
+    const html = await response.text();
+    
+    // Simple way to get projects - in production, use a proper API
+    document.getElementById('projectsModal').style.display = 'block';
+    
+    // Load projects list
+    const projectsList = document.getElementById('projectsList');
+    projectsList.innerHTML = `
+        <div style="text-align: left;">
+            <div style="margin: 10px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; cursor: pointer;" onclick="location.href='/board/1'">
+                <strong>📁 Sample Project</strong>
+                <p style="margin: 5px 0 0 0; color: #5e6c84; font-size: 14px;">Your first project</p>
+            </div>
+        </div>
+    `;
+}
+
+function hideProjectsModal() {
+    document.getElementById('projectsModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('projectsModal');
+    if (event.target === modal) {
+        hideProjectsModal();
+    }
+}
+</script>
+{% endblock %}

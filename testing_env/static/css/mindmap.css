@@ -1,0 +1,627 @@
+/* Mind Map Specific Styles */
+.mindmap-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.mindmap-header h1 {
+    margin: 0;
+    color: white;
+    font-size: 28px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.mindmap-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.form-select {
+    padding: 10px 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.9);
+    cursor: pointer;
+    min-width: 180px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.mindmap-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    overflow: hidden;
+    position: relative;
+    border: 2px solid #e1e8ed;
+}
+
+.mindmap-toolbar {
+    background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px;
+    border-bottom: 2px solid #dee2e6;
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    flex-wrap: wrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tool-group label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tool-group select, 
+.tool-group button {
+    padding: 8px 16px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tool-group button:hover {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.tool-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.2);
+}
+
+#mindmapCanvas {
+    display: block;
+    cursor: grab;
+    background: radial-gradient(circle at 50% 50%, #fafbfc 0%, #f1f3f4 100%);
+    border: none;
+    transition: cursor 0.2s ease;
+}
+
+#mindmapCanvas:active {
+    cursor: grabbing;
+}
+
+#mindmapCanvas.connection-mode {
+    cursor: crosshair;
+}
+
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    min-width: 120px;
+}
+
+.context-menu div {
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #172b4d;
+    transition: background-color 0.2s;
+}
+
+.context-menu div:hover {
+    background: #f8f9fa;
+}
+
+/* Node type indicators */
+.node-type-legend {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid #ddd;
+}
+
+.legend-color.todo { background: #e3fcef; border-color: #36b37e; }
+.legend-color.in_progress { background: #fff4e6; border-color: #ffab00; }
+.legend-color.done { background: #e3f2fd; border-color: #0079bf; }
+.legend-color.idea { background: #f3e5f5; border-color: #9c27b0; }
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .mindmap-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .mindmap-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .mindmap-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .tool-group {
+        justify-content: space-between;
+    }
+    
+    #mindmapCanvas {
+        width: 100%;
+        height: 400px;
+    }
+}
+
+/* Updated to use CSS custom properties from base.html */
+.mindmap-header,
+.mindmap-container {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.mindmap-header h1 {
+    color: var(--text-primary);
+}
+
+.mindmap-toolbar {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.form-select,
+.tool-group select,
+.tool-group button {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.tool-group button:hover {
+    background: var(--bg-tertiary);
+}
+
+#mindmapCanvas {
+    background: var(--bg-primary);
+    transition: background-color 0.3s ease;
+}
+
+.context-menu {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.context-menu div {
+    color: var(--text-primary);
+}
+
+.context-menu div:hover {
+    background: var(--bg-tertiary);
+}
+
+.node-type-legend {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Animation for smooth interactions */
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Loading state */
+.mindmap-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 100;
+}
+
+.mindmap-loading::after {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-top: 2px solid #0079bf;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* Additional enhancements */
+.tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tooltip.show {
+    opacity: 1;
+}
+
+.status-indicator {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.status-indicator.saving {
+    background: linear-gradient(90deg, #ffc107, #e0a800);
+    color: #212529;
+}
+
+.status-indicator.saved {
+    background: linear-gradient(90deg, #28a745, #1e7e34);
+    color: white;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Enhanced button styles */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.btn:active {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+}
+
+/* Floating action button */
+.fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,123,255,0.3);
+    transition: all 0.3s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 12px 32px rgba(0,123,255,0.4);
+}
+/* Summary dialog styles */
+.summary-dialog .dialog-content {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    width: 500px;
+    max-width: 90vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid #dee2e6;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.type-breakdown {
+    margin: 20px 0;
+}
+
+.type-breakdown h4 {
+    margin-bottom: 15px;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 8px;
+}
+
+.type-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.type-item:hover {
+    background: #e9ecef;
+}
+
+.isolated-warning {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 15px 0;
+    font-weight: 500;
+    border: 1px solid #ffeaa7;
+}
+
+/* Enhanced node creation dialog */
+.node-creation-dialog .dialog-content h3 {
+    margin-top: 0;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.node-creation-dialog .dialog-content h3::before {
+    content: '✨';
+    font-size: 20px;
+}
+
+/* Progress bar for completion rate */
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Enhanced canvas cursor states */
+#mindmapCanvas.dragging {
+    cursor: grabbing !important;
+}
+
+#mindmapCanvas.connecting {
+    cursor: crosshair !important;
+}
+
+/* Improved mobile touch targets */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .tool-group button {
+        min-height: 40px;
+        min-width: 40px;
+    }
+    
+    .context-menu div {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* Accessibility improvements */
+.btn:focus-visible,
+.tool-group button:focus-visible,
+.form-select:focus-visible {
+    outline: 3px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn {
+        border: 2px solid currentColor;
+    }
+    
+    .node-type-legend {
+        border: 2px solid #000;
+    }
+    
+    .legend-color {
+        border-width: 3px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    .mindmap-header,
+    .mindmap-toolbar,
+    .fab,
+    .node-type-legend {
+        display: none;
+    }
+    
+    .mindmap-container {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    #mindmapCanvas {
+        background: white !important;
+    }
+}

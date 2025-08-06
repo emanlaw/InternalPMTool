@@ -1,0 +1,949 @@
+{% extends "base.html" %}
+
+{% block title %}Mind Map - Project Planning{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/mindmap.css">
+{% endblock %}
+
+{% block content %}
+<div class="mindmap-header">
+    <h1>🧠 Interactive Mind Map</h1>
+    <div class="mindmap-controls">
+        <select id="projectSelect" class="form-select">
+            <option value="">Select Project</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" onclick="createNode()">+ Add Node</button>
+        <button class="btn btn-secondary" onclick="saveMindMap()">💾 Save</button>
+        <button class="btn btn-secondary" onclick="exportMindMap()">📸 Export PNG</button>
+        <button class="btn btn-secondary" onclick="exportToJSON()">📄 Export JSON</button>
+        <button class="btn btn-secondary" onclick="importFromJSON()">📁 Import JSON</button>
+        <button class="btn btn-secondary" onclick="clearCanvas()">🗑️ Clear</button>
+        <button class="btn btn-secondary" onclick="showMindMapSummary()">📊 Summary</button>
+    </div>
+</div>
+
+<div class="mindmap-container">
+    <div class="mindmap-toolbar">
+        <div class="tool-group">
+            <label>Node Type:</label>
+            <select id="nodeType">
+                <option value="todo">TODO</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+                <option value="idea">Idea</option>
+            </select>
+        </div>
+        <div class="tool-group">
+            <label>Zoom:</label>
+            <button onclick="zoomIn()">+</button>
+            <button onclick="zoomOut()">-</button>
+            <button onclick="resetZoom()">Reset</button>
+        </div>
+    </div>
+    
+    <canvas id="mindmapCanvas" width="1200" height="800"></canvas>
+</div>
+
+<style>
+.mindmap-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mindmap-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+}
+
+.mindmap-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.mindmap-toolbar {
+    background: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.tool-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tool-group label {
+    font-weight: 500;
+    color: #5e6c84;
+}
+
+.tool-group select, .tool-group button {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+}
+
+#mindmapCanvas {
+    display: block;
+    cursor: crosshair;
+    background: #fafbfc;
+}
+
+/* Dark mode styles */
+.dark-mode .mindmap-header,
+.dark-mode .mindmap-container {
+    background: #2d3748;
+    color: #f5f5f5;
+}
+
+.dark-mode .mindmap-toolbar {
+    background: #374151;
+    border-color: #555555;
+}
+
+.dark-mode .form-select,
+.dark-mode .tool-group select,
+.dark-mode .tool-group button {
+    background: #374151;
+    color: #f0f0f0;
+    border-color: #555555;
+}
+
+.dark-mode #mindmapCanvas {
+    background: #1a1a1a;
+}
+</style>
+
+<script>
+class MindMap {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.nodes = [];
+        this.connections = [];
+        this.selectedNode = null;
+        this.dragging = false;
+        this.zoom = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.nodeIdCounter = 1;
+        
+        this.setupEventListeners();
+        this.draw();
+    }
+    
+    setupEventListeners() {
+        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+        this.canvas.addEventListener('dblclick', (e) => this.onDoubleClick(e));
+        this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
+        this.canvas.addEventListener('wheel', (e) => this.onWheel(e));
+        this.canvas.addEventListener('mouseleave', () => this.hideTooltip());
+        
+        // Touch events for mobile
+        this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
+        this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
+        this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
+    }
+    
+    getMousePos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: (e.clientX - rect.left - this.panX) / this.zoom,
+            y: (e.clientY - rect.top - this.panY) / this.zoom
+        };
+    }
+    
+    onMouseDown(e) {
+        const pos = this.getMousePos(e);
+        const node = this.getNodeAt(pos.x, pos.y);
+        
+        if (node) {
+            this.selectedNode = node;
+            this.dragging = true;
+            this.dragOffset = {
+                x: pos.x - node.x,
+                y: pos.y - node.y
+            };
+        } else {
+            this.selectedNode = null;
+        }
+        
+        this.draw();
+    }
+    
+    onMouseMove(e) {
+        const pos = this.getMousePos(e);
+        
+        if (this.dragging && this.selectedNode) {
+            this.selectedNode.x = pos.x - this.dragOffset.x;
+            this.selectedNode.y = pos.y - this.dragOffset.y;
+            this.draw();
+        } else {
+            // Show tooltip for hovered node
+            const hoveredNode = this.getNodeAt(pos.x, pos.y);
+            if (hoveredNode) {
+                this.showTooltip(e, hoveredNode);
+                this.canvas.style.cursor = 'pointer';
+            } else {
+                this.hideTooltip();
+                this.canvas.style.cursor = this.connectionMode ? 'crosshair' : 'grab';
+            }
+        }
+    }
+    
+    onMouseUp(e) {
+        this.dragging = false;
+    }
+    
+    onDoubleClick(e) {
+        const pos = this.getMousePos(e);
+        const node = this.getNodeAt(pos.x, pos.y);
+        
+        if (node) {
+            this.editNode(node);
+        } else {
+            this.createNodeAt(pos.x, pos.y);
+        }
+    }
+    
+    onRightClick(e) {
+        e.preventDefault();
+        const pos = this.getMousePos(e);
+        const node = this.getNodeAt(pos.x, pos.y);
+        
+        if (node) {
+            this.showContextMenu(e, node);
+        }
+    }
+    
+    createNodeAt(x, y) {
+        const nodeType = document.getElementById('nodeType').value;
+        this.showNodeCreationDialog(x, y, nodeType);
+    }
+    
+    showNodeCreationDialog(x, y, nodeType) {
+        const dialog = document.createElement('div');
+        dialog.className = 'node-creation-dialog';
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <h3>Create New Node</h3>
+                <div class="form-group">
+                    <label>Node Text:</label>
+                    <textarea id="nodeText" placeholder="Enter node description..." rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Node Type:</label>
+                    <select id="dialogNodeType">
+                        <option value="todo" ${nodeType === 'todo' ? 'selected' : ''}>TODO</option>
+                        <option value="in_progress" ${nodeType === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="done" ${nodeType === 'done' ? 'selected' : ''}>Done</option>
+                        <option value="idea" ${nodeType === 'idea' ? 'selected' : ''}>Idea</option>
+                    </select>
+                </div>
+                <div class="dialog-actions">
+                    <button class="btn btn-primary" onclick="this.parentElement.parentElement.parentElement.createNode()">Create</button>
+                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.parentElement.remove()">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        dialog.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        const content = dialog.querySelector('.dialog-content');
+        content.style.cssText = `
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        `;
+        
+        dialog.createNode = () => {
+            const text = dialog.querySelector('#nodeText').value.trim();
+            const type = dialog.querySelector('#dialogNodeType').value;
+            
+            if (text) {
+                const node = {
+                    id: this.nodeIdCounter++,
+                    x: x,
+                    y: y,
+                    text: text,
+                    type: type,
+                    width: Math.max(120, text.length * 8),
+                    height: Math.max(60, Math.ceil(text.length / 15) * 20 + 20)
+                };
+                
+                this.nodes.push(node);
+                this.selectedNode = node;
+                this.draw();
+                dialog.remove();
+            } else {
+                alert('Please enter node text');
+            }
+        };
+        
+        document.body.appendChild(dialog);
+        dialog.querySelector('#nodeText').focus();
+    }
+    
+    editNode(node) {
+        const newText = prompt('Edit node text:', node.text);
+        if (newText !== null) {
+            node.text = newText;
+            this.draw();
+        }
+    }
+    
+    getNodeAt(x, y) {
+        for (let i = this.nodes.length - 1; i >= 0; i--) {
+            const node = this.nodes[i];
+            if (x >= node.x - node.width/2 && x <= node.x + node.width/2 &&
+                y >= node.y - node.height/2 && y <= node.y + node.height/2) {
+                return node;
+            }
+        }
+        return null;
+    }
+    
+    getNodeColor(type) {
+        const colors = {
+            'todo': '#e3fcef',
+            'in_progress': '#fff4e6',
+            'done': '#e3f2fd',
+            'idea': '#f3e5f5'
+        };
+        return colors[type] || '#f8f9fa';
+    }
+    
+    getNodeBorderColor(type) {
+        const colors = {
+            'todo': '#36b37e',
+            'in_progress': '#ffab00',
+            'done': '#0079bf',
+            'idea': '#9c27b0'
+        };
+        return colors[type] || '#ddd';
+    }
+    
+    draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.save();
+        this.ctx.translate(this.panX, this.panY);
+        this.ctx.scale(this.zoom, this.zoom);
+        
+        // Draw connections
+        this.connections.forEach(conn => {
+            const fromNode = this.nodes.find(n => n.id === conn.from);
+            const toNode = this.nodes.find(n => n.id === conn.to);
+            
+            if (fromNode && toNode) {
+                this.drawConnection(fromNode, toNode);
+            }
+        });
+        
+        // Draw nodes
+        this.nodes.forEach(node => {
+            this.drawNode(node);
+        });
+        
+        this.ctx.restore();
+    }
+    
+    drawNode(node) {
+        const isSelected = node === this.selectedNode;
+        
+        // Draw node background
+        this.ctx.fillStyle = this.getNodeColor(node.type);
+        this.ctx.strokeStyle = isSelected ? '#ff5630' : this.getNodeBorderColor(node.type);
+        this.ctx.lineWidth = isSelected ? 3 : 2;
+        
+        this.ctx.fillRect(
+            node.x - node.width/2,
+            node.y - node.height/2,
+            node.width,
+            node.height
+        );
+        
+        this.ctx.strokeRect(
+            node.x - node.width/2,
+            node.y - node.height/2,
+            node.width,
+            node.height
+        );
+        
+        // Draw text
+        this.ctx.fillStyle = '#172b4d';
+        this.ctx.font = '14px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        
+        // Wrap text
+        const words = node.text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        words.forEach(word => {
+            const testLine = currentLine + (currentLine ? ' ' : '') + word;
+            const metrics = this.ctx.measureText(testLine);
+            
+            if (metrics.width > node.width - 10) {
+                if (currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    lines.push(word);
+                }
+            } else {
+                currentLine = testLine;
+            }
+        });
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        const lineHeight = 16;
+        const startY = node.y - (lines.length - 1) * lineHeight / 2;
+        
+        lines.forEach((line, index) => {
+            this.ctx.fillText(line, node.x, startY + index * lineHeight);
+        });
+    }
+    
+    drawConnection(fromNode, toNode) {
+        this.ctx.strokeStyle = '#5e6c84';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(fromNode.x, fromNode.y);
+        this.ctx.lineTo(toNode.x, toNode.y);
+        this.ctx.stroke();
+        
+        // Draw arrow
+        const angle = Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x);
+        const arrowLength = 10;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(toNode.x, toNode.y);
+        this.ctx.lineTo(
+            toNode.x - arrowLength * Math.cos(angle - Math.PI/6),
+            toNode.y - arrowLength * Math.sin(angle - Math.PI/6)
+        );
+        this.ctx.moveTo(toNode.x, toNode.y);
+        this.ctx.lineTo(
+            toNode.x - arrowLength * Math.cos(angle + Math.PI/6),
+            toNode.y - arrowLength * Math.sin(angle + Math.PI/6)
+        );
+        this.ctx.stroke();
+    }
+    
+    showContextMenu(e, node) {
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.position = 'fixed';
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+        menu.style.background = 'white';
+        menu.style.border = '1px solid #ddd';
+        menu.style.borderRadius = '4px';
+        menu.style.padding = '5px 0';
+        menu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+        menu.style.zIndex = '1000';
+        
+        const options = [
+            { text: 'Edit', action: () => this.editNode(node) },
+            { text: 'Delete', action: () => this.deleteNode(node) },
+            { text: 'Connect to...', action: () => this.startConnection(node) }
+        ];
+        
+        options.forEach(option => {
+            const item = document.createElement('div');
+            item.textContent = option.text;
+            item.style.padding = '8px 15px';
+            item.style.cursor = 'pointer';
+            item.addEventListener('click', () => {
+                option.action();
+                document.body.removeChild(menu);
+            });
+            item.addEventListener('mouseenter', () => {
+                item.style.background = '#f8f9fa';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.style.background = 'white';
+            });
+            menu.appendChild(item);
+        });
+        
+        document.body.appendChild(menu);
+        
+        // Remove menu when clicking elsewhere
+        setTimeout(() => {
+            document.addEventListener('click', function removeMenu() {
+                if (document.body.contains(menu)) {
+                    document.body.removeChild(menu);
+                }
+                document.removeEventListener('click', removeMenu);
+            });
+        }, 100);
+    }
+    
+    deleteNode(node) {
+        if (confirm('Delete this node?')) {
+            this.nodes = this.nodes.filter(n => n.id !== node.id);
+            this.connections = this.connections.filter(c => c.from !== node.id && c.to !== node.id);
+            this.draw();
+        }
+    }
+    
+    startConnection(fromNode) {
+        this.connectionMode = true;
+        this.connectionFrom = fromNode;
+        this.canvas.style.cursor = 'crosshair';
+        
+        const originalHandler = this.canvas.onclick;
+        this.canvas.onclick = (e) => {
+            const pos = this.getMousePos(e);
+            const toNode = this.getNodeAt(pos.x, pos.y);
+            
+            if (toNode && toNode !== fromNode) {
+                this.connections.push({
+                    from: fromNode.id,
+                    to: toNode.id
+                });
+                this.draw();
+            }
+            
+            this.connectionMode = false;
+            this.canvas.style.cursor = 'default';
+            this.canvas.onclick = originalHandler;
+        };
+    }
+    
+    onWheel(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(0.1, Math.min(3, this.zoom * zoomFactor));
+        
+        // Zoom towards mouse position
+        this.panX = mouseX - (mouseX - this.panX) * (newZoom / this.zoom);
+        this.panY = mouseY - (mouseY - this.panY) * (newZoom / this.zoom);
+        
+        this.zoom = newZoom;
+        this.draw();
+    }
+    
+    zoomIn() {
+        this.zoom = Math.min(3, this.zoom * 1.2);
+        this.draw();
+    }
+    
+    zoomOut() {
+        this.zoom = Math.max(0.1, this.zoom / 1.2);
+        this.draw();
+    }
+    
+    resetZoom() {
+        this.zoom = 1;
+        this.panX = 0;
+        this.panY = 0;
+        this.draw();
+    }
+    
+    showTooltip(e, node) {
+        let tooltip = document.querySelector('.mindmap-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.className = 'mindmap-tooltip tooltip';
+            document.body.appendChild(tooltip);
+        }
+        
+        tooltip.innerHTML = `
+            <strong>${node.text}</strong><br>
+            <small>Type: ${node.type.replace('_', ' ').toUpperCase()}</small><br>
+            <small>Double-click to edit</small>
+        `;
+        
+        tooltip.style.left = e.clientX + 10 + 'px';
+        tooltip.style.top = e.clientY - 10 + 'px';
+        tooltip.classList.add('show');
+    }
+    
+    hideTooltip() {
+        const tooltip = document.querySelector('.mindmap-tooltip');
+        if (tooltip) {
+            tooltip.classList.remove('show');
+        }
+    }
+    
+    // Touch event handlers for mobile support
+    onTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        this.onMouseDown(mouseEvent);
+    }
+    
+    onTouchMove(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        this.onMouseMove(mouseEvent);
+    }
+    
+    onTouchEnd(e) {
+        e.preventDefault();
+        const mouseEvent = new MouseEvent('mouseup', {});
+        this.onMouseUp(mouseEvent);
+    }
+    
+    clear() {
+        this.nodes = [];
+        this.connections = [];
+        this.selectedNode = null;
+        this.draw();
+    }
+    
+    exportToPNG() {
+        const link = document.createElement('a');
+        link.download = 'mindmap.png';
+        link.href = this.canvas.toDataURL();
+        link.click();
+    }
+    
+    save() {
+        const projectId = document.getElementById('projectSelect').value;
+        if (!projectId) {
+            alert('Please select a project first');
+            return;
+        }
+        
+        const data = {
+            project_id: parseInt(projectId),
+            nodes: this.nodes,
+            connections: this.connections
+        };
+        
+        fetch('/api/save_mindmap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Mind map saved successfully!');
+            } else {
+                alert('Error saving mind map: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error saving mind map');
+        });
+    }
+    
+    load(projectId) {
+        fetch(`/api/load_mindmap/${projectId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.nodes = data.nodes || [];
+                this.connections = data.connections || [];
+                this.draw();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading mind map:', error);
+        });
+    }
+}
+
+// Initialize mind map
+let mindmap;
+
+document.addEventListener('DOMContentLoaded', function() {
+    mindmap = new AdvancedMindMap('mindmapCanvas');
+    window.mindmap = mindmap; // Make globally accessible
+    
+    // Add floating action button
+    const fab = document.createElement('button');
+    fab.className = 'fab';
+    fab.innerHTML = '+';
+    fab.title = 'Add Node (Double-click on canvas)';
+    fab.onclick = () => mindmap.createNodeAt(200, 200);
+    document.body.appendChild(fab);
+    
+    // Load mind map when project is selected
+    document.getElementById('projectSelect').addEventListener('change', function() {
+        const projectId = this.value;
+        if (projectId) {
+            mindmap.load(projectId);
+        } else {
+            mindmap.clear();
+        }
+    });
+    
+    // Add keyboard shortcut hints
+    const helpButton = document.createElement('button');
+    helpButton.className = 'btn btn-secondary';
+    helpButton.innerHTML = '? Help';
+    helpButton.onclick = showHelpDialog;
+    document.querySelector('.mindmap-controls').appendChild(helpButton);
+});
+
+function showHelpDialog() {
+    const dialog = document.createElement('div');
+    dialog.className = 'help-overlay';
+    dialog.innerHTML = `
+        <div class="help-content">
+            <button class="close-help" onclick="this.parentElement.parentElement.remove()">&times;</button>
+            <h2>Mind Map Help</h2>
+            <div class="help-shortcuts">
+                <div class="shortcut-key">Double-click</div>
+                <div>Create/Edit node</div>
+                <div class="shortcut-key">Right-click</div>
+                <div>Context menu</div>
+                <div class="shortcut-key">Drag</div>
+                <div>Move nodes</div>
+                <div class="shortcut-key">Mouse wheel</div>
+                <div>Zoom in/out</div>
+                <div class="shortcut-key">Ctrl+S</div>
+                <div>Save mind map</div>
+                <div class="shortcut-key">Ctrl+Z</div>
+                <div>Undo</div>
+                <div class="shortcut-key">Ctrl+Y</div>
+                <div>Redo</div>
+                <div class="shortcut-key">Delete</div>
+                <div>Delete selected node</div>
+            </div>
+            <h3>Node Types</h3>
+            <p><strong>TODO:</strong> Tasks to be completed</p>
+            <p><strong>In Progress:</strong> Currently working on</p>
+            <p><strong>Done:</strong> Completed tasks</p>
+            <p><strong>Idea:</strong> Brainstorming and concepts</p>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    setTimeout(() => dialog.classList.add('show'), 10);
+}
+
+// Enhanced global functions
+function createNode() {
+    const canvas = document.getElementById('mindmapCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const centerX = (rect.width / 2 - mindmap.panX) / mindmap.zoom;
+    const centerY = (rect.height / 2 - mindmap.panY) / mindmap.zoom;
+    mindmap.createNodeAt(centerX, centerY);
+}
+
+function clearCanvas() {
+    if (confirm('⚠️ This will delete all nodes and connections. Are you sure?')) {
+        mindmap.clear();
+    }
+}
+
+function exportMindMap() {
+    mindmap.exportToPNG();
+}
+
+function saveMindMap() {
+    mindmap.save();
+}
+
+function zoomIn() {
+    mindmap.zoomIn();
+}
+
+function zoomOut() {
+    mindmap.zoomOut();
+}
+
+function resetZoom() {
+    mindmap.resetZoom();
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .node-creation-dialog .dialog-content {
+        animation: slideUp 0.3s ease;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.2);
+    }
+    
+    .dialog-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+    }
+    
+    .help-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .help-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .help-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        position: relative;
+    }
+    
+    .help-overlay.show .help-content {
+        transform: scale(1);
+    }
+    
+    .help-shortcuts {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 10px;
+        margin: 20px 0;
+    }
+    
+    .shortcut-key {
+        background: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-weight: bold;
+        border: 1px solid #dee2e6;
+    }
+    
+    .close-help {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6c757d;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    }
+    
+    .close-help:hover {
+        background: #f8f9fa;
+        color: #495057;
+    }
+`;
+document.head.appendChild(style);
+</script>
+<script src="/static/js/mindmap.js"></script>
+{% endblock %}

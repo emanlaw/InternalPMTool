@@ -67,3 +67,22 @@ Thumbs.db
 
 # Local data
 data.json.backup
+
+# Testing environment data
+testing_env/data/
+testing_env/firebase-service-account.json
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.old
+
+# Migration scripts output
+migration_*.json
+sync_*.json
