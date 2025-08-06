@@ -53,7 +53,7 @@
     {
       "id": 1,
       "username": "admin",
-      "password_hash": "pbkdf2:sha256:600000$Bz5ohT0Zy2joxB4p$28a7853b441ea80735e4a4673891f12468e304395ca18fca76b69cb351906dad",
+      "password_hash": "pbkdf2:sha256:600000$Te1tQCkUXUohW5Uz$16190898dbe053d2767ca8f72445f05d415e65fbc4a9c2fbb1ed8cd423d26188",
       "role": "admin",
       "status": "active",
       "email": "admin@example.com",

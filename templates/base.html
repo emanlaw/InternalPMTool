@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>{% block title %}PM Tool - Kanban Board{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/gantt_analytics.css">
+    <link rel="stylesheet" href="/static/css/mobile-responsive.css">
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background: #f4f5f7; }
@@ -245,22 +248,27 @@
 <body>
     <div class="header">
         <h1>🔧 PM Tool</h1>
-        <nav>
-            <a href="{{ url_for('home') }}">Home</a>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('issues_list') }}">Issues</a>
-            <a href="{{ url_for('stories') }}">📖 Stories</a>
-            <a href="/backlog">📋 Backlog</a>
-            <a href="/sprints">🏃‍♂️ Sprints</a>
-            <a href="/gantt">📊 Gantt Chart</a>
-            <a href="/mindmap">🧠 Mind Map</a>
-            <a href="/archive">📁 Archive</a>
-            <a href="/analytics">Analytics</a>
-            <a href="/firebase">Firebase</a>
-            {% if current_user.is_authenticated and current_user.can_manage_users() %}
-                <a href="{{ url_for('admin_users') }}">👥 Admin</a>
-            {% endif %}
-            <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
+        <nav class="nav-menu">
+            <button class="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Toggle mobile navigation">
+                <span id="mobileNavIcon">☰</span>
+            </button>
+            <div class="nav-links" id="navLinks">
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('issues_list') }}">Issues</a>
+                <a href="{{ url_for('stories') }}">📖 Stories</a>
+                <a href="/backlog">📋 Backlog</a>
+                <a href="/sprints">🏃‍♂️ Sprints</a>
+                <a href="/gantt">📊 Gantt Chart</a>
+                <a href="/mindmap">🧠 Mind Map</a>
+                <a href="/archive">📁 Archive</a>
+                <a href="/analytics">Analytics</a>
+                <a href="/firebase">Firebase</a>
+                {% if current_user.is_authenticated and current_user.can_manage_users() %}
+                    <a href="{{ url_for('admin_users') }}">👥 Admin</a>
+                {% endif %}
+            </div>
+            <div class="nav-user-section">
                 {% if current_user.is_authenticated %}
                     <div id="notificationBell" style="position: relative; display: inline-block; margin-right: 15px;">
                         <span style="font-size: 18px; cursor: pointer;" onclick="toggleNotifications()">🔔</span>
@@ -368,6 +376,44 @@
             if (bell && !bell.contains(event.target)) {
                 dropdown.style.display = 'none';
             }
+        });
+        
+        // Mobile Navigation Toggle
+        function toggleMobileNav() {
+            const navLinks = document.getElementById('navLinks');
+            const mobileNavIcon = document.getElementById('mobileNavIcon');
+            
+            navLinks.classList.toggle('mobile-open');
+            
+            // Update icon
+            if (navLinks.classList.contains('mobile-open')) {
+                mobileNavIcon.textContent = '✕'; // Close icon
+            } else {
+                mobileNavIcon.textContent = '☰'; // Hamburger icon
+            }
+        }
+        
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', function(event) {
+            const nav = document.getElementById('navLinks');
+            const toggle = document.querySelector('.mobile-nav-toggle');
+            
+            if (nav && toggle && !nav.contains(event.target) && !toggle.contains(event.target)) {
+                nav.classList.remove('mobile-open');
+                document.getElementById('mobileNavIcon').textContent = '☰';
+            }
+        });
+        
+        // Close mobile nav when clicking on a link
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    const nav = document.getElementById('navLinks');
+                    nav.classList.remove('mobile-open');
+                    document.getElementById('mobileNavIcon').textContent = '☰';
+                });
+            });
         });
         
         // Load dark mode preference on page load
