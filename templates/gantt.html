@@ -439,6 +439,9 @@ let ganttData = {
     cards: {{ cards | tojson }}
 };
 
+// Ensure we only work with active (non-archived) projects
+ganttData.projects = ganttData.projects.filter(project => !project.archived);
+
 document.addEventListener('DOMContentLoaded', function() {
     initializeGantt();
     generateTimeline();
