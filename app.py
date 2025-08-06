@@ -75,13 +75,17 @@ def load_user(user_id):
 
 
 def load_data():
-    """Load data from Firebase"""
-    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
-    
+    """Load data from Firebase or JSON fallback"""
     if db is None:
-        print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
-        print("You need to download the real service account key from Firebase Console.")
-        return data
+        print("WARNING: Firebase not initialized! Using JSON fallback for testing.")
+        try:
+            with open('data.json', 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading JSON data: {e}")
+            return {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
+    
+    data = {'users': [], 'projects': [], 'epics': [], 'stories': [], 'cards': [], 'comments': [], 'notifications': []}
     
     try:
         # Load from Firebase collections
@@ -188,10 +192,16 @@ def load_data():
     return data
 
 def save_data(data):
-    """Save data to Firebase"""
+    """Save data to Firebase or JSON fallback"""
     if db is None:
-        print("ERROR: Firebase not initialized! Cannot save data.")
-        return
+        print("WARNING: Firebase not initialized! Using JSON fallback for testing.")
+        try:
+            with open('data.json', 'w') as f:
+                json.dump(data, f, indent=2)
+            return
+        except Exception as e:
+            print(f"Error saving JSON data: {e}")
+            return
     
     try:
         # Save to Firebase collections
