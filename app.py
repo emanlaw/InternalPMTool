@@ -9,6 +9,14 @@ from datetime import datetime, date
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+# Define predefined labels with colors
+PREDEFINED_LABELS = [
+    {'id': 'bug', 'name': 'Bug', 'color': '#ff5630'},
+    {'id': 'feature', 'name': 'Feature', 'color': '#0052cc'},
+    {'id': 'urgent', 'name': 'Urgent', 'color': '#ff8b00'},
+    {'id': 'enhancement', 'name': 'Enhancement', 'color': '#36b37e'}
+]
+
 # Initialize Firebase
 try:
     if not firebase_admin._apps:
@@ -732,7 +740,8 @@ def add_card():
         'priority': request.json.get('priority', 'Medium'),
         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'due_date': request.json.get('due_date', ''),
-        'story_points': request.json.get('story_points')
+        'story_points': request.json.get('story_points'),
+        'labels': request.json.get('labels', [])  # Add support for labels
     }
     
     data['cards'].append(new_card)
@@ -779,6 +788,7 @@ def search_cards():
     priority_filter = request.args.get('priority', '')
     assignee_filter = request.args.get('assignee', '')
     project_filter = request.args.get('project_id', '')
+    label_filter = request.args.get('label', '')
     
     filtered_cards = cards
     
@@ -793,6 +803,9 @@ def search_cards():
     
     if assignee_filter:
         filtered_cards = [c for c in filtered_cards if c.get('assignee', '').lower() == assignee_filter.lower()]
+    
+    if label_filter:
+        filtered_cards = [c for c in filtered_cards if label_filter in c.get('labels', [])]
     
     if search_query:
         filtered_cards = [c for c in filtered_cards if 
@@ -1233,7 +1246,9 @@ app.jinja_env.globals.update(
     get_due_date_text_class=get_due_date_text_class,
     get_due_date_status=get_due_date_status,
     get_comment_count=get_comment_count,
-    format_timestamp=format_timestamp
+    format_timestamp=format_timestamp,
+    predefined_labels=PREDEFINED_LABELS,
+    get_label_by_id=lambda label_id: next((label for label in PREDEFINED_LABELS if label['id'] == label_id), None)
 )
 
 @app.template_filter('format_date')

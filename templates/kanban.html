@@ -18,6 +18,17 @@
             <div class="card priority-{{ card.priority.lower() }} {% if card.due_date %}{{ get_due_date_class(card.due_date) }}{% endif %}" draggable="true" data-card-id="{{ card.id }}" onclick="openCardDetails({{ card.id }})" style="cursor: pointer;">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                <!-- Labels Display -->
+                {% if card.labels %}
+                <div class="labels-container">
+                    {% for label_id in card.labels %}
+                    {% set label = get_label_by_id(label_id) %}
+                    {% if label %}
+                    <span class="label-badge" style="background-color: {{ label.color }};">{{ label.name }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
                 {% if card.due_date %}
                 <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
                     📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
@@ -40,6 +51,17 @@
             <div class="card priority-{{ card.priority.lower() }} {% if card.due_date %}{{ get_due_date_class(card.due_date) }}{% endif %}" draggable="true" data-card-id="{{ card.id }}" onclick="openCardDetails({{ card.id }})" style="cursor: pointer;">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                <!-- Labels Display -->
+                {% if card.labels %}
+                <div class="labels-container">
+                    {% for label_id in card.labels %}
+                    {% set label = get_label_by_id(label_id) %}
+                    {% if label %}
+                    <span class="label-badge" style="background-color: {{ label.color }};">{{ label.name }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
                 {% if card.due_date %}
                 <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
                     📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
@@ -62,6 +84,17 @@
             <div class="card priority-{{ card.priority.lower() }} {% if card.due_date %}{{ get_due_date_class(card.due_date) }}{% endif %}" draggable="true" data-card-id="{{ card.id }}" onclick="openCardDetails({{ card.id }})" style="cursor: pointer;">
                 <div class="card-title">{{ card.title }}</div>
                 <div class="card-description" style="font-size: 12px; color: #5e6c84; margin: 8px 0;">{{ card.description }}</div>
+                <!-- Labels Display -->
+                {% if card.labels %}
+                <div class="labels-container">
+                    {% for label_id in card.labels %}
+                    {% set label = get_label_by_id(label_id) %}
+                    {% if label %}
+                    <span class="label-badge" style="background-color: {{ label.color }};">{{ label.name }}</span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
                 {% if card.due_date %}
                 <div class="due-date {{ get_due_date_text_class(card.due_date) }}">
                     📅 Due: {{ card.due_date }} {{ get_due_date_status(card.due_date) }}
@@ -91,6 +124,22 @@
                 <option value="Medium" selected>Medium Priority</option>
                 <option value="High">High Priority</option>
             </select>
+            
+            <!-- Labels Selector -->
+            <div style="margin: 12px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #172b4d;">Labels:</label>
+                <div class="label-selector" id="labelSelector">
+                    {% for label in predefined_labels %}
+                    <div class="label-option" 
+                         style="background-color: {{ label.color }};" 
+                         data-label-id="{{ label.id }}"
+                         onclick="toggleLabel('{{ label.id }}')">
+                        {{ label.name }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="selectedLabels" value="">
+            </div>
             <div style="margin-top: 15px;">
                 <button type="submit" class="btn">Create Card</button>
                 <button type="button" class="btn btn-secondary" onclick="hideAddCardModal()">Cancel</button>
@@ -202,6 +251,22 @@ function showAddCardModal() {
 function hideAddCardModal() {
     document.getElementById('addCardModal').style.display = 'none';
     document.getElementById('cardForm').reset();
+    // Reset label selections
+    document.querySelectorAll('.label-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.getElementById('selectedLabels').value = '';
+}
+
+// Label selection functionality
+function toggleLabel(labelId) {
+    const option = document.querySelector(`[data-label-id="${labelId}"]`);
+    option.classList.toggle('selected');
+    
+    // Update hidden input with selected labels
+    const selectedLabels = Array.from(document.querySelectorAll('.label-option.selected'))
+        .map(option => option.dataset.labelId);
+    document.getElementById('selectedLabels').value = selectedLabels.join(',');
 }
 
 document.getElementById('cardForm').addEventListener('submit', async (e) => {
@@ -216,7 +281,8 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             description: document.getElementById('cardDescription').value,
             assignee: document.getElementById('cardAssignee').value,
             priority: document.getElementById('cardPriority').value,
-            due_date: document.getElementById('cardDueDate').value
+            due_date: document.getElementById('cardDueDate').value,
+            labels: document.getElementById('selectedLabels').value.split(',').filter(l => l)
         })
     });
     
