@@ -434,6 +434,7 @@
             <a href="/archive">📁 Archive</a>
             {% if current_user.is_authenticated and current_user.can_manage_users() %}
                 <a href="/analytics">Analytics</a>
+                <a href="/time_reports">⏰ Time Reports</a>
                 <a href="/firebase">Firebase</a>
                 <a href="{{ url_for('admin_users') }}">👥 Admin</a>
             {% endif %}

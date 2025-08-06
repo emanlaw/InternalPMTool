@@ -625,6 +625,57 @@ def analytics():
     active_projects = [p for p in data['projects'] if not p.get('archived', False)]
     return render_template('gantt_analytics.html', projects=active_projects, cards=data['cards'])
 
+@app.route('/time_reports')
+@login_required
+def time_reports():
+    data = load_data()
+    time_logs = data.get('time_logs', [])
+    cards = data.get('cards', [])
+    projects = data.get('projects', [])
+    
+    # Create a mapping of card_id to card details
+    card_map = {card['id']: card for card in cards}
+    project_map = {project['id']: project for project in projects}
+    
+    # Add card and project details to time logs
+    enhanced_time_logs = []
+    for log in time_logs:
+        if log['card_id'] in card_map:
+            card = card_map[log['card_id']]
+            project = project_map.get(card.get('project_id'), {})
+            
+            enhanced_log = log.copy()
+            enhanced_log['card_title'] = card.get('title', 'Unknown Card')
+            enhanced_log['project_name'] = project.get('name', 'Unknown Project')
+            enhanced_log['hours'] = round(log.get('duration_minutes', 0) / 60, 1)
+            enhanced_time_logs.append(enhanced_log)
+    
+    # Sort by created_at descending
+    enhanced_time_logs.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    # Calculate summary statistics
+    total_time_minutes = sum(log.get('duration_minutes', 0) for log in time_logs)
+    total_hours = round(total_time_minutes / 60, 1)
+    
+    # Group by user
+    user_stats = {}
+    for log in time_logs:
+        username = log.get('username', 'Unknown')
+        if username not in user_stats:
+            user_stats[username] = {'total_minutes': 0, 'log_count': 0}
+        user_stats[username]['total_minutes'] += log.get('duration_minutes', 0)
+        user_stats[username]['log_count'] += 1
+    
+    # Convert to hours and sort
+    for username in user_stats:
+        user_stats[username]['total_hours'] = round(user_stats[username]['total_minutes'] / 60, 1)
+    
+    return render_template('time_reports.html', 
+                         time_logs=enhanced_time_logs,
+                         total_hours=total_hours,
+                         user_stats=user_stats,
+                         log_count=len(time_logs))
+
 @app.route('/gantt')
 @login_required
 def gantt():
