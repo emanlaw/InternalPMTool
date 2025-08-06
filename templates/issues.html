@@ -14,17 +14,17 @@
 </div>
 
 <!-- Search and Filter Section -->
-<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+<div class="search-container">
+    <div class="filters-row">
         <!-- Search Bar -->
-        <div style="flex: 1; min-width: 250px;">
+        <div class="search-field">
             <input type="text" id="searchInput" placeholder="🔍 Search issues by title or description..." 
-                   style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px;"
+                   class="search-input"
                    oninput="performSearch()">
         </div>
         
         <!-- Filters -->
-        <select id="projectFilter" onchange="performSearch()" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <select id="projectFilter" onchange="performSearch()" class="filter-select">
             <option value="">All Projects</option>
             {% for project in projects %}
             <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
@@ -33,21 +33,21 @@
             {% endfor %}
         </select>
         
-        <select id="statusFilter" onchange="performSearch()" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <select id="statusFilter" onchange="performSearch()" class="filter-select">
             <option value="">All Status</option>
             <option value="todo">To Do</option>
             <option value="in_progress">In Progress</option>
             <option value="done">Done</option>
         </select>
         
-        <select id="priorityFilter" onchange="performSearch()" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <select id="priorityFilter" onchange="performSearch()" class="filter-select">
             <option value="">All Priority</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
         </select>
         
-        <select id="assigneeFilter" onchange="performSearch()" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <select id="assigneeFilter" onchange="performSearch()" class="filter-select">
             <option value="">All Assignees</option>
             <option value="John">John</option>
             <option value="Jane">Jane</option>

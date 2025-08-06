@@ -1248,5 +1248,10 @@ def format_date(date_string):
     except:
         return date_string
 
+@app.route('/mobile-demo')
+def mobile_demo():
+    """Demo page to showcase mobile responsive design features"""
+    return render_template('mobile-demo.html')
+
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=5000)
