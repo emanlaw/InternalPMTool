@@ -189,35 +189,77 @@
 
 <script>
 let draggedCard = null;
+let isDragging = false;
+let touchStartY = 0;
+let touchStartX = 0;
 
-// Drag and Drop functionality
-document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('dragstart', (e) => {
-        draggedCard = e.target;
-        e.target.classList.add('dragging');
+// Enhanced Drag and Drop functionality with touch support
+function initializeDragAndDrop() {
+    document.querySelectorAll('.card').forEach(card => {
+        // Mouse events
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+        
+        // Touch events for mobile
+        card.addEventListener('touchstart', handleTouchStart, { passive: false });
+        card.addEventListener('touchmove', handleTouchMove, { passive: false });
+        card.addEventListener('touchend', handleTouchEnd, { passive: false });
     });
-    
-    card.addEventListener('dragend', (e) => {
-        e.target.classList.remove('dragging');
-        draggedCard = null;
-    });
-});
 
-document.querySelectorAll('.column').forEach(column => {
-    column.addEventListener('dragover', (e) => {
-        e.preventDefault();
+    document.querySelectorAll('.column').forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('drop', handleDrop);
+        column.addEventListener('dragenter', handleDragEnter);
+        column.addEventListener('dragleave', handleDragLeave);
     });
-    
-    column.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        if (draggedCard) {
-            const newStatus = column.dataset.status;
-            const cardId = parseInt(draggedCard.dataset.cardId);
-            
-            // Move card visually
-            column.querySelector('.cards-container').appendChild(draggedCard);
-            
-            // Update server
+}
+
+// Mouse drag handlers
+function handleDragStart(e) {
+    draggedCard = e.target;
+    e.target.classList.add('dragging');
+    isDragging = true;
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.column').forEach(col => col.classList.remove('drag-target'));
+    draggedCard = null;
+    isDragging = false;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+}
+
+function handleDragEnter(e) {
+    e.preventDefault();
+    if (isDragging) {
+        e.currentTarget.classList.add('drag-target');
+    }
+}
+
+function handleDragLeave(e) {
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+        e.currentTarget.classList.remove('drag-target');
+    }
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    if (draggedCard) {
+        const column = e.currentTarget;
+        const newStatus = column.dataset.status;
+        const cardId = parseInt(draggedCard.dataset.cardId);
+        
+        // Move card visually
+        column.querySelector('.cards-container').appendChild(draggedCard);
+        
+        // Remove drag target styling
+        column.classList.remove('drag-target');
+        
+        // Update server
+        try {
             await fetch('/api/move_card', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -229,9 +271,111 @@ document.querySelectorAll('.column').forEach(column => {
             
             // Update column counts
             updateColumnCounts();
+        } catch (error) {
+            console.error('Error moving card:', error);
+            // Revert the move on error
+            location.reload();
         }
-    });
-});
+    }
+}
+
+// Touch event handlers for mobile drag and drop
+function handleTouchStart(e) {
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    draggedCard = e.currentTarget;
+    
+    // Add visual feedback
+    setTimeout(() => {
+        if (draggedCard === e.currentTarget) {
+            e.currentTarget.classList.add('dragging');
+        }
+    }, 200);
+}
+
+function handleTouchMove(e) {
+    if (!draggedCard) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    const moveX = touch.clientX - touchStartX;
+    const moveY = touch.clientY - touchStartY;
+    
+    // Only start dragging if moved significantly
+    if (Math.abs(moveX) > 10 || Math.abs(moveY) > 10) {
+        isDragging = true;
+        
+        // Move the card visually
+        draggedCard.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        draggedCard.style.zIndex = '1000';
+        draggedCard.style.opacity = '0.8';
+        
+        // Highlight drop targets
+        const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+        const column = elementBelow?.closest('.column');
+        
+        document.querySelectorAll('.column').forEach(col => col.classList.remove('drag-target'));
+        if (column && column !== draggedCard.closest('.column')) {
+            column.classList.add('drag-target');
+        }
+    }
+}
+
+async function handleTouchEnd(e) {
+    if (!draggedCard || !isDragging) {
+        if (draggedCard) {
+            draggedCard.classList.remove('dragging');
+            draggedCard = null;
+        }
+        return;
+    }
+    
+    const touch = e.changedTouches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetColumn = elementBelow?.closest('.column');
+    
+    // Reset visual state
+    draggedCard.style.transform = '';
+    draggedCard.style.zIndex = '';
+    draggedCard.style.opacity = '';
+    draggedCard.classList.remove('dragging');
+    document.querySelectorAll('.column').forEach(col => col.classList.remove('drag-target'));
+    
+    // Move card if dropped on different column
+    if (targetColumn && targetColumn !== draggedCard.closest('.column')) {
+        const newStatus = targetColumn.dataset.status;
+        const cardId = parseInt(draggedCard.dataset.cardId);
+        
+        // Move card visually
+        targetColumn.querySelector('.cards-container').appendChild(draggedCard);
+        
+        // Update server
+        try {
+            await fetch('/api/move_card', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    card_id: cardId,
+                    status: newStatus
+                })
+            });
+            
+            // Update column counts
+            updateColumnCounts();
+        } catch (error) {
+            console.error('Error moving card:', error);
+            // Revert the move on error
+            location.reload();
+        }
+    }
+    
+    draggedCard = null;
+    isDragging = false;
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initializeDragAndDrop);
 
 function updateColumnCounts() {
     document.querySelectorAll('.column').forEach(column => {

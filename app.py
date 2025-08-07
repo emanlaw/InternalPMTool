@@ -10,5 +10,10 @@ from app import create_app
 # Create the Flask application using the app factory
 app = create_app()
 
+@app.route('/mobile-demo')
+def mobile_demo():
+    """Demo page to showcase mobile responsive design features"""
+    return render_template('mobile-demo.html')
+
 if __name__ == '__main__':
     app.run(debug=True)
