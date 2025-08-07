@@ -1,0 +1,164 @@
+/* Registration Form Styles */
+.registration-container {
+    max-width: 500px;
+    margin: 50px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.registration-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.registration-header h1 {
+    color: #172b4d;
+    margin: 0 0 10px 0;
+    font-size: 28px;
+}
+
+.registration-header p {
+    color: #5e6c84;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #172b4d;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #0079bf;
+}
+
+.password-strength {
+    font-size: 12px;
+    margin-top: 5px;
+    height: 15px;
+}
+
+.password-match {
+    font-size: 12px;
+    margin-top: 5px;
+    height: 15px;
+}
+
+.strength-weak { color: #ff5630; }
+.strength-medium { color: #ffab00; }
+.strength-strong { color: #36b37e; }
+
+.match-error { color: #ff5630; }
+.match-success { color: #36b37e; }
+
+.btn {
+    width: 100%;
+    background: #0079bf;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #005a8b;
+}
+
+.btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #5e6c84;
+}
+
+.login-link a {
+    color: #0079bf;
+    text-decoration: none;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+.flash-messages {
+    margin-bottom: 20px;
+}
+
+.flash-error {
+    background: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #c62828;
+}
+
+.flash-success {
+    background: #e8f5e8;
+    color: #2e7d32;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #2e7d32;
+}
+
+/* Updated to use CSS custom properties from base.html */
+.registration-container {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.registration-header h1 {
+    color: var(--text-primary) !important;
+}
+
+.form-group label {
+    color: var(--text-secondary);
+}
+
+.form-group input {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: var(--link-color);
+}
+
+.flash-error {
+    background: var(--bg-secondary);
+    color: var(--error);
+    border-color: var(--error);
+}
+
+.flash-success {
+    background: var(--bg-secondary);
+    color: var(--success);
+    border-color: var(--success);
+}

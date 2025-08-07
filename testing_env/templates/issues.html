@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_simple.html" %}
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -631,28 +631,20 @@ async function loadProjectEpics() {
     
     try {
         console.log('Fetching epics for project:', projectId);
-        const response = await fetch(`/api/test/epics/${projectId}`);
+        const response = await fetch(`/api/get_epics/${projectId}`);
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
         
-        const responseData = await response.json();
-        console.log('Response data:', responseData);
+        const projectEpics = await response.json();
+        console.log('Received epics:', projectEpics);
         
-        if (responseData.success) {
-            const projectEpics = responseData.epics;
-            console.log('Received epics:', projectEpics);
-            
-            epicSelect.innerHTML = '<option value="">Select Epic (Optional)</option>';
-            projectEpics.forEach(epic => {
-                epicSelect.innerHTML += `<option value="${epic.id}">${epic.title}</option>`;
-            });
-            
-            console.log('Epic dropdown populated, enabling it');
-            epicSelect.disabled = false;
-        } else {
-            console.error('API returned error:', responseData.error);
-            epicSelect.disabled = true;
-        }
+        epicSelect.innerHTML = '<option value="">Select Epic (Optional)</option>';
+        projectEpics.forEach(epic => {
+            epicSelect.innerHTML += `<option value="${epic.id}">${epic.title}</option>`;
+        });
+        
+        console.log('Epic dropdown populated, enabling it');
+        epicSelect.disabled = false;
         
         // Reset and disable story dropdown until epic is selected
         storySelect.innerHTML = '<option value="">Select Story (Optional)</option>';
@@ -679,28 +671,20 @@ async function loadEpicStories() {
     
     try {
         console.log('Fetching stories for epic:', epicId);
-        const response = await fetch(`/api/test/stories/${epicId}`);
+        const response = await fetch(`/api/get_stories/${epicId}`);
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
         
-        const responseData = await response.json();
-        console.log('Response data:', responseData);
+        const epicStories = await response.json();
+        console.log('Received stories:', epicStories);
         
-        if (responseData.success) {
-            const epicStories = responseData.stories;
-            console.log('Received stories:', epicStories);
-            
-            storySelect.innerHTML = '<option value="">Select Story (Optional)</option>';
-            epicStories.forEach(story => {
-                storySelect.innerHTML += `<option value="${story.id}">${story.title}</option>`;
-            });
-            
-            storySelect.disabled = epicStories.length === 0;
-            console.log('Story dropdown enabled:', epicStories.length > 0);
-        } else {
-            console.error('API returned error:', responseData.error);
-            storySelect.disabled = true;
-        }
+        storySelect.innerHTML = '<option value="">Select Story (Optional)</option>';
+        epicStories.forEach(story => {
+            storySelect.innerHTML += `<option value="${story.id}">${story.title}</option>`;
+        });
+        
+        storySelect.disabled = epicStories.length === 0;
+        console.log('Story dropdown enabled:', epicStories.length > 0);
     } catch (error) {
         console.error('Error loading stories:', error);
         storySelect.disabled = true;

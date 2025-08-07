@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Sprint Overview</h1>
+
+<div class="card">
+    <h3>Current Sprint Status</h3>
+    <p><strong>Sprint 1</strong> - In Progress</p>
+    <div style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
+        <div>Progress: 60%</div>
+        <div style="background: #007bff; height: 10px; width: 60%; border-radius: 5px; margin-top: 5px;"></div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Sprint Metrics</h3>
+    <div style="display: flex; gap: 20px;">
+        <div>
+            <strong>Total Issues:</strong> 12
+        </div>
+        <div>
+            <strong>Completed:</strong> 7
+        </div>
+        <div>
+            <strong>In Progress:</strong> 3
+        </div>
+        <div>
+            <strong>Remaining:</strong> 2
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Team Velocity</h3>
+    <p>Average: 8 story points per sprint</p>
+    <p>Current Sprint: 10 story points</p>
+</div>
+
+<div class="card">
+    <h3>Quick Actions</h3>
+    <button class="btn" onclick="location.href='/issues'">View All Issues</button>
+    <button class="btn" onclick="location.href='/mindmap'">Open Mindmap</button>
+</div>
+{% endblock %}

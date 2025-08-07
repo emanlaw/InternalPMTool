@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Stories{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>Stories Management</h2>
+                    {% if current_project %}
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{{ url_for('stories') }}">All Stories</a></li>
+                                <li class="breadcrumb-item active">{{ current_project.name }}</li>
+                            </ol>
+                        </nav>
+                    {% endif %}
+                </div>
+                <div>
+                    <button class="btn btn-primary me-2" onclick="showEpicModal()">
+                        <i class="fas fa-plus"></i> Add Epic
+                    </button>
+                    <button class="btn btn-success" onclick="showStoryModal()">
+                        <i class="fas fa-plus"></i> Add Story
+                    </button>
+                </div>
+            </div>
+
+            <!-- Project Filter -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <select class="form-select" id="projectFilter" onchange="filterByProject()">
+                        <option value="">All Projects</option>
+                        {% for project in projects %}
+                            <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Epics and Stories Display -->
+            {% for epic in epics %}
+            <div class="card mb-4 epic-card">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-mountain"></i> Epic: {{ epic.title }}
+                        </h5>
+                        <div>
+                            <span class="badge bg-light text-dark">{{ epic.status }}</span>
+                            <button class="btn btn-sm btn-outline-light ms-2" onclick="addStoryToEpic({{ epic.id }})">
+                                <i class="fas fa-plus"></i> Add Story
+                            </button>
+                        </div>
+                    </div>
+                    {% if epic.description %}
+                        <p class="mb-0 mt-2"><small>{{ epic.description }}</small></p>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% set epic_stories = stories | selectattr('epic_id', 'equalto', epic.id) | list %}
+                        {% if epic_stories %}
+                            {% for story in epic_stories %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card story-card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-book"></i> {{ story.title }}
+                                        </h6>
+                                        {% if story.description %}
+                                            <p class="card-text"><small class="text-muted">{{ story.description }}</small></p>
+                                        {% endif %}
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-{{ 'success' if story.status == 'done' else 'warning' if story.status == 'in_progress' else 'secondary' }}">
+                                                {{ story.status.replace('_', ' ').title() }}
+                                            </span>
+                                            {% if story.story_points %}
+                                                <span class="badge bg-info">{{ story.story_points }} pts</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewStoryIssues({{ story.id }})">
+                                                <i class="fas fa-tasks"></i> View Issues
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-book fa-3x mb-3"></i>
+                                    <p>No stories in this epic yet.</p>
+                                    <button class="btn btn-outline-primary" onclick="addStoryToEpic({{ epic.id }})">
+                                        <i class="fas fa-plus"></i> Add First Story
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if not epics %}
+            <div class="text-center py-5">
+                <i class="fas fa-mountain fa-4x text-muted mb-4"></i>
+                <h4 class="text-muted">No Epics Found</h4>
+                <p class="text-muted">Start by creating your first epic to organize your stories.</p>
+                <button class="btn btn-primary" onclick="showEpicModal()">
+                    <i class="fas fa-plus"></i> Create First Epic
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Epic Modal -->
+<div id="addEpicModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div class="modal-content" style="background: white; margin: 50px auto; padding: 20px; width: 500px; border-radius: 8px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Add New Epic</h3>
+            <button onclick="hideEpicModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <form id="addEpicForm">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Project *</label>
+                <select id="epicProject" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Select Project</option>
+                    {% for project in projects %}
+                        <option value="{{ project.id }}" {% if current_project and current_project.id == project.id %}selected{% endif %}>
+                            {{ project.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Epic Title *</label>
+                <input type="text" id="epicTitle" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Description</label>
+                <textarea id="epicDescription" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            <div style="margin-top: 20px;">
+                <button type="button" class="btn" onclick="createEpic()" style="margin-right: 10px;">Create Epic</button>
+                <button type="button" class="btn btn-secondary" onclick="hideEpicModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Story Modal -->
+<div id="addStoryModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div class="modal-content" style="background: white; margin: 50px auto; padding: 20px; width: 500px; border-radius: 8px; max-height: 80vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3>Add New Story</h3>
+            <button onclick="hideStoryModal()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <form id="addStoryForm">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Epic *</label>
+                <select id="storyEpic" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Select Epic</option>
+                    {% for epic in epics %}
+                        <option value="{{ epic.id }}">{{ epic.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Story Title *</label>
+                <input type="text" id="storyTitle" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Description</label>
+                <textarea id="storyDescription" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Story Points</label>
+                <select id="storyPoints" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <option value="">Select Points</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                    <option value="8">8</option>
+                    <option value="13">13</option>
+                </select>
+            </div>
+            <div style="margin-top: 20px;">
+                <button type="button" class="btn btn-success" onclick="createStory()" style="margin-right: 10px;">Create Story</button>
+                <button type="button" class="btn btn-secondary" onclick="hideStoryModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterByProject() {
+    const projectId = document.getElementById('projectFilter').value;
+    if (projectId) {
+        window.location.href = `{{ url_for('stories') }}?project_id=${projectId}`;
+    } else {
+        window.location.href = `{{ url_for('stories') }}`;
+    }
+}
+
+function createEpic() {
+    const projectId = document.getElementById('epicProject').value;
+    const title = document.getElementById('epicTitle').value;
+    const description = document.getElementById('epicDescription').value;
+    
+    if (!projectId || !title) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading state
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Creating...';
+    btn.disabled = true;
+    
+    fetch('/api/add_epic', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            project_id: parseInt(projectId),
+            title: title,
+            description: description
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+            btn.textContent = originalText;
+            btn.disabled = false;
+        } else {
+            hideEpicModal();
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating epic');
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+}
+
+function createStory() {
+    const epicId = document.getElementById('storyEpic').value;
+    const title = document.getElementById('storyTitle').value;
+    const description = document.getElementById('storyDescription').value;
+    const storyPoints = document.getElementById('storyPoints').value;
+    
+    if (!epicId || !title) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading state
+    const btn = event.target;
+    const originalText = btn.textContent;
+    btn.textContent = 'Creating...';
+    btn.disabled = true;
+    
+    fetch('/api/add_story', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            epic_id: parseInt(epicId),
+            title: title,
+            description: description,
+            story_points: storyPoints ? parseInt(storyPoints) : 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert('Error: ' + data.error);
+            btn.textContent = originalText;
+            btn.disabled = false;
+        } else {
+            hideStoryModal();
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating story');
+        btn.textContent = originalText;
+        btn.disabled = false;
+    });
+}
+
+function showEpicModal() {
+    document.getElementById('addEpicModal').style.display = 'block';
+}
+
+function hideEpicModal() {
+    document.getElementById('addEpicModal').style.display = 'none';
+    document.getElementById('addEpicForm').reset();
+}
+
+function showStoryModal() {
+    document.getElementById('addStoryModal').style.display = 'block';
+}
+
+function hideStoryModal() {
+    document.getElementById('addStoryModal').style.display = 'none';
+    document.getElementById('addStoryForm').reset();
+}
+
+function addStoryToEpic(epicId) {
+    document.getElementById('storyEpic').value = epicId;
+    showStoryModal();
+}
+
+function viewStoryIssues(storyId) {
+    // Navigate to issues page filtered by story
+    window.location.href = `{{ url_for('issues_list') }}?story_id=${storyId}`;
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const epicModal = document.getElementById('addEpicModal');
+    const storyModal = document.getElementById('addStoryModal');
+    
+    if (event.target === epicModal) {
+        hideEpicModal();
+    }
+    if (event.target === storyModal) {
+        hideStoryModal();
+    }
+}
+
+// Close modals with Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const epicModal = document.getElementById('addEpicModal');
+        const storyModal = document.getElementById('addStoryModal');
+        
+        if (epicModal.style.display === 'block') {
+            hideEpicModal();
+        }
+        if (storyModal.style.display === 'block') {
+            hideStoryModal();
+        }
+    }
+});
+</script>
+
+<style>
+.epic-card {
+    border-left: 4px solid #0d6efd;
+}
+
+.story-card {
+    border-left: 3px solid #198754;
+    transition: transform 0.2s;
+}
+
+.story-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.breadcrumb {
+    background: none;
+    padding: 0;
+}
+</style>
+{% endblock %}
