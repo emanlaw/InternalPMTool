@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_simple.html" %}
 
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -55,13 +55,6 @@
             <option value="admin">admin</option>
         </select>
         
-        <select id="labelFilter" onchange="performSearch()" style="padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-            <option value="">All Labels</option>
-            {% for label in predefined_labels %}
-            <option value="{{ label.id }}">{{ label.name }}</option>
-            {% endfor %}
-        </select>
-        
         <button onclick="clearFilters()" class="btn btn-secondary" style="padding: 10px 15px;">Clear Filters</button>
         <button onclick="exportToExcel()" class="btn" style="padding: 10px 15px; background: #28a745;">📊 Export Excel</button>
     </div>
@@ -82,7 +75,6 @@
                 <th>Story</th>
                 <th>Status</th>
                 <th>Priority</th>
-                <th>Labels</th>
                 <th>Assignee</th>
                 <th>Due Date</th>
                 <th>Comments</th>
@@ -127,18 +119,6 @@
                     </select>
                 </td>
                 <td><span class="priority-badge priority-{{ card.priority.lower() }}">{{ card.priority }}</span></td>
-                <td>
-                    {% if card.labels %}
-                        {% for label_id in card.labels %}
-                        {% set label = get_label_by_id(label_id) %}
-                        {% if label %}
-                        <span class="label-badge" style="background-color: {{ label.color }};">{{ label.name }}</span>
-                        {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
                 <td>{{ card.assignee or 'Unassigned' }}</td>
                 <td>
                     {% if card.due_date %}
@@ -224,22 +204,6 @@
                 <option value="Medium" selected>Medium Priority</option>
                 <option value="High">High Priority</option>
             </select>
-            
-            <!-- Labels Selector -->
-            <div style="margin: 12px 0;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #172b4d;">Labels:</label>
-                <div class="label-selector" id="labelSelector">
-                    {% for label in predefined_labels %}
-                    <div class="label-option" 
-                         style="background-color: {{ label.color }};" 
-                         data-label-id="{{ label.id }}"
-                         onclick="toggleLabel('{{ label.id }}')">
-                        {{ label.name }}
-                    </div>
-                    {% endfor %}
-                </div>
-                <input type="hidden" id="selectedLabels" value="">
-            </div>
             
             <div style="margin-top: 15px;">
                 <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
@@ -383,7 +347,6 @@ function performSearch() {
         const statusFilter = document.getElementById('statusFilter').value;
         const priorityFilter = document.getElementById('priorityFilter').value;
         const assigneeFilter = document.getElementById('assigneeFilter').value;
-        const labelFilter = document.getElementById('labelFilter').value;
         
         // Build query parameters
         const params = new URLSearchParams();
@@ -392,7 +355,6 @@ function performSearch() {
         if (statusFilter) params.append('status', statusFilter);
         if (priorityFilter) params.append('priority', priorityFilter);
         if (assigneeFilter) params.append('assignee', assigneeFilter);
-        if (labelFilter) params.append('label', labelFilter);
         
         // Update URL without page reload
         const newUrl = '/issues' + (params.toString() ? '?' + params.toString() : '');
@@ -489,7 +451,6 @@ function clearFilters() {
     document.getElementById('statusFilter').value = '';
     document.getElementById('priorityFilter').value = '';
     document.getElementById('assigneeFilter').value = '';
-    document.getElementById('labelFilter').value = '';
     
     // Update URL
     window.history.replaceState({}, '', '/issues');
@@ -670,28 +631,20 @@ async function loadProjectEpics() {
     
     try {
         console.log('Fetching epics for project:', projectId);
-        const response = await fetch(`/api/test/epics/${projectId}`);
+        const response = await fetch(`/api/get_epics/${projectId}`);
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
         
-        const responseData = await response.json();
-        console.log('Response data:', responseData);
+        const projectEpics = await response.json();
+        console.log('Received epics:', projectEpics);
         
-        if (responseData.success) {
-            const projectEpics = responseData.epics;
-            console.log('Received epics:', projectEpics);
-            
-            epicSelect.innerHTML = '<option value="">Select Epic (Optional)</option>';
-            projectEpics.forEach(epic => {
-                epicSelect.innerHTML += `<option value="${epic.id}">${epic.title}</option>`;
-            });
-            
-            console.log('Epic dropdown populated, enabling it');
-            epicSelect.disabled = false;
-        } else {
-            console.error('API returned error:', responseData.error);
-            epicSelect.disabled = true;
-        }
+        epicSelect.innerHTML = '<option value="">Select Epic (Optional)</option>';
+        projectEpics.forEach(epic => {
+            epicSelect.innerHTML += `<option value="${epic.id}">${epic.title}</option>`;
+        });
+        
+        console.log('Epic dropdown populated, enabling it');
+        epicSelect.disabled = false;
         
         // Reset and disable story dropdown until epic is selected
         storySelect.innerHTML = '<option value="">Select Story (Optional)</option>';
@@ -718,28 +671,20 @@ async function loadEpicStories() {
     
     try {
         console.log('Fetching stories for epic:', epicId);
-        const response = await fetch(`/api/test/stories/${epicId}`);
+        const response = await fetch(`/api/get_stories/${epicId}`);
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
         
-        const responseData = await response.json();
-        console.log('Response data:', responseData);
+        const epicStories = await response.json();
+        console.log('Received stories:', epicStories);
         
-        if (responseData.success) {
-            const epicStories = responseData.stories;
-            console.log('Received stories:', epicStories);
-            
-            storySelect.innerHTML = '<option value="">Select Story (Optional)</option>';
-            epicStories.forEach(story => {
-                storySelect.innerHTML += `<option value="${story.id}">${story.title}</option>`;
-            });
-            
-            storySelect.disabled = epicStories.length === 0;
-            console.log('Story dropdown enabled:', epicStories.length > 0);
-        } else {
-            console.error('API returned error:', responseData.error);
-            storySelect.disabled = true;
-        }
+        storySelect.innerHTML = '<option value="">Select Story (Optional)</option>';
+        epicStories.forEach(story => {
+            storySelect.innerHTML += `<option value="${story.id}">${story.title}</option>`;
+        });
+        
+        storySelect.disabled = epicStories.length === 0;
+        console.log('Story dropdown enabled:', epicStories.length > 0);
     } catch (error) {
         console.error('Error loading stories:', error);
         storySelect.disabled = true;
@@ -903,22 +848,6 @@ function hideAddCardModal() {
     document.getElementById('cardForm').reset();
     document.getElementById('validationErrors').style.display = 'none';
     clearValidationErrors();
-    // Reset label selections
-    document.querySelectorAll('.label-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-    document.getElementById('selectedLabels').value = '';
-}
-
-// Label selection functionality for issues template
-function toggleLabel(labelId) {
-    const option = document.querySelector(`[data-label-id="${labelId}"]`);
-    option.classList.toggle('selected');
-    
-    // Update hidden input with selected labels
-    const selectedLabels = Array.from(document.querySelectorAll('.label-option.selected'))
-        .map(option => option.dataset.labelId);
-    document.getElementById('selectedLabels').value = selectedLabels.join(',');
 }
 
 function clearValidationErrors() {
@@ -995,8 +924,7 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
             assignee: document.getElementById('cardAssignee').value,
             priority: document.getElementById('cardPriority').value,
             due_date: document.getElementById('cardDueDate').value,
-            status: addToBacklog ? 'todo' : 'todo',
-            labels: document.getElementById('selectedLabels').value.split(',').filter(l => l)
+            status: addToBacklog ? 'todo' : 'todo'
         };
         
         // Add epic_id and story_id only if they have values

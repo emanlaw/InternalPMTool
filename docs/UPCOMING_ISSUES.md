@@ -36,20 +36,61 @@ Description:
 I want to add colored labels/tags to cards for better organization (like "Bug", "Feature", "Urgent").
 
 What I want:
-- Add labels when creating/editing cards
-- Predefined label types with colors
-- Show labels on cards with colors
-- Filter by labels in issues list
 
 Acceptance Criteria:
-- [ ] Label selector in card creation modal
-- [ ] Predefined labels: Bug (red), Feature (blue), Urgent (orange), Enhancement (green)
-- [ ] Labels displayed as colored badges on cards
-- [ ] Filter dropdown for labels in issues list
-- [ ] Multiple labels per card supported
 
 @coding-agent please implement this feature
 ```
+### Issue #9: Enhanced Issue Creation/Editing & Backlog Placement
+
+**Feature Title:**
+Enhanced Issue Creation/Editing: Select Epic, Story, and Backlog Placement
+
+**Description:**
+Update the “Create Issue” and “Edit Issue” modals on the Issues List page to allow users to:
+- Select a relevant Epic (from available epics in the project)
+- Choose a Story within the chosen Epic (if the Epic contains Stories)
+- Move or assign issues directly into the Product Backlog during creation/editing
+
+**What is Being Requested?**
+- Epic Selector: Dropdown list of all epics in the project
+- Story Selector: After selecting an Epic, dynamically populate a dropdown with all child Stories; user may select one (optional if no stories)
+- Backlog Checkbox/Option: Checkbox or dropdown to place this issue directly into the Backlog
+- On editing an issue: Ability to change its Epic and Story assignment, move/remove the issue from the Backlog
+
+**Acceptance Criteria:**
+- Epic field shown and required if project has Epics
+- Story field shown and enabled/required only when an Epic with child Stories is selected
+- Issues are linked to the chosen Epic (and optionally Story) in the data model
+- Issue is placed into the Backlog if user selects that option
+- Editing an issue allows user to update Epic, Story, and Backlog placement
+- UI updates are reflected immediately on the Issues List page
+- Changes are persisted to backend (e.g., Firebase or DB)
+- Validation prevents saving without required fields (e.g., Epic must be selected if available)
+- Epic/Story selection in UI dynamically filters Stories once Epic is selected
+- Issues can be removed from or moved into the Backlog via a clear UI control
+- All standard issue fields (title, description, assignee, etc.) maintained
+- Seamless user experience: minimizing required clicks, clear error feedback
+
+**Technical Notes / UI Guidance:**
+- Add Epic and Story dropdown fields (Story field disables/hides if no Epic or if Epic has no child stories).
+- Backlog option could be a checkbox or a dropdown status.
+- On the backend, maintain direct references (foreign keys or parent IDs) for Epic and Story.
+- Whenever an issue is updated, ensure project-level hierarchy and integrity: issue-to-story-to-epic structure remains valid.
+- Ensure support for bulk moves (drag-and-drop to Backlog, bulk-edit to change Epic/Story).
+
+**Related Features:**
+- Issue hierarchy: Epic > Story > Issue (recently implemented)
+- Product Backlog (already available but needs more seamless assignments from Issues)
+
+**Stakeholders:**
+- @coding-agent
+- Frontend/UI team
+- Product/Project Owners
+
+**Priority & Labels:**
+- Priority: High
+- Labels: enhancement, issue-creation, epic-story-link, backlog, ui/ux
 
 ### 🔵 **Issue #9:** ~~Time Tracking Features~~ - OPEN
 ```
@@ -61,14 +102,8 @@ GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/9
 Description:
 I want to track time spent on cards to measure productivity and estimate future work.
 
-What I want:
-- Start/stop timer on cards
-- Log time manually
 - Time reports and analytics
 - Estimated vs actual time comparison
-
-Acceptance Criteria:
-- [ ] Timer widget in card details modal
 - [ ] Manual time entry option
 - [ ] Time logs with timestamps
 - [ ] Total time spent displayed on cards
@@ -271,43 +306,45 @@ Acceptance Criteria:
 @coding-agent please implement this feature
 ```
 
-### 🔴 **Issue #30:** **[BUG] Gantt Chart Shows Archived Projects** - OPEN
+### ✅ **Issue #30:** **[BUG] Gantt Chart Shows Archived Projects** - COMPLETED
 ```
 Title: [BUG] Gantt Chart Shows Archived Projects in Dropdown
 
-Status: OPEN
+Status: COMPLETED ✅
+Completed Date: 2025-01-08
 GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/30
 
 Description:
-The Gantt Chart page is displaying archived projects in the project dropdown list and throughout the interface. Archived projects should only appear on the Archive page.
+The Gantt Chart page was displaying archived projects in the project dropdown list and throughout the interface. Fixed to ensure archived projects only appear on the Archive page.
 
-What I want:
-- Gantt Chart should only show active (non-archived) projects
-- Project dropdown should exclude archived projects
-- Archived projects should not appear in any charts or analytics
-- Only the Archive page should display archived projects
+What was fixed:
+✅ Gantt Chart now only shows active (non-archived) projects
+✅ Project dropdown excludes archived projects
+✅ Analytics exclude archived project data
+✅ Project filtering is consistent across all pages
+✅ Archived projects only visible on Archive page
+✅ Clear separation between active and archived projects
 
-Current Issues:
-- [ ] Gantt Chart dropdown includes archived projects
-- [ ] Analytics may include archived project data
-- [ ] Project selection shows inactive projects
-- [ ] Inconsistent filtering across pages
+Technical Implementation:
+✅ Updated /gantt route: `projects = [p for p in data.get('projects', []) if not p.get('archived', False)]`
+✅ Added JavaScript filtering: `ganttData.projects = ganttData.projects.filter(project => !project.archived);`
+✅ Applied filtering to /analytics, /issues, /backlog, /stories, /epics routes
+✅ Ensured consistent project filtering logic across all pages
+✅ Created comprehensive test script to verify functionality
 
-Acceptance Criteria:
-- [ ] Gantt Chart project dropdown only shows active projects
-- [ ] All charts and analytics exclude archived projects
-- [ ] Project filtering is consistent across all pages
-- [ ] Archived projects only visible on Archive page
-- [ ] No archived project data in reports or exports
-- [ ] Clear separation between active and archived projects
+Files Modified:
+- app.py: Updated gantt(), analytics(), issues_list(), backlog(), stories(), epics() routes
+- templates/gantt.html: Added client-side filtering in JavaScript
+- test_gantt_fix.py: Created test script to verify functionality
 
-Technical Requirements:
-- [ ] Update gantt.html template to filter archived projects
-- [ ] Modify backend routes to exclude archived projects
-- [ ] Ensure consistent project filtering logic
-- [ ] Test all project-related dropdowns and lists
+Test Results:
+✅ All tests passed - archived projects properly filtered out
+✅ Gantt Chart shows only active projects
+✅ Project dropdowns exclude archived projects
+✅ Analytics exclude archived project data
+✅ Consistent behavior across all pages
 
-@coding-agent please fix this bug
+Priority: HIGH - RESOLVED
 ```
 
 ### 🟢 **Issue #31:** ***[FEATURE] Enhanced Gantt Chart Date Navigation and Timeline View*** - OPEN
@@ -434,7 +471,105 @@ Optional Enhancements:
 @coding-agent please implement this enhanced backlog creation feature
 ```
 
-### 🔴 **Issue #33:** **[FEATURE] Implement Hierarchical Project Structure: Project > Epic > Story > Issue > Sub-Issue** - OPEN
+### 🔵 **Issue #34:** **[FEATURE] Enhanced Sprint Management with Epic/Story/Issue Selection** - OPEN
+```
+Title: [FEATURE] Enhanced Sprint Management with Epic/Story/Issue Selection
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/34
+
+Description:
+Enhance the Sprint Management page with advanced functionality for viewing, starting, and editing sprints with hierarchical Epic/Story/Issue selection capabilities.
+
+What I want:
+- View function: Dropdown showing epics assigned to the sprint
+- Start function: Confirmation dialog when starting a sprint
+- Edit function: Comprehensive sprint editing interface with hierarchical selection
+- Sprint planning with Epic > Story > Issue hierarchy
+- Drag-and-drop or checkbox selection for sprint items
+
+Current Issues:
+- [ ] View button only shows placeholder text
+- [ ] Start button has no confirmation dialog
+- [ ] Edit button shows placeholder message
+- [ ] No epic/story/issue assignment to sprints
+- [ ] No hierarchical sprint planning interface
+
+Desired Features:
+
+**View Function:**
+- [ ] Dropdown/expandable view showing assigned epics
+- [ ] Each epic shows its stories and issues
+- [ ] Progress indicators for epic/story completion
+- [ ] Sprint burndown visualization
+- [ ] Issue status breakdown (todo/in-progress/done)
+
+**Start Function:**
+- [ ] Confirmation dialog: "Are you sure you want to start this sprint?"
+- [ ] Sprint status changes from 'planning' to 'active'
+- [ ] Start date validation (cannot start past sprints)
+- [ ] Notification to team members about sprint start
+- [ ] Sprint metrics initialization
+
+**Edit Function:**
+- [ ] Modal popup with sprint editing interface
+- [ ] Basic sprint details (name, dates, goal, story points)
+- [ ] Hierarchical epic/story/issue selection tree
+- [ ] Expandable epic nodes showing stories
+- [ ] Expandable story nodes showing issues
+- [ ] Checkbox selection for epics/stories/issues
+- [ ] Drag-and-drop support for adding/removing items
+- [ ] Real-time story points calculation
+- [ ] Sprint capacity warnings
+
+**Sprint Planning Interface:**
+- [ ] Left panel: Available epics/stories/issues
+- [ ] Right panel: Selected sprint items
+- [ ] Search and filter functionality
+- [ ] Bulk selection options
+- [ ] Story points estimation display
+- [ ] Sprint capacity indicator
+
+Technical Requirements:
+- [ ] Update sprints.html with enhanced action buttons
+- [ ] Create sprint view modal with epic dropdown
+- [ ] Implement start sprint confirmation dialog
+- [ ] Build comprehensive sprint edit modal
+- [ ] Add hierarchical tree component for epic/story/issue selection
+- [ ] Implement drag-and-drop functionality
+- [ ] Add real-time story points calculation
+- [ ] Create sprint item assignment API endpoints
+- [ ] Update sprint status management
+- [ ] Add sprint progress tracking
+
+API Endpoints Needed:
+- [ ] GET /api/sprints/{id}/items - Get sprint assigned items
+- [ ] POST /api/sprints/{id}/items - Add items to sprint
+- [ ] DELETE /api/sprints/{id}/items/{itemId} - Remove item from sprint
+- [ ] PUT /api/sprints/{id}/start - Start sprint
+- [ ] PUT /api/sprints/{id} - Update sprint details
+- [ ] GET /api/projects/{id}/hierarchy - Get project epic/story/issue tree
+
+Acceptance Criteria:
+- [ ] View button shows dropdown with assigned epics and their stories/issues
+- [ ] Start button shows confirmation dialog and updates sprint status
+- [ ] Edit button opens comprehensive sprint planning interface
+- [ ] Users can select/unselect epics, stories, and issues for sprint
+- [ ] Real-time story points calculation during sprint planning
+- [ ] Sprint capacity warnings when overloaded
+- [ ] Hierarchical tree view with expand/collapse functionality
+- [ ] Drag-and-drop support for intuitive sprint planning
+- [ ] Changes are saved to Firebase for multi-user access
+- [ ] Sprint progress tracking and visualization
+
+Priority: HIGH
+Estimated Effort: Large (4-6 days)
+Labels: enhancement, sprint-management, ui/ux, high-priority
+
+@coding-agent please implement this enhanced sprint management system
+```
+
+### ✅ **Issue #33:** **[FEATURE] Implement Hierarchical Project Structure: Project > Epic > Story > Issue > Sub-Issue** - COMPLETED
 ```
 Title: [FEATURE] Implement Hierarchical Project Structure: Project > Epic > Story > Issue > Sub-Issue
 
@@ -514,17 +649,73 @@ Estimated Effort: Large (3-5 days)
 ```
 
 ## 📊 SUMMARY
-- **Total Issues**: 31
-- **Completed**: 18 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #10, #12, #13, #14, #15, #16, #17, #18, #23, #24, #26)
-- **Open/In Progress**: 13 issues 🔄
-- **Completion Rate**: 58% (18/31 completed)
+- **Total Issues**: 32
+- **Completed**: 20 issues ✅ (Issues #1, #2, #3, #4, #5, #6, #7, #10, #12, #13, #14, #15, #16, #17, #18, #23, #24, #26, #30, #33)
+- **Open/In Progress**: 12 issues 🔄
+- **Completion Rate**: 63% (20/32 completed)
 
 **Recently Completed:**
+- ✅ Issue #30: [BUG] Gantt Chart Shows Archived Projects (2025-01-08)
+- ✅ Issue #33: Hierarchical Project Structure (Project > Epic > Story > Issue) (2025-08-04)
 - ✅ Issue #26: Project Archive System with Dashboard Integration (2025-08-02)
 
 - ✅ Issue #24: Create Backlog Page with Advanced Filtering (2025-08-02)
 - ✅ Issue #16: Advanced Mind Map Features (2025-08-02)
 - ✅ Issue #15: Interactive Gantt Chart for Sprint and Project Management (2025-08-02)
+
+### 🔵 **Issue #35:** [FEATURE] Enhanced Issue Creation/Editing: Select Epic, Story, and Backlog Placement - OPEN
+```
+Title: [FEATURE] Issue #35: Enhanced Issue Creation/Editing: Select Epic, Story, and Backlog Placement
+
+Status: OPEN
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/35
+
+Description:
+Update the “Create Issue” and “Edit Issue” modals on the Issues List page to allow users to:
+- Select a relevant Epic (from available epics in the project)
+- Choose a Story within the chosen Epic (if the Epic contains Stories)
+- Move or assign issues directly into the Product Backlog during creation/editing
+
+What I want:
+- Epic Selector: Dropdown list of all epics in the project
+- Story Selector: After selecting an Epic, dynamically populate a dropdown with all child Stories; user may select one (optional if no stories)
+- Backlog Checkbox/Option: Checkbox or dropdown to place this issue directly into the Backlog
+- On editing an issue: Ability to change its Epic and Story assignment, move/remove the issue from the Backlog
+
+Acceptance Criteria:
+- Epic field shown and required if project has Epics
+- Story field shown and enabled/required only when an Epic with child Stories is selected
+- Issues are linked to the chosen Epic (and optionally Story) in the data model
+- Issue is placed into the Backlog if user selects that option
+- Editing an issue allows user to update Epic, Story, and Backlog placement
+- UI updates are reflected immediately on the Issues List page
+- Changes are persisted to backend (e.g., Firebase or DB)
+- Validation prevents saving without required fields (e.g., Epic must be selected if available)
+- Epic/Story selection in UI dynamically filters Stories once Epic is selected
+- Issues can be removed from or moved into the Backlog via a clear UI control
+- All standard issue fields (title, description, assignee, etc.) maintained
+- Seamless user experience: minimizing required clicks, clear error feedback
+
+Technical Notes / UI Guidance:
+- Add Epic and Story dropdown fields (Story field disables/hides if no Epic or if Epic has no child stories).
+- Backlog option could be a checkbox or a dropdown status.
+- On the backend, maintain direct references (foreign keys or parent IDs) for Epic and Story.
+- Whenever an issue is updated, ensure project-level hierarchy and integrity: issue-to-story-to-epic structure remains valid.
+- Ensure support for bulk moves (drag-and-drop to Backlog, bulk-edit to change Epic/Story).
+
+Related Features:
+- Issue hierarchy: Epic > Story > Issue (recently implemented)
+- Product Backlog (already available but needs more seamless assignments from Issues)
+
+Stakeholders:
+- @coding-agent
+- Frontend/UI team
+- Product/Project Owners
+
+Priority & Labels:
+- Priority: High
+- Labels: enhancement, epic-story-link, backlog, ui/ux
+```
 
 **Open Issues on GitHub:**
 - Issue #8: Card Labels/Tags System
@@ -540,12 +731,14 @@ Estimated Effort: Large (3-5 days)
 - Issue #30: [BUG] Gantt Chart Shows Archived Projects
 - Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation and Timeline View
 - Issue #32: [FEATURE] Enhanced Product Backlog Item Creation with Required Fields
-- Issue #33: [FEATURE] Hierarchical Project Structure (Project > Epic > Story > Issue)
+ 
+ Issue #35: [FEATURE] Enhanced Issue Creation/Editing: Select Epic, Story, and Backlog Placement
+
 
 ## 🎯 NEXT PRIORITIES
-1. Issue #33: [FEATURE] Hierarchical Project Structure (HIGHEST PRIORITY - ARCHITECTURAL)
-2. Issue #30: [BUG] Gantt Chart Shows Archived Projects (HIGH PRIORITY)
-3. Issue #32: [FEATURE] Enhanced Product Backlog Item Creation (HIGH PRIORITY)
-4. Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation (HIGH PRIORITY)
+1. Issue #34: [FEATURE] Enhanced Sprint Management with Epic/Story/Issue Selection (HIGH PRIORITY)
+2. Issue #32: [FEATURE] Enhanced Product Backlog Item Creation (HIGH PRIORITY)
+3. Issue #31: [FEATURE] Enhanced Gantt Chart Date Navigation (HIGH PRIORITY)
+4. Issue #28: [FEATURE] Enhanced Issues List Modal with Required Fields (HIGH PRIORITY)
 5. Issue #9: Time Tracking Features
 6. Issue #11: Mobile Responsive Design

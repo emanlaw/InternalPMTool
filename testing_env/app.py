@@ -9,14 +9,6 @@ from datetime import datetime, date
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# Define predefined labels with colors
-PREDEFINED_LABELS = [
-    {'id': 'bug', 'name': 'Bug', 'color': '#ff5630'},
-    {'id': 'feature', 'name': 'Feature', 'color': '#0052cc'},
-    {'id': 'urgent', 'name': 'Urgent', 'color': '#ff8b00'},
-    {'id': 'enhancement', 'name': 'Enhancement', 'color': '#36b37e'}
-]
-
 # Initialize Firebase
 try:
     if not firebase_admin._apps:
@@ -81,29 +73,6 @@ def load_data():
     if db is None:
         print("ERROR: Firebase not initialized! Please check your firebase-service-account.json file.")
         print("You need to download the real service account key from Firebase Console.")
-        print("Falling back to local data files...")
-        # Try to load from local files
-        try:
-            from data_manager import DataManager
-            dm = DataManager()
-            local_data = dm.load_data()
-            if local_data and local_data.get('users'):
-                print(f"Using local data: {len(local_data['users'])} users, {len(local_data.get('projects', []))} projects")
-                return local_data
-        except Exception as e:
-            print(f"Error loading local data: {e}")
-        
-        # If local data fails, try data.json directly
-        try:
-            import json
-            with open('data.json', 'r') as f:
-                local_data = json.load(f)
-                if local_data and local_data.get('users'):
-                    print(f"Using data.json: {len(local_data['users'])} users, {len(local_data.get('projects', []))} projects")
-                    return local_data
-        except Exception as e:
-            print(f"Error loading data.json: {e}")
-        
         return data
     
     try:
@@ -186,30 +155,16 @@ def load_data():
     
     # Create default admin user if no users exist
     # If Firebase fails or has no data, use local files
-    print(f"Debug - Checking users count: {len(data['users'])}")
     if not data['users']:
-        print("Debug - No users found, trying local fallback")
         try:
             from data_manager import DataManager
             dm = DataManager()
             local_data = dm.load_data()
-            print(f"Debug - Local data manager loaded: {len(local_data.get('users', []))} users")
             if local_data['users']:
                 data = local_data
                 print(f"Using local data files: {len(data['users'])} users, {len(data['projects'])} projects, {len(data.get('epics', []))} epics, {len(data.get('stories', []))} stories, {len(data.get('sprints', []))} sprints")
         except Exception as e:
             print(f"Error loading local data: {e}")
-            print("Debug - Exception in local data loading, trying data.json fallback")
-            # Try the main data.json file as final fallback
-            try:
-                with open('data.json', 'r') as f:
-                    json_data = json.load(f)
-                    data = json_data
-                    print(f"Using data.json fallback: {len(data.get('users', []))} users, {len(data.get('projects', []))} projects")
-            except (FileNotFoundError, json.JSONDecodeError) as e:
-                print(f"Error loading data.json fallback: {e}")
-    else:
-        print(f"Debug - Using Firebase data with {len(data['users'])} users")
     
     if not data['users']:
         default_admin = {
@@ -647,45 +602,6 @@ def analytics():
     active_projects = [p for p in data['projects'] if not p.get('archived', False)]
     return render_template('gantt_analytics.html', projects=active_projects, cards=data['cards'])
 
-@app.route('/debug_load_data')
-def debug_load_data():
-    """Test the load_data function directly"""
-    data = load_data()
-    return jsonify({
-        'users_count': len(data.get('users', [])),
-        'projects_count': len(data.get('projects', [])),
-        'cards_count': len(data.get('cards', [])),
-        'users': data.get('users', []),
-        'projects': data.get('projects', []),
-        'data_keys': list(data.keys())
-    })
-
-@app.route('/gantt_debug')
-def gantt_debug():
-    """Debug version of gantt route without login requirement"""
-    data = load_data()
-    print(f"Debug - All projects from data: {data.get('projects', [])}")
-    
-    # Filter out archived projects
-    projects = [p for p in data.get('projects', []) if not p.get('archived', False)]
-    cards = data.get('cards', [])
-    
-    print(f"Debug - Projects after filtering: {projects}")
-    print(f"Debug - Cards: {cards}")
-    
-    # Calculate project progress
-    def get_project_progress(project_id):
-        project_cards = [c for c in cards if c.get('project_id') == project_id]
-        if not project_cards:
-            return 0
-        completed = len([c for c in project_cards if c.get('status') == 'done'])
-        return round((completed / len(project_cards)) * 100)
-    
-    return render_template('gantt.html', 
-                         projects=projects, 
-                         cards=cards,
-                         get_project_progress=get_project_progress)
-
 @app.route('/gantt')
 @login_required
 def gantt():
@@ -875,7 +791,7 @@ def add_card():
         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'due_date': request.json.get('due_date', ''),
         'story_points': request.json.get('story_points'),
-        'labels': request.json.get('labels', [])  # Add support for labels
+        'labels': request.json.get('labels', [])
     }
     
     data['cards'].append(new_card)
@@ -953,7 +869,6 @@ def search_cards():
     priority_filter = request.args.get('priority', '')
     assignee_filter = request.args.get('assignee', '')
     project_filter = request.args.get('project_id', '')
-    label_filter = request.args.get('label', '')
     
     filtered_cards = cards
     
@@ -968,9 +883,6 @@ def search_cards():
     
     if assignee_filter:
         filtered_cards = [c for c in filtered_cards if c.get('assignee', '').lower() == assignee_filter.lower()]
-    
-    if label_filter:
-        filtered_cards = [c for c in filtered_cards if label_filter in c.get('labels', [])]
     
     if search_query:
         filtered_cards = [c for c in filtered_cards if 
@@ -1747,9 +1659,7 @@ app.jinja_env.globals.update(
     get_due_date_text_class=get_due_date_text_class,
     get_due_date_status=get_due_date_status,
     get_comment_count=get_comment_count,
-    format_timestamp=format_timestamp,
-    predefined_labels=PREDEFINED_LABELS,
-    get_label_by_id=lambda label_id: next((label for label in PREDEFINED_LABELS if label['id'] == label_id), None)
+    format_timestamp=format_timestamp
 )
 
 @app.template_filter('format_date')

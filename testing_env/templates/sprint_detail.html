@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{{ sprint.name }} - Sprint Details{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/sprints.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="sprint-detail-header">
+    <div class="sprint-breadcrumb">
+        <a href="/sprints">← Back to Sprints</a>
+    </div>
+    
+    <div class="sprint-title-section">
+        <h1>{{ sprint.name }}</h1>
+        <span class="sprint-status status-{{ sprint.status }}">{{ sprint.status.title() }}</span>
+    </div>
+    
+    <div class="sprint-meta">
+        <div class="meta-item">
+            <span class="meta-label">Duration:</span>
+            <span class="meta-value">{{ sprint.start_date }} - {{ sprint.end_date }} ({{ sprint.get_duration_days() }} days)</span>
+        </div>
+        {% if sprint.goal %}
+        <div class="meta-item">
+            <span class="meta-label">Goal:</span>
+            <span class="meta-value">{{ sprint.goal }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="sprint-dashboard">
+    <div class="dashboard-section">
+        <div class="progress-cards">
+            <div class="progress-card">
+                <div class="progress-number">{{ sprint.issues|length }}</div>
+                <div class="progress-label">Total Issues</div>
+            </div>
+            <div class="progress-card">
+                <div class="progress-number">{{ completed_issues|length }}</div>
+                <div class="progress-label">Completed</div>
+            </div>
+            <div class="progress-card">
+                <div class="progress-number">{{ sprint.story_points }}</div>
+                <div class="progress-label">Story Points</div>
+            </div>
+            <div class="progress-card">
+                <div class="progress-number">{{ days_remaining }}</div>
+                <div class="progress-label">Days Left</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-section">
+        <div class="burndown-chart-container">
+            <h3>Burndown Chart</h3>
+            <canvas id="burndownChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="sprint-planning-board">
+    <h2>Sprint Planning Board</h2>
+    
+    <div class="planning-columns">
+        <div class="planning-column">
+            <div class="column-header">
+                <h3>Backlog</h3>
+                <span class="issue-count">{{ backlog_issues|length }}</span>
+            </div>
+            <div class="issue-list" id="backlogList" data-status="backlog">
+                {% for issue in backlog_issues %}
+                <div class="issue-item" data-issue-id="{{ issue.id }}" draggable="true">
+                    <div class="issue-title">{{ issue.title }}</div>
+                    <div class="issue-meta">
+                        <span class="issue-priority priority-{{ issue.priority }}">{{ issue.priority }}</span>
+                        {% if issue.assignee %}
+                        <span class="issue-assignee">{{ issue.assignee }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="planning-column">
+            <div class="column-header">
+                <h3>Sprint Issues</h3>
+                <span class="issue-count">{{ sprint_issues|length }}</span>
+            </div>
+            <div class="issue-list" id="sprintList" data-status="sprint">
+                {% for issue in sprint_issues %}
+                <div class="issue-item" data-issue-id="{{ issue.id }}" draggable="true">
+                    <div class="issue-title">{{ issue.title }}</div>
+                    <div class="issue-meta">
+                        <span class="issue-priority priority-{{ issue.priority }}">{{ issue.priority }}</span>
+                        <span class="issue-status status-{{ issue.status }}">{{ issue.status }}</span>
+                        {% if issue.assignee %}
+                        <span class="issue-assignee">{{ issue.assignee }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="sprint-actions-section">
+    <div class="action-buttons">
+        {% if sprint.status == 'planning' %}
+        <button class="btn btn-success" onclick="startSprint({{ sprint.id }})">🚀 Start Sprint</button>
+        {% elif sprint.status == 'active' %}
+        <button class="btn btn-warning" onclick="completeSprint({{ sprint.id }})">✅ Complete Sprint</button>
+        {% endif %}
+        
+        <button class="btn btn-secondary" onclick="editSprint({{ sprint.id }})">✏️ Edit Sprint</button>
+        <button class="btn btn-secondary" onclick="exportSprintReport({{ sprint.id }})">📊 Export Report</button>
+        
+        {% if sprint.status == 'completed' %}
+        <button class="btn btn-primary" onclick="showRetrospectiveModal()">🔄 Retrospective</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Retrospective Modal -->
+<div id="retrospectiveModal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2>Sprint Retrospective</h2>
+            <span class="close" onclick="closeModal('retrospectiveModal')">&times;</span>
+        </div>
+        <div class="retrospective-content">
+            <div class="retro-section">
+                <h3>What went well? 😊</h3>
+                <textarea id="wentWell" placeholder="What worked well in this sprint?"></textarea>
+            </div>
+            <div class="retro-section">
+                <h3>What could be improved? 🤔</h3>
+                <textarea id="improvements" placeholder="What could we do better next time?"></textarea>
+            </div>
+            <div class="retro-section">
+                <h3>Action items 🎯</h3>
+                <textarea id="actionItems" placeholder="What specific actions will we take?"></textarea>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('retrospectiveModal')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveRetrospective()">Save Retrospective</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const sprintId = {{ sprint.id }};
+const sprintData = {{ sprint.to_dict()|tojson }};
+
+// Initialize drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDragAndDrop();
+    initializeBurndownChart();
+});
+</script>
+<script src="/static/js/sprint-detail.js"></script>
+{% endblock %}

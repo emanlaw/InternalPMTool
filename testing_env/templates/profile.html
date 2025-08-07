@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto;">
+    <h2>👤 User Profile</h2>
+    
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: #e8f5e8; color: #2e7d32; padding: 10px; border-radius: 4px; margin-bottom: 20px; border-left: 4px solid #2e7d32;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST">
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Username</label>
+                <input type="text" value="{{ current_user.username }}" disabled 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; box-sizing: border-box;">
+                <small style="color: #5e6c84;">Username cannot be changed</small>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500;">Email Address</label>
+                <input type="email" name="email" value="{{ user.email or '' }}" 
+                       placeholder="your.email@example.com"
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                <small style="color: #5e6c84;">Required for email notifications</small>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" name="email_notifications" 
+                           {% if user.email_notifications != False %}checked{% endif %}
+                           style="margin-right: 10px;">
+                    <span>📧 Enable daily email notifications for overdue cards</span>
+                </label>
+                <small style="color: #5e6c84; margin-left: 24px;">Receive daily digest at 9:00 AM</small>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn">💾 Save Profile</button>
+                <button type="button" class="btn btn-secondary" onclick="testEmail()">📧 Test Email</button>
+            </div>
+        </form>
+    </div>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+        <h3>📬 Email Notifications</h3>
+        <p>When enabled, you'll receive:</p>
+        <ul>
+            <li>Daily digest of overdue cards at 9:00 AM</li>
+            <li>Professional email format with card details</li>
+            <li>Direct links to view issues</li>
+        </ul>
+        
+        <p><strong>Note:</strong> Make sure to configure SMTP settings in app.py for email functionality.</p>
+    </div>
+</div>
+
+<script>
+async function testEmail() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '🔄 Sending...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch('/api/test-email');
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ Test email sent successfully! Check your inbox.');
+        } else {
+            alert('❌ ' + result.error);
+        }
+    } catch (error) {
+        alert('❌ Error sending test email: ' + error.message);
+    }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+}
+</script>
+{% endblock %}
