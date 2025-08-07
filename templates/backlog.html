@@ -84,6 +84,7 @@
                 <th>Title</th>
                 <th>Description</th>
                 <th>Project</th>
+                <th>Labels</th>
                 <th>Assignee</th>
                 <th>Due Date</th>
                 <th>Story Points</th>
@@ -114,6 +115,18 @@
                             <span style="background: #e3f2fd; color: #0052cc; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">{{ project.name }}</span>
                         {% endif %}
                     {% endfor %}
+                </td>
+                <td>
+                    {% if card.labels %}
+                        {% for label_id in card.labels %}
+                        {% set label = get_label_by_id(label_id) %}
+                        {% if label %}
+                        <span class="label-badge" style="background-color: {{ label.color }};">{{ label.name }}</span>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
                 </td>
                 <td>{{ card.assignee or 'Unassigned' }}</td>
                 <td>
@@ -185,6 +198,23 @@
                 <option value="Medium" selected>🟡 Medium Priority</option>
                 <option value="High">🔴 High Priority</option>
             </select>
+            
+            <!-- Labels Selector -->
+            <div style="margin: 12px 0;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #172b4d;">Labels:</label>
+                <div class="label-selector" id="labelSelector">
+                    {% for label in predefined_labels %}
+                    <div class="label-option" 
+                         style="background-color: {{ label.color }};" 
+                         data-label-id="{{ label.id }}"
+                         onclick="toggleLabel('{{ label.id }}')">
+                        {{ label.name }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <input type="hidden" id="selectedLabels" value="">
+            </div>
+            
             <input type="number" id="cardStoryPoints" placeholder="Story Points" min="1" max="21">
             <div style="margin-top: 15px;">
                 <button type="submit" class="btn">Create Backlog Item</button>
@@ -456,6 +486,22 @@ function showAddCardModal() {
 function hideAddCardModal() {
     document.getElementById('addCardModal').style.display = 'none';
     document.getElementById('cardForm').reset();
+    // Reset label selections
+    document.querySelectorAll('.label-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.getElementById('selectedLabels').value = '';
+}
+
+// Label selection functionality for backlog template
+function toggleLabel(labelId) {
+    const option = document.querySelector(`[data-label-id="${labelId}"]`);
+    option.classList.toggle('selected');
+    
+    // Update hidden input with selected labels
+    const selectedLabels = Array.from(document.querySelectorAll('.label-option.selected'))
+        .map(option => option.dataset.labelId);
+    document.getElementById('selectedLabels').value = selectedLabels.join(',');
 }
 
 // Form submission
@@ -478,7 +524,8 @@ document.getElementById('cardForm').addEventListener('submit', async (e) => {
                 assignee: document.getElementById('cardAssignee').value,
                 priority: document.getElementById('cardPriority').value,
                 due_date: document.getElementById('cardDueDate').value,
-                story_points: document.getElementById('cardStoryPoints').value ? parseInt(document.getElementById('cardStoryPoints').value) : null
+                story_points: document.getElementById('cardStoryPoints').value ? parseInt(document.getElementById('cardStoryPoints').value) : null,
+                labels: document.getElementById('selectedLabels').value.split(',').filter(l => l)
             })
         });
         
