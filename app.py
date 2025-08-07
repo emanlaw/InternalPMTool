@@ -6,13 +6,13 @@ For the original monolithic app, see app_original.py.
 """
 
 from app import create_app
+from flask import Flask, render_template
 
-# Create the Flask application using the app factory
 app = create_app()
 
+# Quick test route from PR merge
 @app.route('/mobile-demo')
 def mobile_demo():
-    """Demo page to showcase mobile responsive design features"""
     return render_template('mobile-demo.html')
 
 if __name__ == '__main__':
