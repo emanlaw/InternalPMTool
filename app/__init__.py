@@ -23,7 +23,12 @@ PREDEFINED_LABELS = [
 
 def create_app():
     """Create and configure the Flask application."""
-    app = Flask(__name__)
+    import os
+    # Get the parent directory (project root) for templates and static files
+    template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'templates'))
+    static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static'))
+    
+    app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
     app.secret_key = 'your-secret-key-change-in-production'
     
     # Initialize Firebase
