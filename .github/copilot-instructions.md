@@ -150,6 +150,68 @@ The app defines 66+ routes. Key routes that must work:
 - **Firebase environment:** Use Firebase Console or migration scripts
 - **Always backup data** before structural changes
 
+### Creating New Issues
+When creating a new GitHub issue, follow this structure template:
+
+```markdown
+### 🔵 Issue #XX: [TYPE] Title - STATUS
+
+Title: [TYPE] Brief Description
+
+Status: OPEN/IN_PROGRESS/COMPLETED
+GitHub Issue: https://github.com/emanlaw/InternalPMTool/issues/XX
+
+Description:
+Brief overview of what needs to be implemented or fixed.
+
+What I want:
+- High-level feature requirements
+- User-facing functionality goals
+- Integration requirements
+
+Current Issues:
+- [ ] Specific problem 1
+- [ ] Specific problem 2
+- [ ] Missing functionality
+
+Desired Features:
+- [ ] Feature requirement 1 with details
+- [ ] Feature requirement 2 with details
+- [ ] UI/UX improvements needed
+
+Technical Requirements:
+- [ ] Backend changes needed
+- [ ] Frontend template updates
+- [ ] API endpoints to create
+- [ ] Database schema changes
+
+API Endpoints Needed:
+- [ ] GET /api/resource - Description
+- [ ] POST /api/resource - Description
+- [ ] PUT /api/resource/{id} - Description
+
+Acceptance Criteria:
+- [ ] Functional requirement 1
+- [ ] Functional requirement 2
+- [ ] Performance/quality requirements
+
+Priority: HIGH/MEDIUM/LOW
+Estimated Effort: Small (1-2 days) / Medium (2-4 days) / Large (4-6 days)
+Labels: enhancement, feature-type, priority-level
+```
+
+**Issue Types:**
+- `[FEATURE]` - New functionality
+- `[BUG]` - Bug fixes
+- `[REFACTOR]` - Code organization/cleanup
+- `[ENHANCEMENT]` - Improvements to existing features
+
+**Common Labels:**
+- Priority: `high-priority`, `medium-priority`, `low-priority`
+- Type: `enhancement`, `bug`, `refactor`, `documentation`
+- Area: `ui/ux`, `backend`, `frontend`, `api`, `database`
+- Component: `sprint-management`, `issue-tracking`, `authentication`, `kanban`
+
 ## Known Issues and Workarounds
 
 ### Docker Build Fails
