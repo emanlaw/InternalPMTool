@@ -1,17 +1,76 @@
-"""
-Simple Flask app using modular structure.
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
+import json
+from datetime import datetime, date
 
-This is the new minimal app.py that uses the modular structure.
-For the original monolithic app, see app_original.py.
-"""
+# Firebase imports
+import firebase_admin
+from firebase_admin import credentials, firestore
 
-from app import create_app
+# Define predefined labels with colors
+PREDEFINED_LABELS = [
+    {'id': 'bug', 'name': 'Bug', 'color': '#ff5630'},
+    {'id': 'feature', 'name': 'Feature', 'color': '#0052cc'},
+    {'id': 'urgent', 'name': 'Urgent', 'color': '#ff8b00'},
+    {'id': 'enhancement', 'name': 'Enhancement', 'color': '#36b37e'}
+]
 
-# Create the Flask application using the app factory
-app = create_app()
+# Initialize Firebase
+try:
+    if not firebase_admin._apps:
+        cred = credentials.Certificate('firebase-service-account.json')
+        firebase_admin.initialize_app(cred)
+    
+    db = firestore.client()
+    print("Firebase initialized successfully!")
+    
+except Exception as e:
+    print(f"Firebase initialization failed: {e}")
+    print("ERROR: Please ensure firebase-service-account.json exists with valid credentials")
+    db = None
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Simple Flask app for Windows
+app = Flask(__name__)
+app.secret_key = 'your-secret-key-change-in-production'
+
+# Flask-Login setup
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, id, username, password_hash, email=None, display_name=None, role='user', status='active'):
+        self.id = id
+        self.username = username
+        self.password_hash = password_hash
+        self.email = email
+        self.display_name = display_name or username
+        self.role = role
+        self.status = status
+    
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    def can_manage_users(self):
+        return self.role == 'admin'
+
+@login_manager.user_loader
+def load_user(user_id):
+    data = load_data()
+    user_data = next((u for u in data.get('users', []) if u['id'] == int(user_id)), None)
+    if user_data:
+        return User(
+            user_data['id'], 
+            user_data['username'], 
+            user_data['password_hash'],
+            user_data.get('email'),
+            user_data.get('display_name'),
+            user_data.get('role', 'user'),
+            user_data.get('status', 'active')
+        )
+    return None
 
 
 
