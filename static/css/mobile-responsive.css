@@ -1,0 +1,543 @@
+/* Mobile-First Responsive Design for PM Tool */
+
+/* ==========================================================================
+   Mobile-First Base Styles (320px+)
+   ========================================================================== */
+
+/* Enhanced touch targets and mobile-friendly spacing */
+button, .btn, a, [onclick] {
+    min-height: 44px; /* iOS guideline for touch targets */
+    padding: 12px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile Navigation Styles */
+.mobile-nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    padding: 8px;
+    cursor: pointer;
+    min-height: 44px;
+    width: 44px;
+}
+
+.header nav {
+    position: relative;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.nav-user-section {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Mobile Kanban Board Styles */
+@media (max-width: 768px) {
+    /* Show mobile navigation toggle */
+    .mobile-nav-toggle {
+        display: flex;
+    }
+    
+    /* Hide desktop navigation */
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #0079bf;
+        flex-direction: column;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        gap: 10px;
+    }
+    
+    .nav-links.mobile-open {
+        display: flex;
+    }
+    
+    .nav-links a {
+        display: block;
+        width: 100%;
+        padding: 15px 20px;
+        margin: 0;
+        text-align: left;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+    
+    .nav-links a:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    
+    /* Kanban Board - Stack columns vertically on mobile */
+    .board {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 0;
+    }
+    
+    .column {
+        min-width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+    
+    /* Enhanced touch-friendly cards */
+    .card {
+        margin-bottom: 15px;
+        padding: 15px;
+        touch-action: manipulation; /* Optimizes touch scrolling */
+    }
+    
+    .card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+    }
+    
+    /* Mobile-friendly modals */
+    .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        margin: 20px auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    /* Responsive tables */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 600px; /* Minimum width for readability */
+    }
+    
+    /* Container padding for mobile */
+    .container {
+        padding: 15px;
+    }
+    
+    /* Header adjustments */
+    .header {
+        padding: 12px 15px;
+    }
+    
+    .header h1 {
+        font-size: 16px;
+    }
+    
+    /* Form improvements for mobile */
+    input, textarea, select {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 12px;
+    }
+    
+    /* Stats grid mobile optimization */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* Search container mobile */
+    .search-container {
+        padding: 15px;
+    }
+    
+    .filters-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-field {
+        min-width: 100%;
+    }
+}
+
+/* ==========================================================================
+   Tablet Styles (768px+)
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1024px) {
+    /* Hide mobile nav toggle */
+    .mobile-nav-toggle {
+        display: none;
+    }
+    
+    /* Show desktop navigation */
+    .nav-links {
+        display: flex !important;
+    }
+    
+    /* Kanban board - 2 columns on tablet */
+    .board {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .column {
+        min-width: calc(50% - 10px);
+        max-width: calc(50% - 10px);
+    }
+    
+    /* Modal adjustments for tablet */
+    .modal-content {
+        width: 80vw;
+        max-width: 600px;
+    }
+    
+    /* Stats grid - 2 columns on tablet */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==========================================================================
+   Desktop Styles (1024px+)
+   ========================================================================== */
+@media (min-width: 1024px) {
+    /* Full desktop layout */
+    .mobile-nav-toggle {
+        display: none;
+    }
+    
+    .nav-links {
+        display: flex !important;
+    }
+    
+    /* Kanban board - full 3-column layout */
+    .board {
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+    
+    .column {
+        min-width: 300px;
+        max-width: 300px;
+    }
+    
+    /* Original modal sizes for desktop */
+    .modal-content {
+        width: 500px;
+        max-width: 500px;
+    }
+    
+    .modal-content[style*="max-width: 600px"] {
+        width: 600px;
+        max-width: 600px;
+    }
+}
+
+/* ==========================================================================
+   Touch-Friendly Drag and Drop Enhancements
+   ========================================================================== */
+
+/* Touch-friendly drag indicators */
+.card[draggable="true"] {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none; /* Prevents scrolling during drag */
+}
+
+.card[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Visual feedback for drag operations */
+.card.drag-over {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.column.drag-target {
+    background: #e3f2fd;
+    transition: background 0.2s;
+}
+
+/* Touch-friendly notification dropdown */
+.notification-dropdown {
+    width: 90vw !important;
+    max-width: 350px;
+    right: 10px !important;
+}
+
+@media (max-width: 480px) {
+    .notification-dropdown {
+        width: calc(100vw - 20px) !important;
+        right: 10px !important;
+        left: 10px !important;
+    }
+}
+
+/* ==========================================================================
+   Dark Mode Mobile Enhancements
+   ========================================================================== */
+body.dark-mode .nav-links {
+    background: #2d3748;
+}
+
+body.dark-mode .column.drag-target {
+    background: #374151;
+}
+
+/* ==========================================================================
+   Loading States and Performance
+   ========================================================================== */
+
+/* Skeleton loading for better perceived performance */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+body.dark-mode .loading-skeleton {
+    background: linear-gradient(90deg, #374151 25%, #4a5568 50%, #374151 75%);
+    background-size: 200% 100%;
+}
+
+/* ==========================================================================
+   Performance Optimizations for Mobile
+   ========================================================================== */
+
+/* Critical CSS inlining for above-the-fold content */
+.critical-content {
+    contain: layout style paint;
+}
+
+/* Lazy loading support */
+.lazy-load {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.lazy-load.loaded {
+    opacity: 1;
+}
+
+/* Optimize animations for mobile */
+@media (max-width: 768px) {
+    * {
+        animation-duration: 0.2s !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* GPU acceleration for smooth scrolling */
+.smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    will-change: scroll-position;
+}
+
+/* ==========================================================================
+   Enhanced Form Responsiveness
+   ========================================================================== */
+
+/* Touch-friendly form elements */
+@media (max-width: 768px) {
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #172b4d;
+        font-size: 16px;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    input[type="number"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 15px 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    input:focus,
+    textarea:focus,
+    select:focus {
+        outline: none;
+        border-color: #0079bf;
+        box-shadow: 0 0 0 3px rgba(0, 121, 191, 0.1);
+    }
+    
+    /* Custom select arrow for mobile */
+    select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+    }
+}
+
+/* ==========================================================================
+   Advanced Mobile Kanban Enhancements
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Swipe indicators */
+    .kanban-swipe-hint {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 1000;
+        animation: fadeInOut 3s ease-in-out;
+    }
+    
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+    }
+    
+    /* Enhanced card interactions */
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+    
+    .card:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    /* Column headers with better touch targets */
+    .column h3 {
+        padding: 12px 0;
+        margin: 0 0 15px 0;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    /* Add column menu button for mobile */
+    .column-menu-btn {
+        background: none;
+        border: none;
+        color: #5e6c84;
+        font-size: 18px;
+        padding: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .column-menu-btn:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* ==========================================================================
+   Responsive Dashboard and Analytics
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Stats cards mobile layout */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .stat-card {
+        text-align: left;
+        padding: 15px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
+    }
+    
+    /* Chart containers */
+    .chart-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .chart-container canvas {
+        min-width: 600px;
+        height: 300px !important;
+    }
+}
+
+/* ==========================================================================
+   Print Styles (for mobile browsers)
+   ========================================================================== */
+
+@media print {
+    .mobile-nav-toggle,
+    .nav-user-section,
+    .notification-dropdown {
+        display: none !important;
+    }
+    
+    .nav-links {
+        display: none !important;
+    }
+    
+    .board {
+        flex-direction: column !important;
+    }
+    
+    .column {
+        min-width: 100% !important;
+        max-width: 100% !important;
+        break-inside: avoid;
+        margin-bottom: 20px;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+    }
+}

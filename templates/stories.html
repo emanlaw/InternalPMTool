@@ -12,7 +12,7 @@
                     {% if current_project %}
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="{{ url_for('stories') }}">All Stories</a></li>
+                                <li class="breadcrumb-item"><a href="{{ url_for('dashboard.stories') }}">All Stories</a></li>
                                 <li class="breadcrumb-item active">{{ current_project.name }}</li>
                             </ol>
                         </nav>
@@ -206,9 +206,9 @@
 function filterByProject() {
     const projectId = document.getElementById('projectFilter').value;
     if (projectId) {
-        window.location.href = `{{ url_for('stories') }}?project_id=${projectId}`;
+        window.location.href = `{{ url_for('dashboard.stories') }}?project_id=${projectId}`;
     } else {
-        window.location.href = `{{ url_for('stories') }}`;
+        window.location.href = `{{ url_for('dashboard.stories') }}`;
     }
 }
 
@@ -327,7 +327,7 @@ function addStoryToEpic(epicId) {
 
 function viewStoryIssues(storyId) {
     // Navigate to issues page filtered by story
-    window.location.href = `{{ url_for('issues_list') }}?story_id=${storyId}`;
+    window.location.href = `{{ url_for('dashboard.issues_list') }}?story_id=${storyId}`;
 }
 
 // Close modals when clicking outside
