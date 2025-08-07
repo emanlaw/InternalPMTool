@@ -67,10 +67,16 @@ def create_app():
     from app.routes.admin import admin_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.projects import projects_bp
+    from app.routes.sprints import sprints_bp
+    from app.routes.api import api_bp
+    from app.routes.issues import issues_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(projects_bp)
+    app.register_blueprint(sprints_bp)
+    app.register_blueprint(api_bp)
+    app.register_blueprint(issues_bp)
     
     return app
