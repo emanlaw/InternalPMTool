@@ -94,6 +94,21 @@ def load_data():
         data['users'].append(default_admin)
         save_data(data)
     
+    # Ensure there's a test regular user for testing non-admin navigation
+    if not any(u.get('username') == 'testuser' for u in data['users']):
+        test_user = {
+            'id': max([u['id'] for u in data['users']], default=0) + 1,
+            'username': 'testuser',
+            'password_hash': generate_password_hash('testpass'),
+            'email': 'testuser@test.com',
+            'display_name': 'Test Regular User',
+            'role': 'user',
+            'status': 'active',
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        data['users'].append(test_user)
+        save_data(data)
+    
     return data
 
 def save_data(data):
