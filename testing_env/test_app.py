@@ -49,6 +49,14 @@ class User(UserMixin):
         self.role = role
         self.status = status
 
+    def can_manage_users(self):
+        """Check if user can manage other users"""
+        return self.role == 'admin'
+
+    def is_admin(self):
+        """Check if user is an admin"""
+        return self.role == 'admin'
+
 @login_manager.user_loader
 def load_user(user_id):
     data = load_data()
@@ -84,6 +92,21 @@ def load_data():
             'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         data['users'].append(default_admin)
+        save_data(data)
+    
+    # Ensure there's a test regular user for testing non-admin navigation
+    if not any(u.get('username') == 'testuser' for u in data['users']):
+        test_user = {
+            'id': max([u['id'] for u in data['users']], default=0) + 1,
+            'username': 'testuser',
+            'password_hash': generate_password_hash('testpass'),
+            'email': 'testuser@test.com',
+            'display_name': 'Test Regular User',
+            'role': 'user',
+            'status': 'active',
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        data['users'].append(test_user)
         save_data(data)
     
     return data
