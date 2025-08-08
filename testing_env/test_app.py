@@ -147,7 +147,6 @@ def home():
 @login_required
 def issues_list():
     data = load_data()
-    print(f"DEBUG: Loaded {len(data['cards'])} cards, {len(data['projects'])} projects")
     project_id = request.args.get('project_id', type=int)
     
     if project_id:
