@@ -157,8 +157,11 @@ def get_sprint_items(sprint_id):
         # Get sprint items (stories, epics, cards)
         items = sprint.get('items', [])
         
-        # Enrich items with full data
-        enriched_items = []
+        # Separate items by type
+        epics = []
+        stories = []
+        issues = []
+        
         for item in items:
             item_type = item.get('type')
             item_id = item.get('id')
@@ -166,17 +169,23 @@ def get_sprint_items(sprint_id):
             if item_type == 'epic':
                 epic = next((e for e in data.get('epics', []) if e['id'] == item_id), None)
                 if epic:
-                    enriched_items.append({'type': 'epic', 'data': epic})
+                    epics.append(epic)
             elif item_type == 'story':
                 story = next((s for s in data.get('stories', []) if s['id'] == item_id), None)
                 if story:
-                    enriched_items.append({'type': 'story', 'data': story})
+                    stories.append(story)
             elif item_type == 'card':
                 card = next((c for c in data.get('cards', []) if c['id'] == item_id), None)
                 if card:
-                    enriched_items.append({'type': 'card', 'data': card})
+                    issues.append(card)
         
-        return jsonify({'success': True, 'items': enriched_items})
+        return jsonify({
+            'success': True, 
+            'sprint': sprint,
+            'epics': epics,
+            'stories': stories,
+            'issues': issues
+        })
         
     except Exception as e:
         print(f"Error getting sprint items: {e}")
@@ -185,7 +194,8 @@ def get_sprint_items(sprint_id):
 
 @sprints_bp.route('/api/sprints/<int:sprint_id>/items', methods=['POST'])
 @login_required
-def add_sprint_item(sprint_id):
+def update_sprint_items(sprint_id):
+    """Update sprint items based on edit modal selections"""
     try:
         data = load_data(db)
         
@@ -193,46 +203,150 @@ def add_sprint_item(sprint_id):
         if not sprint:
             return jsonify({'success': False, 'error': 'Sprint not found'})
         
-        item_type = request.json.get('type')  # 'epic', 'story', 'card'
-        item_id = request.json.get('id')
+        epic_ids = request.json.get('epic_ids', [])
+        story_ids = request.json.get('story_ids', [])
+        issue_ids = request.json.get('issue_ids', [])
         
-        if not item_type or not item_id:
-            return jsonify({'success': False, 'error': 'Type and ID are required'})
+        # Clear existing items and add new ones
+        sprint['items'] = []
         
-        # Check if item exists
-        item_data = None
-        if item_type == 'epic':
-            item_data = next((e for e in data.get('epics', []) if e['id'] == item_id), None)
-        elif item_type == 'story':
-            item_data = next((s for s in data.get('stories', []) if s['id'] == item_id), None)
-        elif item_type == 'card':
-            item_data = next((c for c in data.get('cards', []) if c['id'] == item_id), None)
+        # Add epics
+        for epic_id in epic_ids:
+            sprint['items'].append({
+                'type': 'epic',
+                'id': epic_id,
+                'added_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'added_by': current_user.username
+            })
         
-        if not item_data:
-            return jsonify({'success': False, 'error': f'{item_type.title()} not found'})
+        # Add stories
+        for story_id in story_ids:
+            sprint['items'].append({
+                'type': 'story',
+                'id': story_id,
+                'added_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'added_by': current_user.username
+            })
         
-        # Add to sprint items
-        if 'items' not in sprint:
-            sprint['items'] = []
-        
-        # Check if already in sprint
-        existing = next((i for i in sprint['items'] if i['type'] == item_type and i['id'] == item_id), None)
-        if existing:
-            return jsonify({'success': False, 'error': f'{item_type.title()} already in sprint'})
-        
-        sprint['items'].append({
-            'type': item_type,
-            'id': item_id,
-            'added_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'added_by': current_user.username
-        })
+        # Add issues (cards)
+        for issue_id in issue_ids:
+            sprint['items'].append({
+                'type': 'card',
+                'id': issue_id,
+                'added_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'added_by': current_user.username
+            })
         
         save_data(data, db)
         
-        return jsonify({'success': True, 'message': f'{item_type.title()} added to sprint'})
+        return jsonify({'success': True, 'message': 'Sprint items updated successfully'})
         
     except Exception as e:
-        print(f"Error adding sprint item: {e}")
+        print(f"Error updating sprint items: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@sprints_bp.route('/api/sprints/<int:sprint_id>', methods=['PUT'])
+@login_required
+def update_sprint(sprint_id):
+    """Update sprint details"""
+    try:
+        data = load_data(db)
+        
+        sprint = next((s for s in data.get('sprints', []) if s['id'] == sprint_id), None)
+        if not sprint:
+            return jsonify({'success': False, 'error': 'Sprint not found'})
+        
+        # Update sprint fields
+        if 'name' in request.json:
+            sprint['name'] = request.json['name']
+        if 'goal' in request.json:
+            sprint['goal'] = request.json['goal']
+        if 'story_points' in request.json:
+            sprint['story_points'] = request.json['story_points']
+        if 'start_date' in request.json:
+            sprint['start_date'] = request.json['start_date']
+        if 'end_date' in request.json:
+            sprint['end_date'] = request.json['end_date']
+            
+        sprint['updated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sprint['updated_by'] = current_user.username
+        
+        save_data(data, db)
+        
+        return jsonify({'success': True, 'message': 'Sprint updated successfully'})
+        
+    except Exception as e:
+        print(f"Error updating sprint: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@sprints_bp.route('/api/projects/<int:project_id>/hierarchy', methods=['GET'])
+@login_required
+def get_project_hierarchy(project_id):
+    """Get project hierarchy for sprint planning"""
+    try:
+        data = load_data(db)
+        
+        project = next((p for p in data.get('projects', []) if p['id'] == project_id), None)
+        if not project:
+            return jsonify({'success': False, 'error': 'Project not found'})
+        
+        # Get all epics for this project
+        epics = [e for e in data.get('epics', []) if e.get('project_id') == project_id]
+        
+        # Get all stories for this project
+        all_stories = [s for s in data.get('stories', []) if s.get('project_id') == project_id]
+        
+        # Get all issues (cards) for this project
+        all_issues = [c for c in data.get('cards', []) if c.get('project_id') == project_id]
+        
+        # Build hierarchy
+        enriched_epics = []
+        orphaned_stories = []
+        orphaned_issues = []
+        
+        for epic in epics:
+            epic_stories = [s for s in all_stories if s.get('epic_id') == epic['id']]
+            
+            # Add stories to epic and get their issues
+            epic_with_stories = epic.copy()
+            epic_with_stories['stories'] = []
+            
+            for story in epic_stories:
+                story_issues = [i for i in all_issues if i.get('story_id') == story['id']]
+                story_with_issues = story.copy()
+                story_with_issues['issues'] = story_issues
+                epic_with_stories['stories'].append(story_with_issues)
+            
+            enriched_epics.append(epic_with_stories)
+        
+        # Find orphaned stories (not in any epic)
+        used_story_ids = set()
+        for epic in enriched_epics:
+            for story in epic.get('stories', []):
+                used_story_ids.add(story['id'])
+        
+        orphaned_stories = [s for s in all_stories if s['id'] not in used_story_ids]
+        
+        # Find orphaned issues (not in any story)
+        used_issue_ids = set()
+        for epic in enriched_epics:
+            for story in epic.get('stories', []):
+                for issue in story.get('issues', []):
+                    used_issue_ids.add(issue['id'])
+        
+        orphaned_issues = [i for i in all_issues if i['id'] not in used_issue_ids]
+        
+        return jsonify({
+            'success': True,
+            'epics': enriched_epics,
+            'orphaned_stories': orphaned_stories,
+            'orphaned_issues': orphaned_issues
+        })
+        
+    except Exception as e:
+        print(f"Error getting project hierarchy: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
 
