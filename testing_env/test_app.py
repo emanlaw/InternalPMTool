@@ -49,6 +49,14 @@ class User(UserMixin):
         self.role = role
         self.status = status
 
+    def can_manage_users(self):
+        """Check if user can manage other users"""
+        return self.role == 'admin'
+
+    def is_admin(self):
+        """Check if user is an admin"""
+        return self.role == 'admin'
+
 @login_manager.user_loader
 def load_user(user_id):
     data = load_data()

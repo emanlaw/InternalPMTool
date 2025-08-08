@@ -28,9 +28,18 @@
         <h1>🧪 Testing Environment</h1>
         <nav>
             <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="/sprints">🏃‍♂️ Sprints</a>
+            <a href="{{ url_for('stories') }}">📖 Stories</a>
             <a href="{{ url_for('issues_list') }}">Issues</a>
-            <a href="{{ url_for('stories') }}">Stories</a>
-            <a href="{{ url_for('backlog') }}">Backlog</a>
+            <a href="{{ url_for('backlog') }}">📋 Backlog</a>
+            <a href="/gantt">📊 Gantt Chart</a>
+            <a href="/mindmap">🧠 Mind Map</a>
+            <a href="/archive">📁 Archive</a>
+            {% if current_user.is_authenticated and current_user.can_manage_users() %}
+                <a href="/analytics">Analytics</a>
+                <a href="/firebase">Firebase</a>
+                <a href="/admin">👥 Admin</a>
+            {% endif %}
             <div style="margin-left: auto;">
                 {% if current_user.is_authenticated %}
                     <span>{{ current_user.username }}</span>
