@@ -23,7 +23,7 @@ PREDEFINED_LABELS = [
 
 def create_app():
     """Create and configure the Flask application."""
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.secret_key = 'your-secret-key-change-in-production'
     
     # Initialize Firebase
