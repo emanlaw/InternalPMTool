@@ -87,7 +87,14 @@
             <tr>
                 <td><strong>#{{ card.id }}</strong></td>
                 <td><a href="javascript:void(0)" onclick="openCardDetails({{ card.id }})" style="color: #0079bf; text-decoration: none;">{{ card.title }}</a></td>
-                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ card.description or '-' }}</td>
+                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.4;" title="{{ card.description or '' }}">
+                    {% if card.description %}
+                        {% set desc_text = card.description[:120] + '...' if card.description|length > 120 else card.description %}
+                        {{ desc_text }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td>
                     {% for project in projects %}
                         {% if project.id == card.project_id %}
@@ -140,11 +147,11 @@
                         <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">
                             ⋮ Actions
                         </button>
-                        <div id="dropdown-{{ card.id }}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 9999; min-width: 150px;">
-                            <a href="javascript:void(0)" onclick="editIssue({{ card.id }})" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">✏️ Edit Issue</a>
-                            <a href="javascript:void(0)" onclick="moveToBacklog({{ card.id }})" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📋 Move to Backlog</a>
-                            <a href="javascript:void(0)" onclick="sendToAssignee({{ card.id }}, '{{ card.assignee }}')" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📧 Send to Assignee</a>
-                            <a href="javascript:void(0)" onclick="deleteIssue({{ card.id }})" style="display: block; padding: 8px 12px; text-decoration: none; color: #dc3545;">🗑️ Delete</a>
+                        <div id="dropdown-{{ card.id }}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; min-width: 160px; max-width: 200px; white-space: nowrap;">
+                            <a href="javascript:void(0)" onclick="editIssue({{ card.id }})" style="display: block; padding: 10px 14px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">✏️ Edit Issue</a>
+                            <a href="javascript:void(0)" onclick="moveToBacklog({{ card.id }})" style="display: block; padding: 10px 14px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">📋 Move to Backlog</a>
+                            <a href="javascript:void(0)" onclick="sendToAssignee({{ card.id }}, '{{ card.assignee }}')" style="display: block; padding: 10px 14px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">📧 Send to Assignee</a>
+                            <a href="javascript:void(0)" onclick="deleteIssue({{ card.id }})" style="display: block; padding: 10px 14px; text-decoration: none; color: #dc3545; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#fff5f5'" onmouseout="this.style.backgroundColor='transparent'">🗑️ Delete</a>
                         </div>
                     </div>
                 </td>
@@ -398,7 +405,7 @@ function updateTable(cards) {
             <tr>
                 <td><strong>#${card.id}</strong></td>
                 <td><a href="javascript:void(0)" onclick="openCardDetails(${card.id})" style="color: #0079bf; text-decoration: none;">${card.title}</a></td>
-                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${card.description || '-'}</td>
+                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; line-height: 1.4;" title="${card.description || ''}">${card.description && card.description.length > 120 ? card.description.substring(0, 120) + '...' : (card.description || '-')}</td>
                 <td><span style="background: #e3f2fd; color: #0052cc; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${project ? project.name : 'Unknown'}</span></td>
                 <td>${epic ? `<span style="background: #e8f5e8; color: #2e7d32; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${epic.title}</span>` : '<span style="color: #999;">-</span>'}</td>
                 <td>${story ? `<span style="background: #fff3e0; color: #f57c00; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${story.title}</span>` : '<span style="color: #999;">-</span>'}</td>
@@ -423,11 +430,11 @@ function updateTable(cards) {
                         <button class="btn btn-secondary" style="font-size: 12px; padding: 4px 8px;" onclick="var d=this.nextElementSibling;document.querySelectorAll('.dropdown-menu').forEach(m=>m.style.display='none');d.style.display=d.style.display==='block'?'none':'block'">
                             ⋮ Actions
                         </button>
-                        <div id="dropdown-${card.id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 9999; min-width: 150px;">
-                            <a href="javascript:void(0)" onclick="editIssue(${card.id})" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">✏️ Edit Issue</a>
-                            <a href="javascript:void(0)" onclick="moveToBacklog(${card.id})" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📋 Move to Backlog</a>
-                            <a href="javascript:void(0)" onclick="sendToAssignee(${card.id}, '${card.assignee || ''}')" style="display: block; padding: 8px 12px; text-decoration: none; color: #333; border-bottom: 1px solid #eee;">📧 Send to Assignee</a>
-                            <a href="javascript:void(0)" onclick="deleteIssue(${card.id})" style="display: block; padding: 8px 12px; text-decoration: none; color: #dc3545;">🗑️ Delete</a>
+                        <div id="dropdown-${card.id}" class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; min-width: 160px; max-width: 200px; white-space: nowrap;">
+                            <a href="javascript:void(0)" onclick="editIssue(${card.id})" style="display: block; padding: 10px 14px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">✏️ Edit Issue</a>
+                            <a href="javascript:void(0)" onclick="moveToBacklog(${card.id})" style="display: block; padding: 10px 14px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">📋 Move to Backlog</a>
+                            <a href="javascript:void(0)" onclick="sendToAssignee(${card.id}, '${card.assignee || ''}')" style="display: block; padding: 10px 14px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='transparent'">📧 Send to Assignee</a>
+                            <a href="javascript:void(0)" onclick="deleteIssue(${card.id})" style="display: block; padding: 10px 14px; text-decoration: none; color: #dc3545; font-size: 13px; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#fff5f5'" onmouseout="this.style.backgroundColor='transparent'">🗑️ Delete</a>
                         </div>
                     </div>
                 </td>
