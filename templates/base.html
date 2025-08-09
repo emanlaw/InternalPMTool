@@ -466,10 +466,10 @@
     <div class="header">
         <h1>🔧 PM Tool</h1>
         <nav>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('dashboard.home') }}">Dashboard</a>
             <a href="/sprints">🏃‍♂️ Sprints</a>
-            <a href="{{ url_for('stories') }}">📖 Stories</a>
-            <a href="{{ url_for('issues_list') }}">Issues</a>
+            <a href="{{ url_for('dashboard.stories') }}">📖 Stories</a>
+            <a href="{{ url_for('dashboard.issues_list') }}">Issues</a>
             <a href="/backlog">📋 Backlog</a>
             <a href="/gantt">📊 Gantt Chart</a>
             <a href="/mindmap">🧠 Mind Map</a>
@@ -477,7 +477,7 @@
             {% if current_user.is_authenticated and current_user.can_manage_users() %}
                 <a href="/analytics">Analytics</a>
                 <a href="/firebase">Firebase</a>
-                <a href="{{ url_for('admin_users') }}">👥 Admin</a>
+                <a href="{{ url_for('admin.admin_users') }}">👥 Admin</a>
             {% endif %}
             <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
                 {% if current_user.is_authenticated %}
@@ -496,12 +496,12 @@
                             <span id="darkModeIcon">🌙</span>
                         </button>
                     </div>
-                    <a href="{{ url_for('profile') }}">Profile</a>
+                    <a href="{{ url_for('auth.profile') }}">Profile</a>
                     <span style="color: rgba(255,255,255,0.8);">{{ current_user.username }}</span>
-                    <a href="{{ url_for('logout') }}">Logout</a>
+                    <a href="{{ url_for('auth.logout') }}">Logout</a>
                 {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('register') }}">Register</a>
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a href="{{ url_for('auth.register') }}">Register</a>
                 {% endif %}
             </div>
         </nav>

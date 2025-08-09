@@ -12,6 +12,10 @@ Internal PM Tool is a Flask-based web application for project management featuri
 
 ## Quick Start (Development)
 
+### Code Agent Ojective
+- **Primary Goal:** Key developers in navigating and modifying the Internal PM Tool codebase.
+- **Secondary Goal:** Create error-free code and files for executable products, in this project, Project Management (PM) Tool
+
 ### Bootstrap and Dependencies
 Run these commands to set up the development environment:
 ```bash
