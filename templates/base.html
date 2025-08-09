@@ -466,8 +466,10 @@
     <div class="header">
         <h1>🔧 PM Tool</h1>
         <nav>
-            <a href="{{ url_for('dashboard.home') }}">Home</a>
-            <a href="{{ url_for('sprints.sprints') }}">🏃‍♂️ Sprints</a>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="/sprints">🏃‍♂️ Sprints</a>
+                <a href="{{ url_for('stories') }}">📖 Stories</a>
+                <a href="{{ url_for('issues_list') }}">Issues</a>
             <a href="/backlog">📋 Backlog</a>
             <a href="/gantt">📊 Gantt Chart</a>
             <a href="/mindmap">🧠 Mind Map</a>
@@ -508,7 +510,6 @@
         {% block content %}{% endblock %}
     </div>
     
-    <script>
     <script>
         // Enhanced Theme System
         class ThemeManager {
