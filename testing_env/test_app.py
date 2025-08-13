@@ -76,7 +76,13 @@ def load_user(user_id):
 def load_data():
     """Load data from local files for testing"""
     from data_manager import DataManager
-    dm = DataManager()
+    import os
+    
+    # Get the correct data directory path (relative to the testing_env directory)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(current_dir, 'data')
+    
+    dm = DataManager(data_dir)
     data = dm.load_data()
     
     # Create default admin user if no users exist
@@ -114,7 +120,13 @@ def load_data():
 def save_data(data):
     """Save data to local files for testing"""
     from data_manager import DataManager
-    dm = DataManager()
+    import os
+    
+    # Get the correct data directory path (relative to the testing_env directory)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(current_dir, 'data')
+    
+    dm = DataManager(data_dir)
     dm.save_data(data)
 
 @app.route('/login', methods=['GET', 'POST'])
